@@ -3,3 +3,6 @@ xcuserdata/
 build/
 DerivedData/
 *.xcuserstate
+
+# 图书文件
+*.epub

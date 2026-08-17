@@ -85,7 +85,6 @@ struct ReaderPlaceholderView: View {
     private var readerMenu: some View {
         VStack(alignment: .leading, spacing: 4) {
             menuRow("Contents", trailing: "0%")
-            menuRow("Search Book")
             menuRow("Themes & Settings")
             Divider().overlay(Color.white.opacity(0.2))
             HStack(spacing: 18) {
