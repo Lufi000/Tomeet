@@ -4,7 +4,7 @@ extension ReadingGoal {
     /// Gauge 取值 0...1：今日已读秒数 / 目标分钟*60，钳到 1。
     var todayProgress: Double {
         guard dailyGoalMinutes > 0 else { return 0 }
-        return min(1, Double(todayReadingSeconds) / Double(dailyGoalMinutes * 60))
+        return max(0, min(1, Double(todayReadingSeconds) / Double(dailyGoalMinutes * 60)))
     }
 
     /// 中心显示如 `1:11`（mvp.md §2.3）。

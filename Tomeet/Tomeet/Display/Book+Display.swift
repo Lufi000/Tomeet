@@ -34,11 +34,6 @@ extension Book {
         }
     }
 
-    /// “最近打开”排序别名（plan §Task2 Interfaces 以 `sortRecent` 命名本函数）。
-    static func sortRecent(_ a: Book, _ b: Book) -> Bool {
-        sortRecentlyOpened(a, b)
-    }
-
     static func sortManual(_ a: Book, _ b: Book) -> Bool {
         a.addedDate < b.addedDate
     }

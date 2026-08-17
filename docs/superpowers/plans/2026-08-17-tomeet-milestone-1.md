@@ -25,19 +25,21 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 | # | 任务 | 状态 |
 | --- | --- | --- |
-| T0 | 工程地基（清示例、封面资产入库） | [ ] |
-| T1 | 数据层（Book / ReadingGoal / seed） | [ ] |
-| T2 | Root 导航骨架（TabView 三入口） | [ ] |
-| T3 | Home 页面（Continue / Previous / Reading Goals） | [ ] |
-| T4 | Library 书架（LazyVGrid + 状态 + Menu） | [ ] |
-| T5 | Collections Sheet | [ ] |
-| T6 | 阅读器占位页 | [ ] |
-| T7 | Search 占位页 | [ ] |
-| T8 | 验收打磨 | [ ] |
+| T0 | 工程地基（清示例、封面资产入库） | [x] |
+| T1 | 数据层（Book / ReadingGoal / seed） | [x] |
+| T2 | Root 导航骨架（TabView 三入口） | [x] |
+| T3 | Home 页面（Continue / Previous / Reading Goals） | [x] |
+| T4 | Library 书架（LazyVGrid + 状态 + Menu） | [x] |
+| T5 | Collections Sheet | [x] |
+| T6 | 阅读器占位页 | [x] |
+| T7 | Search 占位页 | [x] |
+| T8 | 验收打磨 | [x] |
+
+> 已由实现计划执行：docs/superpowers/plans/2026-08-17-tomeet-milestone-1-impl.md
 
 ---
 
-## T0 工程地基 [ ]
+## T0 工程地基 [x]
 
 **依据**：`mvp.md` §0.1、§7；CLAUDE.md（模型以 Book/ReadingGoal 为准）
 
@@ -55,7 +57,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T1 数据层（SwiftData） [ ]
+## T1 数据层（SwiftData） [x]
 
 **依据**：`mvp.md` §7（模型代码已给全）、§2.3、§3.3
 
@@ -74,7 +76,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T2 Root 导航骨架 [ ]
+## T2 Root 导航骨架 [x]
 
 **依据**：`mvp.md` §1.1、§1.2、§8.3
 
@@ -92,7 +94,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T3 Home 页面 [ ]
+## T3 Home 页面 [x]
 
 **依据**：`mvp.md` §2（2.1 顶部 / 2.2 Continue / 2.3 Reading Goals）、§8
 
@@ -112,7 +114,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T4 Library 书架 [ ]
+## T4 Library 书架 [x]
 
 **依据**：`mvp.md` §3（3.1 顶部 / 3.2 网格 / 3.3 NEW / 3.4 菜单）、§8
 
@@ -133,7 +135,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T5 Collections Sheet [ ]
+## T5 Collections Sheet [x]
 
 **依据**：`mvp.md` §4
 
@@ -152,7 +154,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T6 阅读器占位页 [ ]
+## T6 阅读器占位页 [x]
 
 **依据**：`mvp.md` §6、§8.2
 
@@ -172,7 +174,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T7 Search 占位页 [ ]
+## T7 Search 占位页 [x]
 
 **依据**：`mvp.md` §1.1、§8.3、§9（Milestone 1 含 Search 占位）
 
@@ -187,7 +189,7 @@ T0 工程地基 ──► T1 数据层 ──► T2 Root 导航 ──┬─► 
 
 ---
 
-## T8 验收打磨 [ ]
+## T8 验收打磨 [x]
 
 **依据**：`mvp.md` §9「验收标准」
 

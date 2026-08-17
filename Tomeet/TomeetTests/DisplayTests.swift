@@ -41,12 +41,13 @@ struct DisplayTests {
         let recent = book(addedDate: .distantPast, lastOpenedDate: Date(timeIntervalSinceNow: -100))
         let older = book(addedDate: .distantPast, lastOpenedDate: Date(timeIntervalSinceNow: -5000))
         let never = book(addedDate: .distantPast, lastOpenedDate: nil)
-        #expect(Book.sortRecent(recent, older))
-        #expect(Book.sortRecent(recent, never))
+        #expect(Book.sortRecentlyOpened(recent, older))
+        #expect(Book.sortRecentlyOpened(recent, never))
 
         let a = book(addedDate: .distantPast)
         let b = Book(title: "Zebra", author: "A", format: .epub, addedDate: .distantPast)
         #expect(Book.sortTitle(a, b))
+        #expect(Book.sortAuthor(Book(title: "X", author: "Alpha", format: .epub, addedDate: .distantPast), Book(title: "Y", author: "Beta", format: .epub, addedDate: .distantPast)))
         #expect(Book.sortAuthor(b, a) == false)
 
         let earlier = book(addedDate: Date(timeIntervalSince1970: 10))

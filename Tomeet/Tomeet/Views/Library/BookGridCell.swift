@@ -50,7 +50,7 @@ struct BookGridCell: View {
 
             Text(book.title)
                 .font(.subheadline)
-                .lineLimit(1)
+                .lineLimit(2)
             Text(book.author)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
