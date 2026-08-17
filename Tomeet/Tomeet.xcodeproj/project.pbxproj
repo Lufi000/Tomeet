@@ -8,6 +8,7 @@
 
 /* Begin PBXFileReference section */
 		99EA40B0300CBDD10029FE5B /* Tomeet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tomeet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000001 /* TomeetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TomeetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +17,22 @@
 			path = Tomeet;
 			sourceTree = "<group>";
 		};
+		AA0000000000000000000002 /* TomeetTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TomeetTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		99EA40AD300CBDD10029FE5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000003 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +46,7 @@
 			isa = PBXGroup;
 			children = (
 				99EA40B2300CBDD10029FE5B /* Tomeet */,
+				AA0000000000000000000002 /* TomeetTests */,
 				99EA40B1300CBDD10029FE5B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,11 +55,22 @@
 			isa = PBXGroup;
 			children = (
 				99EA40B0300CBDD10029FE5B /* Tomeet.app */,
+				AA0000000000000000000001 /* TomeetTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
+
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 99EA40A8300CBDD10029FE5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99EA40AF300CBDD10029FE5B;
+			remoteInfo = Tomeet;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXNativeTarget section */
 		99EA40AF300CBDD10029FE5B /* Tomeet */ = {
@@ -70,6 +95,29 @@
 			productReference = 99EA40B0300CBDD10029FE5B /* Tomeet.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA0000000000000000000008 /* TomeetTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "TomeetTests" */;
+			buildPhases = (
+				AA0000000000000000000004 /* Sources */,
+				AA0000000000000000000003 /* Frameworks */,
+				AA0000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA0000000000000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000002 /* TomeetTests */,
+			);
+			name = TomeetTests;
+			packageProductDependencies = (
+			);
+			productName = TomeetTests;
+			productReference = AA0000000000000000000001 /* TomeetTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +130,9 @@
 				TargetAttributes = {
 					99EA40AF300CBDD10029FE5B = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					AA0000000000000000000008 = {
+						TestTargetID = 99EA40AF300CBDD10029FE5B;
 					};
 				};
 			};
@@ -100,12 +151,20 @@
 			projectRoot = "";
 			targets = (
 				99EA40AF300CBDD10029FE5B /* Tomeet */,
+				AA0000000000000000000008 /* TomeetTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		99EA40AE300CBDD10029FE5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +181,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 99EA40AF300CBDD10029FE5B /* Tomeet */;
+			targetProxy = AA0000000000000000000006 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		99EA40BB300CBDD20029FE5B /* Debug */ = {
@@ -310,6 +384,42 @@
 			};
 			name = Release;
 		};
+		AA000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3488U99HV8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivy.TomeetTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tomeet.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tomeet";
+			};
+			name = Debug;
+		};
+		AA000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3488U99HV8;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ivy.TomeetTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tomeet.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tomeet";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +437,15 @@
 			buildConfigurations = (
 				99EA40BE300CBDD20029FE5B /* Debug */,
 				99EA40BF300CBDD20029FE5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "TomeetTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000000000000000000000A /* Debug */,
+				AA000000000000000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
