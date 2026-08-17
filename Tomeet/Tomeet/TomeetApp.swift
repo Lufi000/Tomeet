@@ -1,32 +1,25 @@
-//
-//  TomeetApp.swift
-//  Tomeet
-//
-//  Created by lufi on 2026/7/19.
-//
-
 import SwiftUI
 import SwiftData
+import Foundation
 
 @main
 struct TomeetApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    let modelContainer: ModelContainer
 
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContainer = try ModelContainerFactory.make(isStoredInMemoryOnly: false)
+            // 首次启动幂等写入 seed（mvp.md §0.1 / §2.3）
+            try SeedData.seedIfNeeded(in: modelContainer.mainContext)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(modelContainer)
     }
 }
