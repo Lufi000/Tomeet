@@ -13,11 +13,11 @@ enum SeedData {
     static let bookSeeds: [BookSeed] = [
         BookSeed(title: "If I Had a Father", author: "George MacDonald",
                  sourceFileName: "george-macdonald_if-i-had-a-father", coverImageName: "cover-1"),
-        BookSeed(title: "贫穷的本质：我们为什么摆脱不了贫穷", author: "阿比吉特·班纳吉 / 埃斯特·迪弗洛",
-                 sourceFileName: "贫穷的本质：我们为什么摆脱不了贫穷", coverImageName: "cover-2"),
+        BookSeed(title: "贫穷的本质：我们为什么摆脱不了贫穷·修订版（重新理解贫穷，探究穷人之所以贫穷的根源。）", author: "阿比吉特·班纳吉",
+                 sourceFileName: "贫穷的本质：我们为什么摆脱不了贫穷·修订版（重新理解贫穷，探究穷人之所以贫穷的根源。）", coverImageName: "cover-2"),
         BookSeed(title: "读懂一本书：樊登读书法", author: "樊登",
                  sourceFileName: "读懂一本书：樊登读书法", coverImageName: "cover-3"),
-        BookSeed(title: "如何科学开发孩子的大脑：智商与情商发展指南", author: "吉尔·斯塔姆 / 宝拉·斯宾塞",
+        BookSeed(title: "如何科学开发孩子的大脑：智商与情商发展指南", author: "吉尔·斯塔姆（Jill Stamm）",
                  sourceFileName: "如何科学开发孩子的大脑：智商与情商发展指南", coverImageName: "cover-4"),
     ]
 

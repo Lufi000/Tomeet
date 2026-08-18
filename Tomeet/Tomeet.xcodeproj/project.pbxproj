@@ -183,10 +183,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../public_domain_books/books/george-macdonald_if-i-had-a-father.epub",
-				"$(SRCROOT)/../public_domain_books/books/贫穷的本质：我们为什么摆脱不了贫穷.epub",
-				"$(SRCROOT)/../public_domain_books/books/读懂一本书：樊登读书法.epub",
-				"$(SRCROOT)/../public_domain_books/books/如何科学开发孩子的大脑：智商与情商发展指南.epub",
+				"$(SRCROOT)/../public_domain_books/books/",
 			);
 			name = "Extract EPUB Books";
 			outputFileListPaths = (
@@ -195,7 +192,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\nfor epub in \"$SRC/george-macdonald_if-i-had-a-father.epub\" \"$SRC/贫穷的本质：我们为什么摆脱不了贫穷.epub\" \"$SRC/读懂一本书：樊登读书法.epub\" \"$SRC/如何科学开发孩子的大脑：智商与情商发展指南.epub\"; do\n\tbook_dir=\"$DEST/$(basename \"${epub%.epub}\")\"\n\tditto -x -k \"$epub\" \"$book_dir\"\ndone\n";
+			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tditto -x -k \"$epub\" \"$book_dir\"\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
