@@ -63,7 +63,7 @@ struct LibraryView: View {
                 CollectionsSheet(books: books)
             }
             .fullScreenCover(item: $presentedReader) { book in
-                ReaderPlaceholderView(book: book)
+                ReaderView(book: book)
             }
             .toolbarBackground(.visible, for: .navigationBar)
         }

@@ -79,7 +79,7 @@ struct HomeView: View {
                 }
             }
             .fullScreenCover(item: $presentedReader) { book in
-                ReaderPlaceholderView(book: book)
+                ReaderView(book: book)
             }
         }
     }
