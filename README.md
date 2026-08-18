@@ -23,8 +23,8 @@ Over time, conversations with books become notes and personal knowledge you can 
 
 ## Current focus
 
-Milestone 1 ships the Home + Library navigation skeleton and a bookshelf grid backed by SwiftData. The full reader, AI companion audio, and book chat come after that foundation is stable.
+Milestone 2 ships the real EPUB reader: TextKit pagination, `UIPageViewController` `.pageCurl`, chapter Contents jump, and `(chapter, charOffset)` position persistence. Books are seeded from 4 public-domain EPUBs extracted into the bundle at build time. AI companion audio and book chat remain for later milestones.
 
 ## Status
 
-Early development. Product direction and MVP scope live in `docs/design/`.
+Early development. Milestone 1 (Home + Library skeleton) is complete. Milestone 2 reader core is implemented on `feature/reader-m2`. Product direction and MVP scope live in `docs/design/`.
