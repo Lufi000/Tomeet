@@ -27,6 +27,28 @@ struct ModelTests {
         #expect(book.isDownloaded)
         #expect(book.lastOpenedDate == nil)
         #expect(book.collection == nil)
+        #expect(book.sourceFileName == nil)
+        #expect(book.currentLocation == nil)
+    }
+
+    @Test func newFieldsDefaultToNil() {
+        let book = Book(title: "T", author: "A", format: .epub)
+        #expect(book.sourceFileName == nil)
+        #expect(book.currentLocation == nil)
+    }
+
+    @Test func readerFieldsPersistRoundTrip() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+        let book = Book(title: "T", author: "A", format: .epub)
+        book.sourceFileName = "george-macdonald_if-i-had-a-father"
+        book.currentLocation = "3:4821"
+        context.insert(book)
+        try context.save()
+        let fetch = FetchDescriptor<Book>()
+        let fetched = try #require(try context.fetch(fetch).first)
+        #expect(fetched.sourceFileName == "george-macdonald_if-i-had-a-father")
+        #expect(fetched.currentLocation == "3:4821")
     }
 
     @Test func readingGoalPersists() throws {

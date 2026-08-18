@@ -15,6 +15,12 @@ final class Book {
     var isDownloaded: Bool
     var collection: String?
 
+    /// bundle 内已解压书籍目录名（epub 文件名去扩展名）；nil = 旧数据/无源书。
+    var sourceFileName: String?
+
+    /// 阅读位置编码 `"章节:偏移"`（ReaderLocation.encoded）；nil = 未开始读。
+    var currentLocation: String?
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -26,7 +32,9 @@ final class Book {
         readingProgress: Double = 0,
         isNew: Bool = true,
         isDownloaded: Bool = true,
-        collection: String? = nil
+        collection: String? = nil,
+        sourceFileName: String? = nil,
+        currentLocation: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -39,5 +47,7 @@ final class Book {
         self.isNew = isNew
         self.isDownloaded = isDownloaded
         self.collection = collection
+        self.sourceFileName = sourceFileName
+        self.currentLocation = currentLocation
     }
 }

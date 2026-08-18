@@ -7,8 +7,6 @@ struct RootView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
             LibraryView()
                 .tabItem { Label("Library", systemImage: "books.vertical.fill") }
-            SearchView()
-                .tabItem { Label("Search", systemImage: "magnifyingglass") }
         }
         .tint(.blue)
     }
