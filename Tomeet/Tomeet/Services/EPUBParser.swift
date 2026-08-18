@@ -17,7 +17,7 @@ enum EPUBParser {
         }
     }
 
-    static func parseBook(at directoryURL: URL) throws -> BookDocument {
+    static nonisolated func parseBook(at directoryURL: URL) throws -> BookDocument {
         // 1. container.xml → rootfile（EPUB3/EPUB2 布局统一入口）
         let containerURL = directoryURL.appendingPathComponent("META-INF/container.xml")
         let rootfilePath = try Self.rootfilePath(from: containerURL)

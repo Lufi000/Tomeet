@@ -26,11 +26,11 @@ struct PaginationContext: Sendable, Equatable {
 /// `nonisolated`：纯计算，可在后台线程整书分页。
 enum ChapterPager {
     /// dc:language 前缀为 en 时用衬线字体（Apple Books 惯例）。
-    static func isSerifLanguage(_ language: String?) -> Bool {
+    static nonisolated func isSerifLanguage(_ language: String?) -> Bool {
         language?.lowercased().hasPrefix("en") == true
     }
 
-    static func fontDescriptor(for language: String?) -> UIFontDescriptor {
+    static nonisolated func fontDescriptor(for language: String?) -> UIFontDescriptor {
         let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
         guard isSerifLanguage(language), let serif = descriptor.withDesign(.serif) else {
             return descriptor
@@ -38,7 +38,7 @@ enum ChapterPager {
         return serif
     }
 
-    static func paginate(book: BookDocument, context: PaginationContext) -> [PaginatedChapter] {
+    static nonisolated func paginate(book: BookDocument, context: PaginationContext) -> [PaginatedChapter] {
         book.chapters.enumerated().map { index, chapter in
             PaginatedChapter(chapterIndex: index, pages: paginate(chapter: chapter, language: book.language, context: context))
         }
