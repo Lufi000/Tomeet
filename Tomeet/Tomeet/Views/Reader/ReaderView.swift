@@ -1,35 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// ReaderView 菜单模型：章节行 + 固定占位行。
-extension ReaderView {
-    /// Contents 菜单行：真实章节（跳转）或占位行（不跳转）。
-    struct ContentsRow: Equatable {
-        let title: String
-        let jumpable: Bool
-        /// 章节目标（占位行为 nil）
-        let chapterIndex: Int?
-    }
-
-    static let placeholderMenuRowCount = 2  // Search Book / Themes & Settings
-    static let placeholderCircleButtonCount = 4  // share / rotate / reading mode / bookmark
-    static func contentsRows(chapters: [Chapter]) -> [ContentsRow] {
-        chapters.enumerated().map { index, chapter in
-            ContentsRow(title: chapter.title, jumpable: true, chapterIndex: index)
-        } + [
-            ContentsRow(title: "Search Book", jumpable: false, chapterIndex: nil),
-            ContentsRow(title: "Themes & Settings", jumpable: false, chapterIndex: nil),
-        ]
-    }
-}
-
-/// 全屏深色阅读器外壳：加载/错误/就绪三分支，Contents 章节跳转，三级保存时机。
+/// 全屏阅读器外壳：加载/错误/就绪三分支，支持悬浮菜单、目录与主题设置 Sheet。
 struct ReaderView: View {
     let book: Book
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: ReaderViewModel
     @State private var showMenu = false
+    @State private var showContents = false
+    @State private var showSearch = false
+    @State private var showThemes = false
 
     init(book: Book) {
         self.book = book
@@ -38,11 +20,14 @@ struct ReaderView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            themeBackground.ignoresSafeArea()
             content
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(themeForeground)
         .onAppear {
+            let settings = ReaderSettings.fetchOrCreate(in: modelContext)
+            viewModel.apply(settings: settings)
+            applyBrightness(from: settings)
             viewModel.loadBook(pageSize: currentSize)
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -50,21 +35,51 @@ struct ReaderView: View {
                 viewModel.saveCurrentPosition()
             }
         }
+        .sheet(isPresented: $showContents) {
+            ContentsSheet(book: book, viewModel: viewModel)
+        }
+        .sheet(isPresented: $showSearch) {
+            SearchBookSheet(book: book)
+        }
+        .sheet(isPresented: $showThemes) {
+            ThemesSettingsSheet(settings: viewModel.settings ?? ReaderSettings())
+        }
+        .onChange(of: showThemes) { _, isPresented in
+            if !isPresented, let settings = viewModel.settings {
+                viewModel.apply(settings: settings)
+            }
+        }
     }
+
+    // MARK: - 主题颜色
+
+    private var themeBackground: Color {
+        viewModel.settings?.theme.backgroundColor ?? .black
+    }
+
+    private var themeForeground: Color {
+        viewModel.settings?.theme.textColor ?? .white
+    }
+
+    private var chromeColor: Color {
+        themeForeground.opacity(0.8)
+    }
+
+    // MARK: - 内容分支
 
     @ViewBuilder
     private var content: some View {
         switch viewModel.phase {
         case .loading:
-            ProgressView().tint(.white)
+            ProgressView().tint(themeForeground)
         case .failed(let message):
             VStack(spacing: 16) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.largeTitle)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(themeForeground.opacity(0.6))
                 Text(message)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(themeForeground.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                 Button("Retry") {
@@ -107,7 +122,7 @@ struct ReaderView: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(chromeColor)
             }
         }
         .padding()
@@ -118,7 +133,7 @@ struct ReaderView: View {
             Spacer()
             Text("\(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
                 .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(themeForeground.opacity(0.6))
             Spacer()
         }
         .padding(.vertical, 8)
@@ -128,48 +143,72 @@ struct ReaderView: View {
         UIScreen.main.bounds.size
     }
 
-    // MARK: - 右下角圆形菜单
+    // MARK: - 悬浮菜单
 
     private var readerMenu: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(ReaderView.contentsRows(chapters: viewModel.session?.document.chapters ?? []).enumerated()), id: \.offset) { _, row in
-                Button {
-                    if let chapterIndex = row.chapterIndex {
-                        viewModel.jump(toChapter: chapterIndex)
-                        showMenu = false
-                    }
-                } label: {
-                    HStack {
-                        Text(row.title).font(.subheadline)
-                        Spacer()
-                        if row.jumpable, let index = row.chapterIndex {
-                            Text("\(index + 1)").font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                }
-                .buttonStyle(.plain)
-                .disabled(row.jumpable == false)
+        VStack(alignment: .trailing, spacing: 8) {
+            pillButton(
+                title: "Contents · \(Int((book.readingProgress * 100).rounded()))%",
+                icon: "list.bullet"
+            ) {
+                showMenu = false
+                showContents = true
             }
-            Divider().overlay(Color.white.opacity(0.2))
-            HStack(spacing: 18) {
+
+            pillButton(title: "Search Book", icon: "magnifyingglass") {
+                showMenu = false
+                showSearch = true
+            }
+
+            pillButton(title: "Themes & Settings", icon: "textformat") {
+                showMenu = false
+                showThemes = true
+            }
+
+            HStack(spacing: 12) {
                 circleButton("square.and.arrow.up")
                 circleButton("lock.rotation")
-                circleButton("arrow.left.and.right.righttriangle.left.righttriangle.right")
+                circleButton("doc.text")
                 circleButton("bookmark")
             }
-            .padding(.top, 6)
+            .padding(.top, 4)
         }
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .padding(.bottom, 12)
     }
 
+    private func pillButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+            }
+            .foregroundStyle(themeForeground)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(Capsule().stroke(themeForeground.opacity(0.12), lineWidth: 0.5))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private func circleButton(_ systemImage: String) -> some View {
-        Image(systemName: systemImage)
-            .font(.system(size: 18))
-            .frame(width: 40, height: 40)
-            .background(Circle().fill(.white.opacity(0.12)))
+        Button {} label: {
+            Image(systemName: systemImage)
+                .font(.system(size: 18))
+                .frame(width: 44, height: 44)
+                .foregroundStyle(themeForeground)
+                .background(
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Circle().stroke(themeForeground.opacity(0.12), lineWidth: 0.5))
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private var overlayButtons: some View {
@@ -179,7 +218,7 @@ struct ReaderView: View {
                 Spacer()
                 if showMenu {
                     readerMenu
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.scale(scale: 0.9).combined(with: .opacity))
                 }
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -188,10 +227,17 @@ struct ReaderView: View {
                 } label: {
                     Image(systemName: "circle.grid.3x3.circle.fill")
                         .font(.system(size: 44))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeForeground)
                 }
             }
             .padding(20)
         }
+    }
+
+    // MARK: - 亮度
+
+    private func applyBrightness(from settings: ReaderSettings) {
+        guard settings.hasCustomBrightness else { return }
+        UIScreen.main.brightness = CGFloat(settings.brightness)
     }
 }

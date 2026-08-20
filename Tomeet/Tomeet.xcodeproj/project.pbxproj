@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 99EA40A8300CBDD10029FE5B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 99EA40AF300CBDD10029FE5B;
+			remoteInfo = Tomeet;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		99EA40B0300CBDD10029FE5B /* Tomeet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tomeet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000001 /* TomeetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TomeetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,16 +71,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
-/* Begin PBXContainerItemProxy section */
-		AA0000000000000000000006 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 99EA40A8300CBDD10029FE5B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 99EA40AF300CBDD10029FE5B;
-			remoteInfo = Tomeet;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXNativeTarget section */
 		99EA40AF300CBDD10029FE5B /* Tomeet */ = {

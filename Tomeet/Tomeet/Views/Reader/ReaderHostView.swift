@@ -24,6 +24,7 @@ struct ReaderHostView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ pageViewController: UIPageViewController, context: Context) {
         context.coordinator.viewModel = viewModel
+        context.coordinator.applyThemeIfNeeded()
         context.coordinator.reconcile(pageViewController)
     }
 
@@ -35,9 +36,19 @@ struct ReaderHostView: UIViewControllerRepresentable {
         weak var pageViewController: UIPageViewController?
         private var pages: [Int: UIViewController] = [:]
         private var shownGlobalIndex: Int?
+        private var appliedTheme: ReaderTheme?
 
         init(viewModel: ReaderViewModel) {
             self.viewModel = viewModel
+        }
+
+        func applyThemeIfNeeded() {
+            let theme = viewModel.settings?.theme ?? .original
+            guard appliedTheme != theme else { return }
+            appliedTheme = theme
+            for case let pageVC as ReaderPageVC in pages.values {
+                pageVC.apply(theme: theme)
+            }
         }
 
         func reconcile(_ pageViewController: UIPageViewController) {
@@ -68,7 +79,8 @@ struct ReaderHostView: UIViewControllerRepresentable {
             guard index >= 0, index < viewModel.totalPages else { return nil }
             if let cached = pages[index] { return cached }
             guard let text = viewModel.session?.pageMap.textPage(globalIndex: index) else { return nil }
-            let pageVC = ReaderPageVC()
+            let theme = viewModel.settings?.theme ?? .original
+            let pageVC = ReaderPageVC(theme: theme)
             pageVC.configure(text: text)
             pages[index] = pageVC
             return pageVC
@@ -125,16 +137,32 @@ struct ReaderHostView: UIViewControllerRepresentable {
     @MainActor
     final class ReaderPageVC: UIViewController {
         private let textView = UITextView()
+        private let theme: ReaderTheme
+
+        init(theme: ReaderTheme) {
+            self.theme = theme
+            super.init(nibName: nil, bundle: nil)
+        }
+
+        required init?(coder: NSCoder) {
+            self.theme = .original
+            super.init(coder: coder)
+        }
 
         override func loadView() {
             textView.isEditable = false
             textView.isSelectable = false
             textView.isScrollEnabled = false
-            textView.backgroundColor = .black
-            textView.textColor = .white
+            textView.backgroundColor = UIColor(theme.backgroundColor)
+            textView.textColor = UIColor(theme.textColor)
             textView.textContainerInset = .zero
             textView.textContainer.lineFragmentPadding = 0
             view = textView
+        }
+
+        func apply(theme: ReaderTheme) {
+            textView.backgroundColor = UIColor(theme.backgroundColor)
+            textView.textColor = UIColor(theme.textColor)
         }
 
         func configure(text: TextPage) {

@@ -18,11 +18,14 @@ final class ReaderViewModel {
     private(set) var totalPages = 0
     private(set) var currentGlobalIndex = 0
     var pageSize: CGSize = .zero
+    var settings: ReaderSettings?
 
     let book: Book
     private var paginationContext: PaginationContext?
     private var restoredLocation: ReaderLocation?
     private var loadTask: Task<Void, Never>?
+    private var lastAppliedFontSize: CGFloat?
+    private var lastAppliedLineSpacing: CGFloat?
     private let provider: @MainActor (String) -> URL?
     private let persistence: @MainActor (Book, ReaderLocation, Double) -> Void
 
@@ -62,7 +65,11 @@ final class ReaderViewModel {
         guard pageSize != self.paginationContext?.pageSize || isRetryAfterFailure else { return }
         phase = .loading
         loadTask?.cancel()
-        let context = PaginationContext(pageSize: pageSize)
+        var context = PaginationContext(pageSize: pageSize)
+        if let settings {
+            context.fontSize = settings.fontSize
+            context.lineSpacing = CGFloat(settings.lineSpacing)
+        }
         paginationContext = context
         guard let source = book.sourceFileName, let bookURL = provider(source) else {
             phase = .failed("Book source not found: \(book.sourceFileName ?? "(none)")")
@@ -108,6 +115,19 @@ final class ReaderViewModel {
         else { return }
         currentGlobalIndex = index
         saveCurrentPosition()
+    }
+
+    func apply(settings newSettings: ReaderSettings) {
+        settings = newSettings
+        let needsRepagination = lastAppliedFontSize == nil
+            || lastAppliedLineSpacing == nil
+            || lastAppliedFontSize != newSettings.fontSize
+            || lastAppliedLineSpacing != CGFloat(newSettings.lineSpacing)
+        lastAppliedFontSize = newSettings.fontSize
+        lastAppliedLineSpacing = CGFloat(newSettings.lineSpacing)
+        guard needsRepagination, pageSize != .zero else { return }
+        // 重新分页会保留当前阅读位置。
+        loadBook(pageSize: pageSize)
     }
 
     func saveCurrentPosition() {
