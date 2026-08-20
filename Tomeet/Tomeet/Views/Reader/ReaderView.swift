@@ -42,6 +42,9 @@ struct ReaderView: View {
             content
         }
         .foregroundStyle(.white)
+        .onAppear {
+            viewModel.loadBook(pageSize: currentSize)
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 viewModel.saveCurrentPosition()

@@ -131,6 +131,7 @@ struct ReaderHostView: UIViewControllerRepresentable {
             textView.isSelectable = false
             textView.isScrollEnabled = false
             textView.backgroundColor = .black
+            textView.textColor = .white
             textView.textContainerInset = .zero
             textView.textContainer.lineFragmentPadding = 0
             view = textView
