@@ -22,6 +22,67 @@ struct ChapterPagerTests {
         #expect(ChapterPager.isSerifLanguage(nil) == false)
     }
 
+    @Test func cjkLanguageDetection() {
+        #expect(ChapterPager.isCJKLanguage("zh") == true)
+        #expect(ChapterPager.isCJKLanguage("zh-Hans") == true)
+        #expect(ChapterPager.isCJKLanguage("ja") == true)
+        #expect(ChapterPager.isCJKLanguage("ko") == true)
+        #expect(ChapterPager.isCJKLanguage("en") == false)
+        #expect(ChapterPager.isCJKLanguage(nil) == false)
+    }
+
+    @Test func bodyParagraphsHaveFirstLineIndent() throws {
+        let book = BookDocument(title: "T", author: nil, language: "zh", chapters: [
+            Chapter(id: "c", title: "C", blocks: [.paragraph("第一段。"), .paragraph("第二段。")])
+        ])
+        let chapters = ChapterPager.paginate(book: book, context: context)
+        let page = try #require(chapters.first?.pages.first)
+        let attributes = page.text.attributes(at: 0, effectiveRange: nil)
+        let style = try #require(attributes[.paragraphStyle] as? NSParagraphStyle)
+        #expect(style.firstLineHeadIndent > 0)
+    }
+
+    @Test func headingsDoNotHaveFirstLineIndent() throws {
+        let book = BookDocument(title: "T", author: nil, language: "zh", chapters: [
+            Chapter(id: "c", title: "C", blocks: [.heading(level: 1, text: "标题")])
+        ])
+        let chapters = ChapterPager.paginate(book: book, context: context)
+        let page = try #require(chapters.first?.pages.first)
+        let attributes = page.text.attributes(at: 0, effectiveRange: nil)
+        let style = try #require(attributes[.paragraphStyle] as? NSParagraphStyle)
+        #expect(style.firstLineHeadIndent == 0)
+    }
+
+    @Test func h2AndAboveUsesAccentColor() throws {
+        let book = BookDocument(title: "T", author: nil, language: "zh", chapters: [
+            Chapter(id: "c", title: "C", blocks: [
+                .heading(level: 1, text: "Chapter"),
+                .heading(level: 2, text: "Section"),
+            ])
+        ])
+        let context = PaginationContext(pageSize: CGSize(width: 390, height: 700), theme: .ink)
+        let chapters = ChapterPager.paginate(book: book, context: context)
+        let page = try #require(chapters.first?.pages.first)
+        let fullText = page.text.string as NSString
+        let h1Range = fullText.range(of: "Chapter")
+        let h2Range = fullText.range(of: "Section")
+        let h1Color = page.text.attribute(.foregroundColor, at: h1Range.location, effectiveRange: nil) as? UIColor
+        let h2Color = page.text.attribute(.foregroundColor, at: h2Range.location, effectiveRange: nil) as? UIColor
+        #expect(h1Color != h2Color, "h2 应使用强调色，与 h1 不同")
+    }
+
+    @Test func lineHeightMultipleIsApplied() throws {
+        let book = BookDocument(title: "T", author: nil, language: "zh", chapters: [
+            Chapter(id: "c", title: "C", blocks: [.paragraph("正文。")])
+        ])
+        let context = PaginationContext(pageSize: CGSize(width: 390, height: 700), lineHeightMultiple: 1.8)
+        let chapters = ChapterPager.paginate(book: book, context: context)
+        let page = try #require(chapters.first?.pages.first)
+        let attributes = page.text.attributes(at: 0, effectiveRange: nil)
+        let style = try #require(attributes[.paragraphStyle] as? NSParagraphStyle)
+        #expect(style.lineHeightMultiple == 1.8)
+    }
+
     @Test func chaptersNeverSpanPages() throws {
         let chapters = ChapterPager.paginate(book: sampleBook(), context: context)
         #expect(chapters.count == 2)

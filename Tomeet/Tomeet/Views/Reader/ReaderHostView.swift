@@ -4,9 +4,10 @@ import UIKit
 /// UIPageViewController .pageCurl 翻页桥。
 struct ReaderHostView: UIViewControllerRepresentable {
     let viewModel: ReaderViewModel
+    var onToggleChrome: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(viewModel: viewModel)
+        Coordinator(viewModel: viewModel, onToggleChrome: onToggleChrome)
     }
 
     func makeUIViewController(context: Context) -> UIPageViewController {
@@ -19,6 +20,12 @@ struct ReaderHostView: UIViewControllerRepresentable {
         pageViewController.delegate = context.coordinator
         pageViewController.isDoubleSided = false
         context.coordinator.pageViewController = pageViewController
+
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        tap.delegate = context.coordinator
+        tap.cancelsTouchesInView = false
+        pageViewController.view.addGestureRecognizer(tap)
+
         return pageViewController
     }
 
@@ -31,15 +38,17 @@ struct ReaderHostView: UIViewControllerRepresentable {
     // MARK: - Coordinator
 
     @MainActor
-    final class Coordinator: NSObject, UIPageViewControllerDataSource, UIPageViewControllerDelegate {
+    final class Coordinator: NSObject, UIPageViewControllerDataSource, UIPageViewControllerDelegate, UIGestureRecognizerDelegate {
         var viewModel: ReaderViewModel
+        var onToggleChrome: (() -> Void)?
         weak var pageViewController: UIPageViewController?
         private var pages: [Int: UIViewController] = [:]
         private var shownGlobalIndex: Int?
         private var appliedTheme: ReaderTheme?
 
-        init(viewModel: ReaderViewModel) {
+        init(viewModel: ReaderViewModel, onToggleChrome: (() -> Void)? = nil) {
             self.viewModel = viewModel
+            self.onToggleChrome = onToggleChrome
         }
 
         func applyThemeIfNeeded() {
@@ -89,6 +98,45 @@ struct ReaderHostView: UIViewControllerRepresentable {
         private func trimCache(around index: Int) {
             for key in pages.keys where abs(key - index) > 4 {
                 pages.removeValue(forKey: key)
+            }
+        }
+
+        // MARK: - Tap zones
+
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            guard let view = gesture.view else { return }
+            let location = gesture.location(in: view)
+            let zone = TapZone.zone(for: location, in: view.bounds)
+            switch zone {
+            case .previous:
+                turnPage(forward: false)
+            case .next:
+                turnPage(forward: true)
+            case .center:
+                onToggleChrome?()
+            }
+        }
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            // 点击等待滑动手势失败后再响应，确保翻页滑动优先。
+            otherGestureRecognizer is UIPanGestureRecognizer
+        }
+
+        private func turnPage(forward: Bool) {
+            guard let pageViewController,
+                  let current = pageViewController.viewControllers?.first,
+                  let index = index(of: current)
+            else { return }
+            let target = forward ? index + 1 : index - 1
+            guard target >= 0, target < viewModel.totalPages else { return }
+            guard let controller = page(for: target) else { return }
+            pageViewController.setViewControllers(
+                [controller],
+                direction: forward ? .forward : .reverse,
+                animated: true
+            ) { [weak self] _ in
+                self?.shownGlobalIndex = target
+                self?.viewModel.settle(globalIndex: target)
             }
         }
 
@@ -154,7 +202,7 @@ struct ReaderHostView: UIViewControllerRepresentable {
             textView.isSelectable = false
             textView.isScrollEnabled = false
             textView.backgroundColor = UIColor(theme.backgroundColor)
-            textView.textColor = UIColor(theme.textColor)
+            // 文字颜色由 NSAttributedString 携带的主题色/强调色控制。
             textView.textContainerInset = .zero
             textView.textContainer.lineFragmentPadding = 0
             view = textView
@@ -162,11 +210,23 @@ struct ReaderHostView: UIViewControllerRepresentable {
 
         func apply(theme: ReaderTheme) {
             textView.backgroundColor = UIColor(theme.backgroundColor)
-            textView.textColor = UIColor(theme.textColor)
         }
 
         func configure(text: TextPage) {
             textView.attributedText = text.text
         }
+    }
+}
+
+// MARK: - Tap zone
+
+enum TapZone {
+    case previous, center, next
+
+    static func zone(for location: CGPoint, in bounds: CGRect) -> TapZone {
+        let x = location.x / bounds.width
+        if x < 0.30 { return .previous }
+        if x > 0.70 { return .next }
+        return .center
     }
 }

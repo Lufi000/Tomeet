@@ -82,10 +82,12 @@ struct ReaderViewModelTests {
     }
 
     @MainActor
-    @Test func settlePersistsLocationAndProgress() async throws {
+    @Test func changingMarginTriggersRepagination() async throws {
         let book = Book(title: "VM Sample", author: "A", format: .epub)
         book.sourceFileName = "fixture"
         let (viewModel, _) = try makeFixtureViewModel(book: book)
+        let settings = ReaderSettings()
+        viewModel.apply(settings: settings)
         await viewModel.loadBook(pageSize: CGSize(width: 390, height: 700))
         var waited = 0
         while viewModel.phase != .ready && waited < 100 {
@@ -93,14 +95,21 @@ struct ReaderViewModelTests {
             waited += 1
         }
         try #require(viewModel.phase == .ready)
-        let index = min(viewModel.totalPages - 1, 2)
-        viewModel.settle(globalIndex: index)
-        #expect(book.currentLocation != nil)
-        #expect(book.lastOpenedDate != nil)
-        if let currentLocation = book.currentLocation {
-            let location = try #require(ReaderLocation(encoded: currentLocation))
-            #expect(location.chapterIndex >= 0)
+        let firstTotal = viewModel.totalPages
+
+        let newSettings = ReaderSettings(
+            horizontalMargin: 120,
+            verticalMargin: 160,
+            hasCustomBrightness: false
+        )
+        viewModel.apply(settings: newSettings)
+        #expect(viewModel.phase == .loading, "边距变化应立即触发重新分页")
+        waited = 0
+        while viewModel.phase != .ready && waited < 100 {
+            try await Task.sleep(for: .milliseconds(20))
+            waited += 1
         }
-        #expect(book.readingProgress > 0 && book.readingProgress <= 1)
+        try #require(viewModel.phase == .ready)
+        #expect(viewModel.totalPages != firstTotal, "边距变化应改变总页数")
     }
 }

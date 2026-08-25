@@ -5,7 +5,6 @@ enum ModelContainerFactory {
     static func make(isStoredInMemoryOnly: Bool) throws -> ModelContainer {
         let schema = Schema([
             Book.self,
-            ReadingGoal.self,
             ReaderSettings.self,
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isStoredInMemoryOnly)

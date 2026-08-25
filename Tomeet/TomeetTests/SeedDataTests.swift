@@ -5,28 +5,18 @@ import Testing
 
 @MainActor
 struct SeedDataTests {
-    @Test func fixtureHasFourRealBooks() throws {
+    @Test func fixtureHasOneRealBook() throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         try SeedData.seedIfNeeded(in: container.mainContext)
         let books = try container.mainContext.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 4)
-        let bySource = Dictionary(uniqueKeysWithValues: books.compactMap { book in
-            book.sourceFileName.map { ($0, book) }
-        })
-        #expect(bySource.count == 4)
-        let english = try #require(bySource["george-macdonald_if-i-had-a-father"])
-        #expect(english.title == "If I Had a Father")
-        #expect(english.coverImageName == "cover-1")
-        #expect(english.format == .epub)
-        let poor = try #require(bySource["贫穷的本质：我们为什么摆脱不了贫穷·修订版（重新理解贫穷，探究穷人之所以贫穷的根源。）"])
-        #expect(poor.title == "贫穷的本质：我们为什么摆脱不了贫穷·修订版（重新理解贫穷，探究穷人之所以贫穷的根源。）")
-        #expect(poor.coverImageName == "cover-2")
-        let read = try #require(bySource["读懂一本书：樊登读书法"])
-        #expect(read.title == "读懂一本书：樊登读书法")
-        #expect(read.coverImageName == "cover-3")
-        let brain = try #require(bySource["如何科学开发孩子的大脑：智商与情商发展指南"])
-        #expect(brain.title == "如何科学开发孩子的大脑：智商与情商发展指南")
-        #expect(brain.coverImageName == "cover-4")
+        #expect(books.count == 1)
+        #expect(books.allSatisfy { $0.sourceFileName != nil })
+        #expect(books.allSatisfy { !$0.themes.isEmpty })
+        #expect(books.allSatisfy { $0.catalogID != nil })
+        #expect(books.allSatisfy { $0.format == .epub })
+
+        let catalog = try InitialLibraryLoader.load()
+        #expect(catalog.books.count == 1)
     }
 
     @Test func legacyFakeBooksAreRebuilt() throws {
@@ -40,7 +30,7 @@ struct SeedDataTests {
         try SeedData.seedIfNeeded(in: context)
 
         let books = try context.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 4)
+        #expect(books.count == 1)
         #expect(books.allSatisfy { $0.sourceFileName != nil })
     }
 
@@ -69,9 +59,7 @@ struct SeedDataTests {
 
         try SeedData.seedIfNeeded(in: context)
         let firstBookCount = try context.fetchCount(FetchDescriptor<Book>())
-        let firstGoalCount = try context.fetchCount(FetchDescriptor<ReadingGoal>())
-        #expect(firstBookCount == 4)
-        #expect(firstGoalCount == 1)
+        #expect(firstBookCount == 1)
 
         // 第二次调用（模拟再次启动）不得重复插入
         try SeedData.seedIfNeeded(in: context)
@@ -79,12 +67,77 @@ struct SeedDataTests {
         #expect(secondBookCount == firstBookCount)
     }
 
-    @Test func seededReadingGoalMatchesSpecValue() throws {
+    // MARK: - Stale book cleanup
+
+    @Test func staleCuratedBookWithMissingSourceIsRemoved() throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         let context = container.mainContext
-        try SeedData.seedIfNeeded(in: context)
-        let goal = try context.fetch(FetchDescriptor<ReadingGoal>()).first
-        #expect(goal?.dailyGoalMinutes == 5)
-        #expect(goal?.todayReadingSeconds == 71) // 显示为 1:11
+
+        let stale = Book(title: "Stale Curated", author: "Old Author", format: .epub)
+        stale.sourceFileName = "old-removed-book"
+        stale.catalogID = "old-removed-book"
+        context.insert(stale)
+        try context.save()
+
+        try SeedData.cleanupStaleBooks(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.isEmpty)
+    }
+
+    @Test func importedBookWithMissingSourceIsRemoved() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+
+        let imported = Book(title: "Lost Import", author: "User", format: .epub)
+        imported.sourceFileName = "missing-uuid"
+        context.insert(imported)
+        try context.save()
+
+        try SeedData.cleanupStaleBooks(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.isEmpty)
+    }
+
+    @Test func importedBookWithExistingSourceIsKept() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+
+        let sourceName = "kept-uuid"
+        let bookDir = BookSourceResolver.directoryURL(forSourceFileName: sourceName)
+        try FileManager.default.createDirectory(at: bookDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: bookDir) }
+
+        let imported = Book(title: "Kept Import", author: "User", format: .epub)
+        imported.sourceFileName = sourceName
+        context.insert(imported)
+        try context.save()
+
+        try SeedData.cleanupStaleBooks(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.count == 1)
+        #expect(books.first?.sourceFileName == sourceName)
+    }
+
+    @Test func currentCatalogBookWithoutSourceIsKept() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+
+        let catalog = try InitialLibraryLoader.load()
+        let validID = try #require(catalog.books.first?.id)
+
+        let curated = Book(title: "Curated", author: "Author", format: .epub)
+        curated.sourceFileName = validID
+        curated.catalogID = validID
+        context.insert(curated)
+        try context.save()
+
+        try SeedData.cleanupStaleBooks(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.count == 1)
+        #expect(books.first?.catalogID == validID)
     }
 }

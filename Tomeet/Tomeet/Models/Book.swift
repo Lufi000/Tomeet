@@ -21,6 +21,12 @@ final class Book {
     /// 阅读位置编码 `"章节:偏移"`（ReaderLocation.encoded）；nil = 未开始读。
     var currentLocation: String?
 
+    /// 所属主题标识符列表（来自 InitialLibrary.json）。
+    var themes: [String] = []
+
+    /// 对应 InitialLibrary.json 中的书籍 id，用于查找元数据/讨论问题。
+    var catalogID: String?
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -34,7 +40,9 @@ final class Book {
         isDownloaded: Bool = true,
         collection: String? = nil,
         sourceFileName: String? = nil,
-        currentLocation: String? = nil
+        currentLocation: String? = nil,
+        themes: [String] = [],
+        catalogID: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -49,5 +57,7 @@ final class Book {
         self.collection = collection
         self.sourceFileName = sourceFileName
         self.currentLocation = currentLocation
+        self.themes = themes
+        self.catalogID = catalogID
     }
 }

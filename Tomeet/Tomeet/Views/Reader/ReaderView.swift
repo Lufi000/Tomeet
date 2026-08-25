@@ -9,8 +9,9 @@ struct ReaderView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: ReaderViewModel
     @State private var showMenu = false
+    @State private var showChrome = true
+    @State private var chromeHideTask: Task<Void, Never>?
     @State private var showContents = false
-    @State private var showSearch = false
     @State private var showThemes = false
 
     init(book: Book) {
@@ -37,9 +38,6 @@ struct ReaderView: View {
         }
         .sheet(isPresented: $showContents) {
             ContentsSheet(book: book, viewModel: viewModel)
-        }
-        .sheet(isPresented: $showSearch) {
-            SearchBookSheet(book: book)
         }
         .sheet(isPresented: $showThemes) {
             ThemesSettingsSheet(settings: viewModel.settings ?? ReaderSettings())
@@ -91,31 +89,44 @@ struct ReaderView: View {
             GeometryReader { proxy in
                 let size = proxy.size
                 ZStack {
-                    VStack(spacing: 0) {
+                    ReaderHostView(viewModel: viewModel, onToggleChrome: { toggleChrome() })
+                        .frame(width: size.width, height: size.height)
+
+                    if showChrome {
                         topBar
-                        ReaderHostView(viewModel: viewModel)
-                            .frame(width: size.width, height: size.height - chromeHeight)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         bottomBar
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        overlayButtons
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                            .transition(.scale(scale: 0.9).combined(with: .opacity))
                     }
-                    overlayButtons
                 }
+                .animation(.easeInOut(duration: 0.2), value: showChrome)
                 .onAppear {
-                    viewModel.relayout(pageSize: CGSize(width: size.width, height: size.height - chromeHeight))
+                    viewModel.relayout(pageSize: size)
+                    scheduleChromeHide()
                 }
                 .onChange(of: size) { _, newSize in
-                    viewModel.relayout(pageSize: CGSize(width: newSize.width, height: newSize.height - chromeHeight))
+                    viewModel.relayout(pageSize: newSize)
                 }
             }
         }
     }
 
-    private var chromeHeight: CGFloat { 44 + 8 + 32 }
-
     private var topBar: some View {
         HStack {
-            Text(book.title)
-                .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(sectionLabel)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(chromeColor.opacity(0.7))
+                    .lineLimit(1)
+                Text(currentChapterTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+            }
             Spacer()
             Button {
                 dismiss()
@@ -128,13 +139,37 @@ struct ReaderView: View {
         .padding()
     }
 
+    private var sectionLabel: String {
+        guard let ref = viewModel.session?.pageMap.pageRef(globalIndex: viewModel.currentGlobalIndex) else {
+            return book.title
+        }
+        let title = viewModel.session?.document.chapters[safe: ref.chapterIndex]?.title ?? book.title
+        if title.hasPrefix("引言") || title.lowercased().contains("introduction") {
+            return "引言"
+        }
+        if title.isEmpty {
+            return book.title
+        }
+        return "章节"
+    }
+
+    private var currentChapterTitle: String {
+        guard let ref = viewModel.session?.pageMap.pageRef(globalIndex: viewModel.currentGlobalIndex),
+              let title = viewModel.session?.document.chapters[safe: ref.chapterIndex]?.title,
+              !title.isEmpty else {
+            return book.title
+        }
+        return title
+    }
+
     private var bottomBar: some View {
         HStack {
             Spacer()
-            Text("\(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
+            Text("\(viewModel.currentGlobalIndex + 1) / \(viewModel.totalPages)")
                 .font(.caption)
-                .foregroundStyle(themeForeground.opacity(0.6))
-            Spacer()
+                .foregroundStyle(themeForeground.opacity(0.5))
+                .monospacedDigit()
+                .padding(.trailing, 8)
         }
         .padding(.vertical, 8)
     }
@@ -155,23 +190,10 @@ struct ReaderView: View {
                 showContents = true
             }
 
-            pillButton(title: "Search Book", icon: "magnifyingglass") {
-                showMenu = false
-                showSearch = true
-            }
-
             pillButton(title: "Themes & Settings", icon: "textformat") {
                 showMenu = false
                 showThemes = true
             }
-
-            HStack(spacing: 12) {
-                circleButton("square.and.arrow.up")
-                circleButton("lock.rotation")
-                circleButton("doc.text")
-                circleButton("bookmark")
-            }
-            .padding(.top, 4)
         }
         .padding(.bottom, 12)
     }
@@ -196,21 +218,6 @@ struct ReaderView: View {
         .buttonStyle(.plain)
     }
 
-    private func circleButton(_ systemImage: String) -> some View {
-        Button {} label: {
-            Image(systemName: systemImage)
-                .font(.system(size: 18))
-                .frame(width: 44, height: 44)
-                .foregroundStyle(themeForeground)
-                .background(
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .overlay(Circle().stroke(themeForeground.opacity(0.12), lineWidth: 0.5))
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
     private var overlayButtons: some View {
         VStack {
             Spacer()
@@ -224,6 +231,7 @@ struct ReaderView: View {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showMenu.toggle()
                     }
+                    scheduleChromeHide()
                 } label: {
                     Image(systemName: "circle.grid.3x3.circle.fill")
                         .font(.system(size: 44))
@@ -234,10 +242,42 @@ struct ReaderView: View {
         }
     }
 
+    // MARK: - Chrome visibility
+
+    private func toggleChrome() {
+        showChrome.toggle()
+        if showChrome {
+            scheduleChromeHide()
+        } else {
+            showMenu = false
+            chromeHideTask?.cancel()
+        }
+    }
+
+    private func scheduleChromeHide() {
+        chromeHideTask?.cancel()
+        chromeHideTask = Task {
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showMenu = false
+                showChrome = false
+            }
+        }
+    }
+
     // MARK: - 亮度
 
     private func applyBrightness(from settings: ReaderSettings) {
         guard settings.hasCustomBrightness else { return }
         UIScreen.main.brightness = CGFloat(settings.brightness)
+    }
+}
+
+// MARK: - Array helper
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }

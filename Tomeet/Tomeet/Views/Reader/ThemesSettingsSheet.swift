@@ -6,6 +6,7 @@ struct ThemesSettingsSheet: View {
     let settings: ReaderSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @State private var showAdvanced = false
 
     private let fontStep: Double = 1
     private let minFontOffset: Double = -4
@@ -19,6 +20,10 @@ struct ThemesSettingsSheet: View {
                     brightnessSection
                     themeGrid
                     customizeButton
+                    if showAdvanced {
+                        advancedSection
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
                 .padding()
             }
@@ -168,10 +173,14 @@ struct ThemesSettingsSheet: View {
     // MARK: - Customize
 
     private var customizeButton: some View {
-        Button {} label: {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showAdvanced.toggle()
+            }
+        } label: {
             HStack(spacing: 8) {
-                Image(systemName: "gearshape")
-                Text("Customize")
+                Image(systemName: showAdvanced ? "chevron.up" : "gearshape")
+                Text(showAdvanced ? "Hide Details" : "Customize")
                     .font(.subheadline.weight(.semibold))
             }
             .foregroundStyle(.primary)
@@ -183,6 +192,110 @@ struct ThemesSettingsSheet: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    private var advancedSection: some View {
+        VStack(spacing: 20) {
+            sliderRow(
+                title: "Line Height",
+                icon: "arrow.up.and.down.text.horizontal",
+                value: Binding(
+                    get: { settings.lineHeightMultiple },
+                    set: { settings.lineHeightMultiple = $0; try? modelContext.save() }
+                ),
+                range: 1.0...2.0,
+                step: 0.05
+            )
+            sliderRow(
+                title: "Paragraph Spacing",
+                icon: "text.line.last.and.arrowtriangle.forward",
+                value: Binding(
+                    get: { settings.paragraphSpacing },
+                    set: { settings.paragraphSpacing = $0; try? modelContext.save() }
+                ),
+                range: 0...32,
+                step: 2
+            )
+            stepperRow(
+                title: "First-Line Indent",
+                icon: "text.alignleft",
+                value: Binding(
+                    get: { settings.firstLineIndent },
+                    set: { settings.firstLineIndent = $0; try? modelContext.save() }
+                ),
+                step: 0.5,
+                range: 0...4
+            )
+            sliderRow(
+                title: "Horizontal Margin",
+                icon: "arrow.left.and.right.square",
+                value: Binding(
+                    get: { settings.horizontalMargin },
+                    set: { settings.horizontalMargin = $0; try? modelContext.save() }
+                ),
+                range: 12...64,
+                step: 2
+            )
+            sliderRow(
+                title: "Vertical Margin",
+                icon: "arrow.up.and.down.square",
+                value: Binding(
+                    get: { settings.verticalMargin },
+                    set: { settings.verticalMargin = $0; try? modelContext.save() }
+                ),
+                range: 12...80,
+                step: 2
+            )
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+
+    private func sliderRow(title: String, icon: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text(String(format: "%.2f", value.wrappedValue))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: value, in: range, step: step)
+                .tint(.white)
+        }
+    }
+
+    private func stepperRow(title: String, icon: String, value: Binding<Double>, step: Double, range: ClosedRange<Double>) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+            Spacer()
+            Stepper(
+                value: Binding(
+                    get: { value.wrappedValue },
+                    set: { newValue in
+                        value.wrappedValue = min(max(newValue, range.lowerBound), range.upperBound)
+                        try? modelContext.save()
+                    }
+                ),
+                in: range,
+                step: step
+            ) {
+                Text(String(format: "%.1f em", value.wrappedValue))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     private func themeBorderColor(_ theme: ReaderTheme) -> Color {

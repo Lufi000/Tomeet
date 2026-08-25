@@ -24,13 +24,13 @@
 
 - **翻页效果**：原生 `UIPageViewController` `.pageCurl` 翻书效果（Apple Books 式卷页），
   通过 `UIViewControllerRepresentable` 包进 SwiftUI。不用 SwiftUI 纯滑动翻页。
-- **导航结构**：跟 Apple Books 一致 —— 用原生组件做 **Home & Library** 顶部分区导航，
-  **不用底部 TabBar**。具体控件形式（顶部分段选择器等）在搭骨架时敲定。
+- **导航结构**：采用原生 `TabView` 底部 TabBar，包含 **Home** 与 **Library** 两个标签页。
+  当前实现位于 `Tomeet/RootView.swift`；顶部不再使用分段选择器/分区导航。
 - **AI 定位**：阅读器核心体验是与书的 AI 对话，不只是翻页阅读。AI 对话功能是产品重心。
 
 ## 第一个里程碑
 
-**Tab/分区框架（Home + Library 导航骨架）+ 书架网格（SwiftData）**
+**底部 Tab 框架（Home + Library）+ 书架网格（SwiftData）**
 
-- 先搭出 Apple Books 式的导航骨架 + 书架网格，用假数据/占位看结构
+- 先搭出 Home / Library 底部 Tab 骨架 + 书架网格，用假数据/占位看结构
 - 翻书阅读器、AI 对话都在骨架稳定之后再接入

@@ -8,6 +8,7 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
     case bold
     case calm
     case focus
+    case ink
 
     var id: String { rawValue }
 
@@ -20,6 +21,7 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         case .bold: "Bold"
         case .calm: "Calm"
         case .focus: "Focus"
+        case .ink: "Ink"
         }
     }
 
@@ -32,6 +34,7 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         case .bold: Color.black
         case .calm: Color(hex: 0x2C2A24)
         case .focus: Color(hex: 0x2B2520)
+        case .ink: Color(hex: 0x0D0D0D)
         }
     }
 
@@ -44,6 +47,20 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         case .bold: Color(hex: 0xFFF8E7)
         case .calm: Color(hex: 0xE8E6D9)
         case .focus: Color(hex: 0xE5DDD4)
+        case .ink: Color(hex: 0xE8E8E8)
+        }
+    }
+
+    /// 章节小标题/强调色（SwiftUI）。
+    var accentColor: Color {
+        switch self {
+        case .original: Color(hex: 0x5EEAD4)
+        case .quiet: Color(hex: 0x5EEAD4)
+        case .paper: Color(hex: 0x8B5E3C)
+        case .bold: Color(hex: 0xFFD700)
+        case .calm: Color(hex: 0xA8D5BA)
+        case .focus: Color(hex: 0xD4A373)
+        case .ink: Color(hex: 0x5EEAD4)
         }
     }
 

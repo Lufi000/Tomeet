@@ -26,6 +26,12 @@ final class ReaderViewModel {
     private var loadTask: Task<Void, Never>?
     private var lastAppliedFontSize: CGFloat?
     private var lastAppliedLineSpacing: CGFloat?
+    private var lastAppliedParagraphSpacing: CGFloat?
+    private var lastAppliedFirstLineIndent: CGFloat?
+    private var lastAppliedLineHeightMultiple: CGFloat?
+    private var lastAppliedHorizontalMargin: CGFloat?
+    private var lastAppliedVerticalMargin: CGFloat?
+    private var lastAppliedTheme: ReaderTheme?
     private let provider: @MainActor (String) -> URL?
     private let persistence: @MainActor (Book, ReaderLocation, Double) -> Void
 
@@ -45,7 +51,11 @@ final class ReaderViewModel {
     var isReady: Bool { phase == .ready }
 
     static func defaultProvider(_ sourceFileName: String) -> URL? {
-        Bundle.main.url(forResource: sourceFileName, withExtension: nil, subdirectory: "Books")
+        let appSupportURL = BookSourceResolver.directoryURL(forSourceFileName: sourceFileName)
+        if FileManager.default.fileExists(atPath: appSupportURL.path) {
+            return appSupportURL
+        }
+        return Bundle.main.url(forResource: sourceFileName, withExtension: nil, subdirectory: "Books")
     }
 
     static func persist(_ book: Book, _ location: ReaderLocation, _ progress: Double) {
@@ -62,15 +72,24 @@ final class ReaderViewModel {
         } else {
             isRetryAfterFailure = false
         }
-        guard pageSize != self.paginationContext?.pageSize || isRetryAfterFailure else { return }
-        phase = .loading
-        loadTask?.cancel()
+
         var context = PaginationContext(pageSize: pageSize)
         if let settings {
             context.fontSize = settings.fontSize
             context.lineSpacing = CGFloat(settings.lineSpacing)
+            context.paragraphSpacing = CGFloat(settings.paragraphSpacing)
+            context.firstLineIndent = CGFloat(settings.firstLineIndent)
+            context.lineHeightMultiple = CGFloat(settings.lineHeightMultiple)
+            context.horizontalInset = CGFloat(settings.horizontalMargin)
+            context.verticalInset = CGFloat(settings.verticalMargin)
+            context.theme = settings.theme
         }
+
+        guard context != self.paginationContext || isRetryAfterFailure else { return }
+        phase = .loading
+        loadTask?.cancel()
         paginationContext = context
+        self.pageSize = pageSize
         guard let source = book.sourceFileName, let bookURL = provider(source) else {
             phase = .failed("Book source not found: \(book.sourceFileName ?? "(none)")")
             return
@@ -121,10 +140,28 @@ final class ReaderViewModel {
         settings = newSettings
         let needsRepagination = lastAppliedFontSize == nil
             || lastAppliedLineSpacing == nil
+            || lastAppliedParagraphSpacing == nil
+            || lastAppliedFirstLineIndent == nil
+            || lastAppliedLineHeightMultiple == nil
+            || lastAppliedHorizontalMargin == nil
+            || lastAppliedVerticalMargin == nil
+            || lastAppliedTheme == nil
             || lastAppliedFontSize != newSettings.fontSize
             || lastAppliedLineSpacing != CGFloat(newSettings.lineSpacing)
+            || lastAppliedParagraphSpacing != CGFloat(newSettings.paragraphSpacing)
+            || lastAppliedFirstLineIndent != CGFloat(newSettings.firstLineIndent)
+            || lastAppliedLineHeightMultiple != CGFloat(newSettings.lineHeightMultiple)
+            || lastAppliedHorizontalMargin != CGFloat(newSettings.horizontalMargin)
+            || lastAppliedVerticalMargin != CGFloat(newSettings.verticalMargin)
+            || lastAppliedTheme != newSettings.theme
         lastAppliedFontSize = newSettings.fontSize
         lastAppliedLineSpacing = CGFloat(newSettings.lineSpacing)
+        lastAppliedParagraphSpacing = CGFloat(newSettings.paragraphSpacing)
+        lastAppliedFirstLineIndent = CGFloat(newSettings.firstLineIndent)
+        lastAppliedLineHeightMultiple = CGFloat(newSettings.lineHeightMultiple)
+        lastAppliedHorizontalMargin = CGFloat(newSettings.horizontalMargin)
+        lastAppliedVerticalMargin = CGFloat(newSettings.verticalMargin)
+        lastAppliedTheme = newSettings.theme
         guard needsRepagination, pageSize != .zero else { return }
         // 重新分页会保留当前阅读位置。
         loadBook(pageSize: pageSize)

@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		099ECE7629A84BF0A04E10E0 /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61E42E6AB8614B8BB972697D /* PDFKit.framework */; };
+		434E40F71C174A07863AF5BA /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 18C2FFD4FAB242D2B2C884EB /* ZIPFoundation */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		AA0000000000000000000006 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -17,6 +22,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		61E42E6AB8614B8BB972697D /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
 		99EA40B0300CBDD10029FE5B /* Tomeet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tomeet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000001 /* TomeetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TomeetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -39,6 +45,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				434E40F71C174A07863AF5BA /* ZIPFoundation in Frameworks */,
+				099ECE7629A84BF0A04E10E0 /* PDFKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +65,7 @@
 			children = (
 				99EA40B2300CBDD10029FE5B /* Tomeet */,
 				AA0000000000000000000002 /* TomeetTests */,
+				61E42E6AB8614B8BB972697D /* PDFKit.framework */,
 				99EA40B1300CBDD10029FE5B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -91,6 +100,7 @@
 			);
 			name = Tomeet;
 			packageProductDependencies = (
+				18C2FFD4FAB242D2B2C884EB /* ZIPFoundation */,
 			);
 			productName = Tomeet;
 			productReference = 99EA40B0300CBDD10029FE5B /* Tomeet.app */;
@@ -146,6 +156,9 @@
 			);
 			mainGroup = 99EA40A7300CBDD10029FE5B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E7273137DB2C4EC589343046 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 99EA40B1300CBDD10029FE5B /* Products */;
 			projectDirPath = "";
@@ -192,7 +205,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tditto -x -k \"$epub\" \"$book_dir\"\ndone\n";
+			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/。\n# 无效/损坏的 EPUB（如下载失败的 XML 错误页）会被跳过并打印警告，避免构建失败。\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tif ! ditto -x -k \"$epub\" \"$book_dir\"; then\n\t\techo \"warning: skipping invalid or corrupt EPUB: $epub\"\n\t\trm -rf \"$book_dir\" || true\n\t\tcontinue\n\tfi\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -474,6 +487,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E7273137DB2C4EC589343046 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		18C2FFD4FAB242D2B2C884EB /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E7273137DB2C4EC589343046 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 99EA40A8300CBDD10029FE5B /* Project object */;
 }

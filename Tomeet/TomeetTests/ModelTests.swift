@@ -29,12 +29,16 @@ struct ModelTests {
         #expect(book.collection == nil)
         #expect(book.sourceFileName == nil)
         #expect(book.currentLocation == nil)
+        #expect(book.themes.isEmpty)
+        #expect(book.catalogID == nil)
     }
 
     @Test func newFieldsDefaultToNil() {
         let book = Book(title: "T", author: "A", format: .epub)
         #expect(book.sourceFileName == nil)
         #expect(book.currentLocation == nil)
+        #expect(book.themes.isEmpty)
+        #expect(book.catalogID == nil)
     }
 
     @Test func readerFieldsPersistRoundTrip() throws {
@@ -43,30 +47,23 @@ struct ModelTests {
         let book = Book(title: "T", author: "A", format: .epub)
         book.sourceFileName = "george-macdonald_if-i-had-a-father"
         book.currentLocation = "3:4821"
+        book.themes = ["know-yourself", "freedom-and-responsibility"]
+        book.catalogID = "test-book"
         context.insert(book)
         try context.save()
         let fetch = FetchDescriptor<Book>()
         let fetched = try #require(try context.fetch(fetch).first)
         #expect(fetched.sourceFileName == "george-macdonald_if-i-had-a-father")
         #expect(fetched.currentLocation == "3:4821")
-    }
-
-    @Test func readingGoalPersists() throws {
-        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
-        let context = container.mainContext
-        context.insert(ReadingGoal(dailyGoalMinutes: 5, todayReadingSeconds: 71))
-        try context.save()
-
-        let goals = try context.fetch(FetchDescriptor<ReadingGoal>())
-        #expect(goals.count == 1)
-        #expect(goals[0].dailyGoalMinutes == 5)
-        #expect(goals[0].todayReadingSeconds == 71)
+        #expect(fetched.themes == ["know-yourself", "freedom-and-responsibility"])
+        #expect(fetched.catalogID == "test-book")
     }
 
     @Test func formatLabels() {
         #expect(BookFormat.epub.label == "EPUB")
         #expect(BookFormat.pdf.label == "PDF")
+        #expect(BookFormat.mobi.label == "MOBI")
         #expect(BookFormat.audiobook.label == "Audiobook")
-        #expect(BookFormat.allCases.count == 3)
+        #expect(BookFormat.allCases.count == 4)
     }
 }

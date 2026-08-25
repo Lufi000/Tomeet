@@ -13,6 +13,21 @@ final class ReaderSettings {
     /// 行距，默认 8。
     var lineSpacing: Double
 
+    /// 段间距，默认 12。
+    var paragraphSpacing: Double = 12
+
+    /// 首行缩进（em），默认 2.0。
+    var firstLineIndent: Double = 2.0
+
+    /// 行高倍数，默认 1.55。
+    var lineHeightMultiple: Double = 1.55
+
+    /// 水平边距，默认 28。
+    var horizontalMargin: Double = 28
+
+    /// 垂直边距，默认 36。
+    var verticalMargin: Double = 36
+
     /// 亮度 0...1；0.5 为默认值。
     var brightness: Double
 
@@ -23,12 +38,22 @@ final class ReaderSettings {
         theme: ReaderTheme = .original,
         fontSizeOffset: Double = 0,
         lineSpacing: Double = 8,
+        paragraphSpacing: Double = 12,
+        firstLineIndent: Double = 2.0,
+        lineHeightMultiple: Double = 1.55,
+        horizontalMargin: Double = 28,
+        verticalMargin: Double = 36,
         brightness: Double = 0.5,
         hasCustomBrightness: Bool = false
     ) {
         self.themeRawValue = theme.rawValue
         self.fontSizeOffset = fontSizeOffset
         self.lineSpacing = lineSpacing
+        self.paragraphSpacing = paragraphSpacing
+        self.firstLineIndent = firstLineIndent
+        self.lineHeightMultiple = lineHeightMultiple
+        self.horizontalMargin = horizontalMargin
+        self.verticalMargin = verticalMargin
         self.brightness = brightness
         self.hasCustomBrightness = hasCustomBrightness
     }

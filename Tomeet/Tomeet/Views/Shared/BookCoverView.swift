@@ -1,8 +1,15 @@
 import SwiftUI
 
 /// 封面：2:3 比例、小圆角；无封面图时占位图标（mvp.md §3.2 / §8.2）。
+///
+/// 加载优先级：
+/// 1. `book.coverImageName` 指定的 asset-catalog 图片（保留用户导入/自定义书籍）。
+/// 2. EPUB 内嵌封面图片（从解压后的 EPUB 目录读取）。
+/// 3. 系统 `book.closed` 占位图标。
 struct BookCoverView: View {
     let book: Book
+
+    @State private var coverImage: UIImage?
 
     var body: some View {
         Color.clear
@@ -10,6 +17,10 @@ struct BookCoverView: View {
             .overlay {
                 if let name = book.coverImageName {
                     Image(name)
+                        .resizable()
+                        .scaledToFill()
+                } else if let coverImage {
+                    Image(uiImage: coverImage)
                         .resizable()
                         .scaledToFill()
                 } else {
@@ -26,5 +37,24 @@ struct BookCoverView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
             }
+            .task {
+                await loadEmbeddedCover()
+            }
+    }
+
+    private func loadEmbeddedCover() async {
+        guard coverImage == nil, book.coverImageName == nil,
+              let directoryURL = BookSourceResolver.directoryURL(for: book) else {
+            return
+        }
+
+        do {
+            if let coverURL = try EPUBCoverExtractor.coverURL(in: directoryURL),
+               let image = UIImage(contentsOfFile: coverURL.path) {
+                coverImage = image
+            }
+        } catch {
+            // 封面读取失败时静默使用占位图标。
+        }
     }
 }

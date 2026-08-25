@@ -3,7 +3,6 @@ import SwiftData
 
 struct HomeView: View {
     @Query private var books: [Book]
-    @Query private var goals: [ReadingGoal]
     @State private var presentedReader: Book?
 
     private var recentlyOpened: [Book] {
@@ -55,54 +54,15 @@ struct HomeView: View {
                         }
                     }
 
-                    ReadingGoalsSection(goal: goals.first)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ReadingGoalsDetailPlaceholder(goal: goals.first)
-                    } label: {
-                        Image(systemName: "gauge.with.dots.needle.50percent")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        // 头像入口，M1 占位
-                    } label: {
-                        Image(systemName: "person.crop.circle.fill")
-                    }
-                }
-            }
             .fullScreenCover(item: $presentedReader) { book in
                 ReaderView(book: book)
             }
         }
-    }
-}
-
-/// Reading Goals 详情占位页（mvp.md §2.1 顶部入口）。
-struct ReadingGoalsDetailPlaceholder: View {
-    let goal: ReadingGoal?
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        List {
-            Section("Today") {
-                if let goal {
-                    LabeledContent("Time spent", value: goal.todayTimeText)
-                    LabeledContent("Goal", value: goal.goalText)
-                    LabeledContent("Streak", value: "\(goal.currentStreak) days")
-                } else {
-                    Text("No reading goal yet")
-                }
-            }
-        }
-        .navigationTitle("Reading Goals")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }

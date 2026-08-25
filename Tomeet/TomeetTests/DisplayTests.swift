@@ -54,17 +54,4 @@ struct DisplayTests {
         let later = book(addedDate: Date(timeIntervalSince1970: 20))
         #expect(Book.sortManual(earlier, later))
     }
-
-    @Test func clockFormatsAsMMSS() {
-        #expect(ReadingGoal.clockString(seconds: 71) == "1:11")
-        #expect(ReadingGoal.clockString(seconds: 0) == "0:00")
-        #expect(ReadingGoal.clockString(seconds: 3600) == "60:00")
-    }
-
-    @Test func readingGoalDisplay() {
-        let goal = ReadingGoal(dailyGoalMinutes: 5, todayReadingSeconds: 71)
-        #expect(goal.todayProgress > 0 && goal.todayProgress < 1)
-        #expect(goal.todayTimeText == "1:11")
-        #expect(goal.goalText == "of your 5-minute goal")
-    }
 }
