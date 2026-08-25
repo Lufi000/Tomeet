@@ -3,6 +3,7 @@ import SwiftUI
 struct BookGridCell: View {
     let book: Book
     let onOpen: () -> Void
+    let onDelete: () -> Void
 
     private var newBadge: some View {
         Text("NEW")
@@ -39,8 +40,11 @@ struct BookGridCell: View {
                         .foregroundStyle(.secondary)
                 }
                 Menu {
-                    Button("More", systemImage: "ellipsis") {}
-                        .disabled(true)
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.caption)

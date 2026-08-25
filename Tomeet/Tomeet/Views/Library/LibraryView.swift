@@ -31,9 +31,11 @@ struct LibraryView: View {
     @State private var sortMode: LibrarySortMode = .recent
     @State private var groupMode: LibraryGroupMode = .all
     @State private var presentedReader: Book?
+    @State private var bookToDelete: Book?
     @State private var showImporter = false
     @State private var isImporting = false
     @State private var importError: Error?
+    @State private var deleteError: Error?
     @State private var catalog: InitialLibraryCatalog?
 
     private var sortedBooks: [Book] {
@@ -130,6 +132,31 @@ struct LibraryView: View {
             } message: {
                 Text(importError?.localizedDescription ?? "Unknown error")
             }
+            .alert("Remove Failed", isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK") { deleteError = nil }
+            } message: {
+                Text(deleteError?.localizedDescription ?? "Unknown error")
+            }
+            .confirmationDialog("Remove Book", isPresented: Binding(
+                get: { bookToDelete != nil },
+                set: { if !$0 { bookToDelete = nil } }
+            ), titleVisibility: .visible) {
+                Button("Remove", role: .destructive) {
+                    if let book = bookToDelete {
+                        deleteBook(book)
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    bookToDelete = nil
+                }
+            } message: {
+                if let book = bookToDelete {
+                    Text("“\(book.title)” will be removed from your library.")
+                }
+            }
             .toolbarBackground(.visible, for: .navigationBar)
             .task {
                 catalog = try? InitialLibraryLoader.load()
@@ -182,6 +209,8 @@ struct LibraryView: View {
                             ForEach(section.books) { book in
                                 BookGridCell(book: book) {
                                     presentedReader = book
+                                } onDelete: {
+                                    bookToDelete = book
                                 }
                             }
                         }
@@ -219,6 +248,8 @@ struct LibraryView: View {
                 ForEach(bookList) { book in
                     BookGridCell(book: book) {
                         presentedReader = book
+                    } onDelete: {
+                        bookToDelete = book
                     }
                 }
             }
@@ -245,8 +276,24 @@ struct LibraryView: View {
                 }
             }
             .buttonStyle(.plain)
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    deleteBook(book)
+                } label: {
+                    Label("Remove", systemImage: "trash")
+                }
+            }
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
+    }
+
+    private func deleteBook(_ book: Book) {
+        do {
+            try BookDeletionService.delete(book: book, modelContext: modelContext)
+        } catch {
+            deleteError = error
+        }
+        bookToDelete = nil
     }
 }
