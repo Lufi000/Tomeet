@@ -15,6 +15,7 @@ enum SeedData {
             book.sourceFileName = initialBook.id
             book.themes = initialBook.themes
             book.catalogID = initialBook.id
+            book.audioFileName = initialBook.audio?.file
             book.isDownloaded = true
             return book
         }

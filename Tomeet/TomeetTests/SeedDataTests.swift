@@ -67,6 +67,20 @@ struct SeedDataTests {
         #expect(secondBookCount == firstBookCount)
     }
 
+    @Test func seedWritesAudioMetadataFromCatalog() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        try SeedData.seedIfNeeded(in: container.mainContext)
+        let books = try container.mainContext.fetch(FetchDescriptor<Book>())
+        let book = try #require(books.first)
+        #expect(book.audioFileName == "jiangshu.mp3")
+        #expect(book.hasAudio == true)
+
+        let catalog = try InitialLibraryLoader.load()
+        let initial = try #require(catalog.books.first)
+        #expect(initial.audio?.file == "jiangshu.mp3")
+        #expect(initial.audio?.durationMinutes == 50)
+    }
+
     // MARK: - Stale book cleanup
 
     @Test func staleCuratedBookWithMissingSourceIsRemoved() throws {

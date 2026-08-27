@@ -27,6 +27,13 @@ struct InitialBook: Codable, Identifiable {
     let sourceHint: SourceHint
     let qualitySignals: QualitySignals
     let discussionQuestions: [String]
+    let audio: InitialAudio?
+}
+
+/// 讲书音频元数据（bundle 内文件名 + 标注时长）。
+struct InitialAudio: Codable {
+    let file: String
+    let durationMinutes: Int
 }
 
 /// 下载来源提示。
