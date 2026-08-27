@@ -20,6 +20,9 @@ final class SystemAudioController: NowPlayingControlling {
             configureRemoteCommands()
             configured = true
         }
+        // clear() 会 deactivate session，因此每次 configure 都重新激活；
+        // 一次性守卫只保护 category、打断监听与远程命令注册（避免 addTarget 重复注册双发）
+        try? AVAudioSession.sharedInstance().setActive(true)
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [
             MPMediaItemPropertyTitle: title,
             MPMediaItemPropertyArtist: artist,
@@ -43,7 +46,7 @@ final class SystemAudioController: NowPlayingControlling {
     private func configureSession() {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .spokenAudio)
-        try? session.setActive(true)
+        // 激活不在此处：clear() 会 deactivate，激活逻辑放在 configure() 每次执行
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: session,
