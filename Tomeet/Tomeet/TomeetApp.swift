@@ -5,6 +5,7 @@ import Foundation
 @main
 struct TomeetApp: App {
     let modelContainer: ModelContainer
+    let audioPlayer: AudioPlayerService
 
     init() {
         do {
@@ -16,6 +17,12 @@ struct TomeetApp: App {
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
+        // 听书播放服务：AVPlayer + 系统音频胶水，经 environment 注入全局可用
+        audioPlayer = AudioPlayerService(
+            player: AVPlayerAudioPlayer(),
+            nowPlaying: SystemAudioController(),
+            modelContext: modelContainer.mainContext
+        )
     }
 
     var body: some Scene {
@@ -23,5 +30,6 @@ struct TomeetApp: App {
             RootView()
         }
         .modelContainer(modelContainer)
+        .environment(audioPlayer)
     }
 }
