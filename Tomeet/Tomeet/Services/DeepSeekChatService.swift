@@ -12,19 +12,19 @@ enum ChatServiceError: LocalizedError {
     }
 }
 
-/// DeepSeek 官方 API（OpenAI 兼容格式）的流式实现。
+/// 经自家 BFF 代理访问 DeepSeek（OpenAI 兼容格式）的流式实现。
 /// 流式解析思路复用自 CycleAdvisor 的 LLMService（URLSession.bytes + 逐行 SSE）。
 struct DeepSeekChatService: ChatService {
     var model = "deepseek-chat"
     var maxTokens = 1024
     var temperature = 0.7
-    var baseURL = URL(string: "https://api.deepseek.com/v1/chat/completions")!
+    var baseURL = URL(string: "https://tomeet-api.smallbeebee.com/v1/chat/completions")!
 
-    private let apiKey: String
+    private let appToken: String
     private let session: URLSession
 
-    init(apiKey: String = Secrets.deepSeekAPIKey, session: URLSession = .shared) {
-        self.apiKey = apiKey
+    init(appToken: String = Secrets.bffAppToken, session: URLSession = .shared) {
+        self.appToken = appToken
         self.session = session
     }
 
@@ -75,7 +75,7 @@ struct DeepSeekChatService: ChatService {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(appToken, forHTTPHeaderField: "X-App-Token")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
     }

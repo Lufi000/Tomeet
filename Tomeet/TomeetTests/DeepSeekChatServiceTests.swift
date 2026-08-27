@@ -56,13 +56,14 @@ struct DeepSeekChatServiceTests {
 
     // MARK: - Request building
 
-    @Test func buildRequestBodyUsesBearerAuthAndStream() throws {
-        let service = DeepSeekChatService(apiKey: "test-key")
+    @Test func buildRequestBodyUsesAppTokenHeaderAndStream() throws {
+        let service = DeepSeekChatService(appToken: "test-token")
         let messages = [ChatMessage(role: .user, text: "hi")]
         let request = try service.buildURLRequest(messages: messages, contextBook: nil)
 
-        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer test-key")
-        #expect(request.url?.absoluteString.contains("chat/completions") == true)
+        #expect(request.value(forHTTPHeaderField: "X-App-Token") == "test-token")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(request.url?.absoluteString == "https://tomeet-api.smallbeebee.com/v1/chat/completions")
 
         let body = try JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any]
         #expect(body?["stream"] as? Bool == true)
