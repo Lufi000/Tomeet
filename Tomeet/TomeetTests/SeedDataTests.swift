@@ -81,6 +81,21 @@ struct SeedDataTests {
         #expect(initial.audio?.durationMinutes == 50)
     }
 
+    // MARK: - Bundle 资源存在性（防漏打包）
+
+    @Test func catalogAudioFileExistsInBundle() throws {
+        let catalog = try InitialLibraryLoader.load()
+        for book in catalog.books {
+            guard let audio = book.audio else { continue }
+            let url = Bundle.main.url(
+                forResource: audio.file,
+                withExtension: nil,
+                subdirectory: "Books/\(book.id)"
+            )
+            #expect(url != nil, "catalog 登记的音频文件必须在 bundle 中: \(book.id)/\(audio.file)")
+        }
+    }
+
     // MARK: - Stale book cleanup
 
     @Test func staleCuratedBookWithMissingSourceIsRemoved() throws {
