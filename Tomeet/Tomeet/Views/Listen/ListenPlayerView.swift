@@ -124,7 +124,8 @@ struct ListenPlayerView: View {
     }
 
     private var rateLabel: String {
-        player.rate == 1.0 ? "1.0x" : String(format: "%.2gx", player.rate)
+        // %g：1.25→"1.25x"、2.0→"2x"、0.75→"0.75x"；1.0 特判为 "1.0x"（与预设标签一致）
+        player.rate == 1.0 ? "1.0x" : String(format: "%gx", player.rate)
     }
 
     private func formatTime(_ seconds: Double) -> String {

@@ -165,6 +165,8 @@ final class AudioPlayerService {
         player.onPlayToEnd = { [weak self] in
             guard let self else { return }
             self.state = .paused
+            // 锁屏 Now Playing 也要回到暂停样式（rate: 0），否则播完后锁屏仍显示播放键状态
+            self.nowPlaying.update(elapsed: self.duration, duration: self.duration, rate: 0)
             self.saveProgress()  // 进度≈时长，下次 load 走"已听完→从头"
         }
         nowPlaying.onPlay = { [weak self] in

@@ -53,9 +53,18 @@ final class SystemAudioController: NowPlayingControlling {
             queue: .main
         ) { [weak self] note in
             guard let typeValue = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt),
-                  AVAudioSession.InterruptionType(rawValue: typeValue) == .began
+                  let type = AVAudioSession.InterruptionType(rawValue: typeValue)
             else { return }
-            Task { @MainActor in self?.onPause?() }  // 打断开始 → 暂停；结束不自动恢复
+            switch type {
+            case .began:
+                Task { @MainActor in self?.onPause?() }  // 打断开始 → 暂停
+            case .ended:
+                // 打断结束后系统不保证自动重新激活 session，若不激活，用户再点播放会无声。
+                // 这里只复活 session，不自动恢复播放（spec：打断后需用户手动继续）。
+                try? AVAudioSession.sharedInstance().setActive(true)
+            @unknown default:
+                break
+            }
         }
     }
 
