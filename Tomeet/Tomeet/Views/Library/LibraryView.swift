@@ -27,6 +27,7 @@ enum LibraryGroupMode: String, CaseIterable, Identifiable {
 struct LibraryView: View {
     @Query private var books: [Book]
     @Environment(\.modelContext) private var modelContext
+    @Environment(AudioPlayerService.self) private var audioPlayer
     @State private var viewMode: LibraryViewMode = .grid
     @State private var sortMode: LibrarySortMode = .recent
     @State private var groupMode: LibraryGroupMode = .all
@@ -289,6 +290,8 @@ struct LibraryView: View {
     }
 
     private func deleteBook(_ book: Book) {
+        // 若正在播放本书的音频，先停止并卸载播放器，避免删书后仍在播放
+        audioPlayer.unloadIfCurrent(bookID: book.id)
         do {
             try BookDeletionService.delete(book: book, modelContext: modelContext)
         } catch {
