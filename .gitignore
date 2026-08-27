@@ -8,3 +8,6 @@ DerivedData/
 *.epub
 # API 密钥（本地私有，模板见 Secrets.template.swift）
 Secrets.swift
+
+# BFF env (secrets, template in bff/.env.example)
+bff/.env
