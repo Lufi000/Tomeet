@@ -6,3 +6,6 @@ DerivedData/
 
 # 图书文件
 *.epub
+*.mp3
+# macOS
+.DS_Store
