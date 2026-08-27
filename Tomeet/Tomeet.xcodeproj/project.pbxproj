@@ -209,7 +209,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../public_domain_books/books/",
+				"$(SRCROOT)/../books/public_domain_books/",
 			);
 			name = "Extract EPUB Books";
 			outputFileListPaths = (
@@ -218,7 +218,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/。\n# 无效/损坏的 EPUB（如下载失败的 XML 错误页）会被跳过并打印警告，避免构建失败。\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tif ! ditto -x -k \"$epub\" \"$book_dir\"; then\n\t\techo \"warning: skipping invalid or corrupt EPUB: $epub\"\n\t\trm -rf \"$book_dir\" || true\n\t\tcontinue\n\tfi\ndone\n";
+			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../books/public_domain_books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/。\n# 无效/损坏的 EPUB（如下载失败的 XML 错误页）会被跳过并打印警告，避免构建失败。\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tif ! ditto -x -k \"$epub\" \"$book_dir\"; then\n\t\techo \"warning: skipping invalid or corrupt EPUB: $epub\"\n\t\trm -rf \"$book_dir\" || true\n\t\tcontinue\n\tfi\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

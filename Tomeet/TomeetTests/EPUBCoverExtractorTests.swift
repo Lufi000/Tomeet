@@ -10,7 +10,7 @@ struct EPUBCoverExtractorTests {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
         let epubURL = repoRoot
-            .appendingPathComponent("public_domain_books/books/george-macdonald_if-i-had-a-father.epub")
+            .appendingPathComponent("books/public_domain_books/george-macdonald_if-i-had-a-father.epub")
         let bookDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("EPUBCoverExtractorTests-\(UUID().uuidString)")
 
