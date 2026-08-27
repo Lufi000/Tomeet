@@ -59,6 +59,20 @@ struct ModelTests {
         #expect(fetched.catalogID == "test-book")
     }
 
+    @Test func audioFieldsDefaultToNil() {
+        let book = Book(title: "T", author: "A", format: .epub)
+        #expect(book.audioFileName == nil)
+        #expect(book.listenPosition == nil)
+        #expect(book.audioAlignmentFileName == nil)
+        #expect(book.hasAudio == false)
+    }
+
+    @Test func hasAudioReflectsAudioFileName() {
+        let book = Book(title: "T", author: "A", format: .epub)
+        book.audioFileName = "jiangshu.mp3"
+        #expect(book.hasAudio == true)
+    }
+
     @Test func formatLabels() {
         #expect(BookFormat.epub.label == "EPUB")
         #expect(BookFormat.pdf.label == "PDF")

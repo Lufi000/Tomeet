@@ -17,6 +17,11 @@ extension Book {
         !isDownloaded
     }
 
+    /// 是否配了讲书音频（书架角标与阅读器入口只看它）。
+    var hasAudio: Bool {
+        audioFileName != nil
+    }
+
     static func sortTitle(_ a: Book, _ b: Book) -> Bool {
         a.title.localizedStandardCompare(b.title) == .orderedAscending
     }
