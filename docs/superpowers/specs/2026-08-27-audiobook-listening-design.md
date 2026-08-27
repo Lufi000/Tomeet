@@ -37,8 +37,10 @@ books/public_domain_books/*.jiangshu.md
         │  · 剥掉 markdown 标记/括号舞台提示
         │  · TTS 合成（默认 edge-tts zh-CN-YunxiNeural）
         ▼
-Tomeet/Tomeet/Books/<sourceFileName>/jiangshu.m4a
-（与 epub 同目录，进 bundle，Xcode 里加进 target）
+books/public_domain_books/<book-id>.jiangshu.mp3
+        │  Xcode 构建脚本复制（edge-tts 原生输出 mp3，AVPlayer 直接可播，避免引入 ffmpeg 转码）
+        ▼
+App bundle: Books/<sourceFileName>/jiangshu.mp3
 ```
 
 脚本行为：
@@ -87,7 +89,7 @@ var audioAlignmentFileName: String?
 `InitialLibrary.json` 的书条目加：
 
 ```json
-"audio": { "file": "jiangshu.m4a", "durationMinutes": 50 }
+"audio": { "file": "jiangshu.mp3", "durationMinutes": 50 }
 ```
 
 `InitialLibraryLoader` seed 时写入 `audioFileName`。UI 副标题"约 50 分钟"用 catalog 值；播放器真实时长以 `AVPlayerItem.duration` 为准。
