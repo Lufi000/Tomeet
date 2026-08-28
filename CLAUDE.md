@@ -27,6 +27,7 @@
 - **导航结构**：采用原生 `TabView` 底部 TabBar，包含 **Home** 与 **Library** 两个标签页。
   当前实现位于 `Tomeet/RootView.swift`；顶部不再使用分段选择器/分区导航。
 - **AI 定位**：阅读器核心体验是与书的 AI 对话，不只是翻页阅读。AI 对话功能是产品重心。
+- **AI 后端**：DeepSeek 经自家 BFF 代理（`https://tomeet-api.smallbeebee.com`，Go 源码在 `bff/`，部署在阿里云 ECS :8088，systemd `tomeet-bff`）。App 持 `X-App-Token`（`Secrets.swift`，gitignored）；DeepSeek key 只存服务器 `/opt/tomeet-bff/.env`。
 
 ## 第一个里程碑
 
