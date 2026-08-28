@@ -31,6 +31,24 @@ enum BookSourceResolver {
         directoryURL(for: book)?.appendingPathComponent("book.\(ext)")
     }
 
+    /// 返回 `Book` 讲书音频的 URL（含 App Support 与 Bundle 回退）；无音频配置时返回 nil。
+    static func audioURL(for book: Book) -> URL? {
+        guard let name = book.audioFileName else { return nil }
+
+        if let appSupportDir = directoryURL(for: book) {
+            let candidate = appSupportDir.appendingPathComponent(name)
+            if FileManager.default.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+        }
+
+        guard let sourceFileName = book.sourceFileName else { return nil }
+        // Bundle 回退不做存在性检查：音频文件可能随后续版本/构建才打进包内，
+        // 统一返回约定路径，由播放方处理加载失败。
+        return Bundle.main.bundleURL
+            .appendingPathComponent("Books/\(sourceFileName)/\(name)")
+    }
+
     /// 检查 `Book` 对应的书源目录/文件是否存在（含 App Support 与 Bundle 回退）。
     static func sourceExists(for book: Book) -> Bool {
         guard let name = book.sourceFileName else { return false }

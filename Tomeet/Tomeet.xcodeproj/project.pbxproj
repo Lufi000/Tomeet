@@ -27,9 +27,22 @@
 		AA0000000000000000000001 /* TomeetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TomeetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		19FC2B17303DFB7000C72A35 /* Exceptions for "Tomeet" folder in "Tomeet" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 99EA40AF300CBDD10029FE5B /* Tomeet */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		99EA40B2300CBDD10029FE5B /* Tomeet */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				19FC2B17303DFB7000C72A35 /* Exceptions for "Tomeet" folder in "Tomeet" target */,
+			);
 			path = Tomeet;
 			sourceTree = "<group>";
 		};
@@ -196,7 +209,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../public_domain_books/books/",
+				"$(SRCROOT)/../books/public_domain_books/",
 			);
 			name = "Extract EPUB Books";
 			outputFileListPaths = (
@@ -205,7 +218,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nset -euo pipefail\n\nSRC=\"$SRCROOT/../public_domain_books/books\"\nDEST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Books\"\n\nrm -rf \"$DEST\"\nmkdir -p \"$DEST\"\n\n# 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/。\n# 无效/损坏的 EPUB（如下载失败的 XML 错误页）会被跳过并打印警告，避免构建失败。\nfind \"$SRC\" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do\n\tname=\"$(basename \"${epub%.epub}\")\"\n\tbook_dir=\"$DEST/$name\"\n\tif ! ditto -x -k \"$epub\" \"$book_dir\"; then\n\t\techo \"warning: skipping invalid or corrupt EPUB: $epub\"\n\t\trm -rf \"$book_dir\" || true\n\t\tcontinue\n\tfi\ndone\n";
+			shellScript = "\"$SRCROOT/Scripts/copy-books.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -366,10 +379,10 @@
 				DEVELOPMENT_TEAM = 3488U99HV8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tomeet/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -379,12 +392,16 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ivy.Tomeet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -398,10 +415,10 @@
 				DEVELOPMENT_TEAM = 3488U99HV8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Tomeet/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -411,12 +428,16 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ivy.Tomeet;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

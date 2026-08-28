@@ -13,6 +13,7 @@ struct ReaderView: View {
     @State private var chromeHideTask: Task<Void, Never>?
     @State private var showContents = false
     @State private var showThemes = false
+    @State private var showListen = false
 
     init(book: Book) {
         self.book = book
@@ -41,6 +42,9 @@ struct ReaderView: View {
         }
         .sheet(isPresented: $showThemes) {
             ThemesSettingsSheet(settings: viewModel.settings ?? ReaderSettings())
+        }
+        .fullScreenCover(isPresented: $showListen) {
+            ListenPlayerView(book: book)
         }
         .onChange(of: showThemes) { _, isPresented in
             if !isPresented, let settings = viewModel.settings {
@@ -128,6 +132,15 @@ struct ReaderView: View {
                     .lineLimit(1)
             }
             Spacer()
+            if book.hasAudio {
+                Button {
+                    showListen = true
+                } label: {
+                    Image(systemName: "headphones")
+                        .font(.title3)
+                        .foregroundStyle(chromeColor)
+                }
+            }
             Button {
                 dismiss()
             } label: {

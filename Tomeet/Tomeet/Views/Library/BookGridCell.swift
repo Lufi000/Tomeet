@@ -15,6 +15,16 @@ struct BookGridCell: View {
             .padding(6)
     }
 
+    // 听书角标：该书附带音频时显示在封面右上角
+    private var audioBadge: some View {
+        Image(systemName: "headphones")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(5)
+            .background(Circle().fill(Color.black.opacity(0.65)))
+            .padding(6)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Button(action: onOpen) {
@@ -24,6 +34,11 @@ struct BookGridCell: View {
             .overlay(alignment: .topLeading) {
                 if book.showsNewBadge {
                     newBadge
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if book.hasAudio {
+                    audioBadge
                 }
             }
 

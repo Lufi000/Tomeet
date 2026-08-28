@@ -67,6 +67,44 @@ struct SeedDataTests {
         #expect(secondBookCount == firstBookCount)
     }
 
+    @Test func seedWritesAudioMetadataFromCatalog() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        try SeedData.seedIfNeeded(in: container.mainContext)
+        let books = try container.mainContext.fetch(FetchDescriptor<Book>())
+        let book = try #require(books.first)
+        #expect(book.audioFileName == "jiangshu.mp3")
+        #expect(book.hasAudio == true)
+
+        let catalog = try InitialLibraryLoader.load()
+        let initial = try #require(catalog.books.first)
+        #expect(initial.audio?.file == "jiangshu.mp3")
+        #expect(initial.audio?.durationMinutes == 61)
+    }
+
+    // MARK: - Bundle 资源存在性（防漏打包）
+
+    @Test func catalogAudioFileExistsInBundle() throws {
+        let catalog = try InitialLibraryLoader.load()
+        for book in catalog.books {
+            guard let audio = book.audio else { continue }
+            // 豁免逻辑：mp3/epub 被 gitignore，新机器/CI 首次 clone（未跑 TTS 管道）时
+            // 整个 Books/<book.id> 目录都不存在，此时跳过断言（无资产环境）；
+            // 一旦目录已打包进 bundle，音频缺失就必须断言失败（保留防漏打包的牙齿）。
+            let bookDir = Bundle.main.url(
+                forResource: book.id,
+                withExtension: nil,
+                subdirectory: "Books"
+            )
+            guard bookDir != nil else { continue }
+            let url = Bundle.main.url(
+                forResource: audio.file,
+                withExtension: nil,
+                subdirectory: "Books/\(book.id)"
+            )
+            #expect(url != nil, "catalog 登记的音频文件必须在 bundle 中: \(book.id)/\(audio.file)")
+        }
+    }
+
     // MARK: - Stale book cleanup
 
     @Test func staleCuratedBookWithMissingSourceIsRemoved() throws {

@@ -6,7 +6,9 @@ DerivedData/
 
 # 图书文件
 *.epub
-# API 密钥（本地私有，模板见 Secrets.template.swift）
+*.mp3
+
+# API 密钥（本地私有，模板见 Secrets.swift.template）
 Secrets.swift
 
 # BFF env (secrets, template in bff/.env.example)
