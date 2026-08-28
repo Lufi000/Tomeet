@@ -132,24 +132,27 @@ struct ReaderView: View {
                     .lineLimit(1)
             }
             Spacer()
-            if book.hasAudio {
-                Button {
-                    showListen = true
-                } label: {
-                    Image(systemName: "headphones")
-                        .font(.title3)
-                        .foregroundStyle(chromeColor)
-                }
-            }
-            Button {
+            circleButton(icon: "xmark") {
                 dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(chromeColor)
             }
         }
         .padding()
+    }
+
+    /// Apple Books 风格的原生圆形按钮：半透明圆形底 + SF Symbol。
+    private func circleButton(icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(themeForeground.opacity(0.9))
+                .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(themeForeground.opacity(0.12))
+                        .overlay(Circle().stroke(themeForeground.opacity(0.1), lineWidth: 0.5))
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private var sectionLabel: String {
@@ -208,7 +211,6 @@ struct ReaderView: View {
                 showThemes = true
             }
         }
-        .padding(.bottom, 12)
     }
 
     private func pillButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -232,27 +234,26 @@ struct ReaderView: View {
     }
 
     private var overlayButtons: some View {
-        VStack {
+        VStack(alignment: .trailing, spacing: 12) {
             Spacer()
-            HStack {
-                Spacer()
-                if showMenu {
-                    readerMenu
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
-                }
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        showMenu.toggle()
-                    }
+            if showMenu {
+                readerMenu
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+            }
+            if book.hasAudio {
+                circleButton(icon: "headphones") {
+                    showListen = true
                     scheduleChromeHide()
-                } label: {
-                    Image(systemName: "circle.grid.3x3.circle.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(themeForeground)
                 }
             }
-            .padding(20)
+            circleButton(icon: "list.bullet") {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showMenu.toggle()
+                }
+                scheduleChromeHide()
+            }
         }
+        .padding(20)
     }
 
     // MARK: - Chrome visibility
