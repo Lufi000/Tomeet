@@ -62,7 +62,9 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if groupMode == .all {
+                if books.isEmpty {
+                    emptyState
+                } else if groupMode == .all {
                     if viewMode == .grid {
                         gridContent(for: sortedBooks)
                     } else {
@@ -208,6 +210,47 @@ struct LibraryView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+    }
+
+    /// 书架为空：插画 + 引导文案 + 导入入口。
+    private var emptyState: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                libraryHeader
+                Spacer(minLength: 40)
+                Image("EmptyStateReading")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 240)
+                Text("No books yet")
+                    .font(.splendid(.title3, weight: .bold)).tracking(Theme.letterSpacing)
+                    .foregroundStyle(Theme.ink)
+                Text("Import a book and meet the mind inside.")
+                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .foregroundStyle(Theme.inkSecondary)
+                    .multilineTextAlignment(.center)
+                Button {
+                    showImporter = true
+                } label: {
+                    Text("Import Book")
+                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 10)
+                        .background(
+                            Capsule()
+                                .stroke(Theme.accent, lineWidth: 1.5)
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+                Spacer(minLength: 40)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 32)
+        }
+        .scrollContentBackground(.hidden)
     }
 
     private var themedContent: some View {

@@ -3,7 +3,14 @@ import SwiftData
 
 struct HomeView: View {
     @Query private var books: [Book]
+    @Query private var dailyReadings: [DailyReading]
     @State private var presentedReader: Book?
+
+    /// 今日（本地时区 0 点起）的时长记录；没有则 nil。
+    private var todayReading: DailyReading? {
+        let start = Calendar.current.startOfDay(for: Date())
+        return dailyReadings.first { $0.date == start }
+    }
 
     private var recentlyOpened: [Book] {
         books.filter { $0.lastOpenedDate != nil }
@@ -29,11 +36,15 @@ struct HomeView: View {
                         .foregroundStyle(Theme.ink)
                         .padding(.top, 16)
 
-                    if !continueBooks.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Continue")
-                                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
-                                .foregroundStyle(Theme.ink)
+                    todayStatsCard
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Continue")
+                            .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.ink)
+                        if continueBooks.isEmpty {
+                            emptyHint("Books you start reading will appear here.")
+                        } else {
                             ForEach(continueBooks) { book in
                                 ContinueCard(book: book) {
                                     presentedReader = book
@@ -42,11 +53,13 @@ struct HomeView: View {
                         }
                     }
 
-                    if !previousBooks.isEmpty {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Previous")
-                                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
-                                .foregroundStyle(Theme.ink)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Previous")
+                            .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.ink)
+                        if previousBooks.isEmpty {
+                            emptyHint("More books you've opened will appear here.")
+                        } else {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 14) {
                                     ForEach(previousBooks) { book in
@@ -82,5 +95,63 @@ struct HomeView: View {
                 ReaderView(book: book)
             }
         }
+    }
+
+    // MARK: - 今日时长
+
+    private var todayStatsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Today")
+                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
+            HStack(spacing: 0) {
+                statColumn(image: "TodayReading", title: "Reading", seconds: todayReading?.readSeconds ?? 0)
+                Rectangle()
+                    .fill(Theme.inkFaint)
+                    .frame(width: 1, height: 40)
+                statColumn(image: "TodayListening", title: "Listening", seconds: todayReading?.listenSeconds ?? 0)
+            }
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Theme.card)
+            )
+        }
+    }
+
+    private func statColumn(image: String, title: String, seconds: TimeInterval) -> some View {
+        VStack(spacing: 6) {
+            Image(image)
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 52)
+            Text(timeText(seconds))
+                .font(.splendid(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
+                .monospacedDigit()
+            Text(title)
+                .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.inkTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// 空区块的轻提示，让标题不显得悬空。
+    private func emptyHint(_ text: String) -> some View {
+        Text(text)
+            .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+            .foregroundStyle(Theme.inkTertiary)
+            .padding(.vertical, 4)
+    }
+
+    /// 满 1 小时显示 "Xh Y min"，否则显示 "N min"。
+    private func timeText(_ seconds: TimeInterval) -> String {
+        let totalMinutes = Int(seconds / 60)
+        guard totalMinutes > 0 else { return "0 min" }
+        if totalMinutes >= 60 {
+            return "\(totalMinutes / 60)h \(totalMinutes % 60) min"
+        }
+        return "\(totalMinutes) min"
     }
 }
