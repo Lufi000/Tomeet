@@ -6,6 +6,7 @@ struct AIAssistantView: View {
     @State private var viewModel = AIChatViewModel()
     @State private var input = ""
     @State private var showBookPicker = false
+    @FocusState private var inputFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -96,6 +97,8 @@ struct AIAssistantView: View {
                     proxy.scrollTo(lastID, anchor: .bottom)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture { inputFocused = false }
         }
     }
 
@@ -121,6 +124,7 @@ struct AIAssistantView: View {
         HStack(spacing: 10) {
             TextField(inputPlaceholder, text: $input, axis: .vertical)
                 .lineLimit(1...4)
+                .focused($inputFocused)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
@@ -154,7 +158,11 @@ struct AIAssistantView: View {
 
     private func send() {
         let text = input
+        // 持焦的 TextField 会完全忽略外部对 binding 的写入（内部缓冲直到失焦才同步），
+        // 必须先失焦再清空，随后立即恢复焦点让键盘不收起。
+        inputFocused = false
         input = ""
+        Task { @MainActor in inputFocused = true }
         Task { await viewModel.send(text) }
     }
 
