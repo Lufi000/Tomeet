@@ -40,6 +40,39 @@ enum SeedData {
 
         if bookCount == 0 {
             try seedBooks(in: modelContext)
+            return
+        }
+
+        // 存量数据回填：catalog 后来新增的字段（如讲书音频）同步到已种下的书。
+        try backfillFromCatalog(in: modelContext)
+    }
+
+    /// 按 catalogID（老数据回退 sourceFileName，两者都与 JSON 的 id 一致）对齐 catalog 里的
+    /// 音频信息，避免老用户升级后看不到听书入口。
+    private static func backfillFromCatalog(in modelContext: ModelContext) throws {
+        let catalog = try InitialLibraryLoader.load()
+        let audioByID = Dictionary(
+            catalog.books.map { ($0.id, $0.audio?.file) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        var changed = false
+        for book in try modelContext.fetch(FetchDescriptor<Book>()) {
+            let catalogID = book.catalogID ?? book.sourceFileName
+            guard let catalogID,
+                  let audioFile = audioByID[catalogID] ?? nil
+            else { continue }
+            if book.catalogID == nil {
+                book.catalogID = catalogID
+                changed = true
+            }
+            if book.audioFileName != audioFile {
+                book.audioFileName = audioFile
+                changed = true
+            }
+        }
+        if changed {
+            try modelContext.save()
         }
     }
 
