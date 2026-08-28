@@ -6,6 +6,7 @@ import Foundation
 struct TomeetApp: App {
     let modelContainer: ModelContainer
     let audioPlayer: AudioPlayerService
+    let readingTracker: ReadingTimeTracker
 
     init() {
         do {
@@ -17,10 +18,12 @@ struct TomeetApp: App {
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
+        readingTracker = ReadingTimeTracker()
         // 听书播放服务：AVPlayer + 系统音频胶水，经 environment 注入全局可用
         audioPlayer = AudioPlayerService(
             player: AVPlayerAudioPlayer(),
             nowPlaying: SystemAudioController(),
+            readingTracker: readingTracker,
             modelContext: modelContainer.mainContext
         )
     }
@@ -31,5 +34,6 @@ struct TomeetApp: App {
         }
         .modelContainer(modelContainer)
         .environment(audioPlayer)
+        .environment(readingTracker)
     }
 }

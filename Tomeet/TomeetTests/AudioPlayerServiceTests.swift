@@ -43,13 +43,21 @@ struct AudioPlayerServiceTests {
     // ModelContext 不持有其 ModelContainer；局部 container 释放后 insert 会崩溃，这里保持强引用。
     private static var retainedContainers: [ModelContainer] = []
 
-    private func makeService(duration: Double = 3000) throws -> (AudioPlayerService, FakeAudioPlayer, FakeNowPlaying, ModelContext) {
+    private func makeService(
+        duration: Double = 3000,
+        readingTracker: ReadingTimeTracker? = nil
+    ) throws -> (AudioPlayerService, FakeAudioPlayer, FakeNowPlaying, ModelContext) {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         Self.retainedContainers.append(container)
         let player = FakeAudioPlayer()
         player.fakeDuration = duration
         let nowPlaying = FakeNowPlaying()
-        let service = AudioPlayerService(player: player, nowPlaying: nowPlaying, modelContext: container.mainContext)
+        let service = AudioPlayerService(
+            player: player,
+            nowPlaying: nowPlaying,
+            readingTracker: readingTracker ?? ReadingTimeTracker(),
+            modelContext: container.mainContext
+        )
         return (service, player, nowPlaying, container.mainContext)
     }
 
@@ -166,5 +174,81 @@ struct AudioPlayerServiceTests {
         #expect(service.state == .playing)
         service.unloadIfCurrent(bookID: book.id)
         #expect(service.state == .idle)
+    }
+
+    // MARK: - 迷你播放条可见性
+
+    @Test func nowPlayingBarVisibleWhilePlayingOrPaused() async throws {
+        let (service, _, _, context) = try makeService()
+        #expect(service.isNowPlayingBarVisible == false)  // idle 隐藏
+        let book = makeBook(in: context)
+        await service.load(book: book)
+        #expect(service.isNowPlayingBarVisible == true)   // 播放中显示
+        service.togglePlayPause()
+        #expect(service.isNowPlayingBarVisible == true)   // 暂停也保留
+        service.unload()
+        #expect(service.isNowPlayingBarVisible == false)  // 关闭后隐藏
+    }
+
+    @Test func nowPlayingBarHiddenWhenLoadFails() async throws {
+        let (service, _, _, context) = try makeService()
+        let book = Book(title: "T", author: "A", format: .epub)  // 无音频文件 → failed
+        context.insert(book)
+        await service.load(book: book)
+        #expect(service.state == .failed("音频文件缺失"))
+        #expect(service.isNowPlayingBarVisible == false)
+    }
+
+    // MARK: - 听书时长统计（跟随播放状态，不再依赖播放器界面生命周期）
+
+    @Test func listeningTimeAccumulatesOnlyWhilePlaying() async throws {
+        var now = Date()
+        let tracker = ReadingTimeTracker { now }
+        let (service, _, _, context) = try makeService(readingTracker: tracker)
+        let book = makeBook(in: context)
+        await service.load(book: book)
+
+        now.addTimeInterval(65)
+        #expect(tracker.pending.listenSeconds == 65)  // 播放中累计
+
+        service.togglePlayPause()  // 暂停
+        let paused = tracker.pending.listenSeconds
+        now.addTimeInterval(30)
+        #expect(tracker.pending.listenSeconds == paused)  // 暂停期间冻结
+
+        service.togglePlayPause()  // 继续播
+        now.addTimeInterval(10)
+        #expect(tracker.pending.listenSeconds == paused + 10)
+    }
+
+    @Test func pauseFlushesListeningTimeToDailyReading() async throws {
+        var now = Date()
+        let tracker = ReadingTimeTracker { now }
+        let (service, _, _, context) = try makeService(readingTracker: tracker)
+        let book = makeBook(in: context)
+        await service.load(book: book)
+        now.addTimeInterval(30)
+        service.togglePlayPause()  // 暂停 → 同步落库
+
+        let readings = try context.fetch(FetchDescriptor<DailyReading>())
+        #expect(readings.count == 1)
+        #expect(readings[0].listenSeconds == 30)
+        #expect(readings[0].readSeconds == 0)
+    }
+
+    @Test func unloadStopsListeningTrackingAndClearsPending() async throws {
+        var now = Date()
+        let tracker = ReadingTimeTracker { now }
+        let (service, _, _, context) = try makeService(readingTracker: tracker)
+        let book = makeBook(in: context)
+        await service.load(book: book)
+        now.addTimeInterval(20)
+        service.unload()  // 停止 → flush + reset
+
+        #expect(tracker.pending == .zero)  // 已落库清零
+        now.addTimeInterval(20)
+        #expect(tracker.pending == .zero)  // 之后不再累计
+        let readings = try context.fetch(FetchDescriptor<DailyReading>())
+        #expect(readings.first?.listenSeconds == 20)
     }
 }

@@ -5,9 +5,10 @@ import Testing
 
 @MainActor
 struct DailyReadingTests {
-    private func makeContext() throws -> ModelContext {
-        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
-        return container.mainContext
+    /// 注意：ModelContainer 必须全程存活——它被释放后 mainContext 会失效
+    /// （fetch 返回空/写入丢失），所以每个测试自己持有 container。
+    private func makeContainer() throws -> ModelContainer {
+        try ModelContainerFactory.make(isStoredInMemoryOnly: true)
     }
 
     private func allRecords(in context: ModelContext) throws -> [DailyReading] {
@@ -15,7 +16,8 @@ struct DailyReadingTests {
     }
 
     @Test func addCreatesRecordNormalizedToStartOfDay() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let noon = Calendar.current.startOfDay(for: Date()).addingTimeInterval(12 * 3600)
 
         try DailyReading.add(readSeconds: 60, listenSeconds: 30, on: noon, to: context)
@@ -28,7 +30,8 @@ struct DailyReadingTests {
     }
 
     @Test func addAccumulatesOntoSameDay() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let day = Calendar.current.startOfDay(for: Date())
 
         try DailyReading.add(readSeconds: 60, listenSeconds: 30, on: day, to: context)
@@ -41,7 +44,8 @@ struct DailyReadingTests {
     }
 
     @Test func addCreatesSeparateRecordsForDifferentDays() throws {
-        let context = try makeContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let day1 = Calendar.current.startOfDay(for: Date())
         let day2 = day1.addingTimeInterval(86400)
 
@@ -52,23 +56,5 @@ struct DailyReadingTests {
         #expect(records.count == 2)
         #expect(records[0].readSeconds == 60)
         #expect(records[1].listenSeconds == 45)
-    }
-}
-
-// 临时探针，定位后删除
-@MainActor
-struct DailyReadingProbe {
-    @Test func probe() throws {
-        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
-        let context = container.mainContext
-        let d = DailyReading(date: Date(), readSeconds: 1, listenSeconds: 2)
-        context.insert(d)
-        try context.save()
-        let all = try context.fetch(FetchDescriptor<DailyReading>())
-        print("PROBE insert+fetch count =", all.count)
-        let day = Calendar.current.startOfDay(for: Date())
-        let descriptor = FetchDescriptor<DailyReading>(predicate: #Predicate { $0.date == day })
-        let match = try context.fetch(descriptor)
-        print("PROBE predicate count =", match.count)
     }
 }

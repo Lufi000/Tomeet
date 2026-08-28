@@ -1,6 +1,8 @@
+import SwiftData
 import SwiftUI
 
 /// 全屏听书播放器：封面 + 进度 + 控制区。风格沿用阅读器主题语义。
+/// 听书时长统计在 AudioPlayerService 里按播放状态计，这里只管进度写回。
 struct ListenPlayerView: View {
     let book: Book
     @Environment(AudioPlayerService.self) private var player

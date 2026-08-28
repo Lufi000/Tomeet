@@ -21,7 +21,7 @@ struct HomeView: View {
         Array(recentlyOpened.prefix(3))
     }
 
-    /// Previous 书架排除 Continue 已展示的前 3 本，避免同一本书重复出现。
+    /// Continue 里前 3 本之后的书，以封面书架形式接在大卡片下方。
     private var previousBooks: [Book] {
         Array(recentlyOpened.dropFirst(continueBooks.count))
     }
@@ -43,39 +43,31 @@ struct HomeView: View {
                             .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
                             .foregroundStyle(Theme.ink)
                         if continueBooks.isEmpty {
-                            emptyHint("Books you start reading will appear here.")
+                            continueEmptyCard
                         } else {
                             ForEach(continueBooks) { book in
                                 ContinueCard(book: book) {
                                     presentedReader = book
                                 }
                             }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Previous")
-                            .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
-                            .foregroundStyle(Theme.ink)
-                        if previousBooks.isEmpty {
-                            emptyHint("More books you've opened will appear here.")
-                        } else {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 14) {
-                                    ForEach(previousBooks) { book in
-                                        Button {
-                                            presentedReader = book
-                                        } label: {
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                BookCoverView(book: book).frame(width: 100)
-                                                Text(book.title)
-                                                    .font(.splendid(.caption)).tracking(Theme.letterSpacing)
-                                                    .lineLimit(1)
-                                                    .foregroundStyle(Theme.ink)
+                            if !previousBooks.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 14) {
+                                        ForEach(previousBooks) { book in
+                                            Button {
+                                                presentedReader = book
+                                            } label: {
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    BookCoverView(book: book).frame(width: 100)
+                                                    Text(book.title)
+                                                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                                                        .lineLimit(1)
+                                                        .foregroundStyle(Theme.ink)
+                                                }
+                                                .frame(width: 100)
                                             }
-                                            .frame(width: 100)
+                                            .buttonStyle(.plain)
                                         }
-                                        .buttonStyle(.plain)
                                     }
                                 }
                             }
@@ -137,12 +129,24 @@ struct HomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// 空区块的轻提示，让标题不显得悬空。
-    private func emptyHint(_ text: String) -> some View {
-        Text(text)
-            .font(.splendid(.caption)).tracking(Theme.letterSpacing)
-            .foregroundStyle(Theme.inkTertiary)
-            .padding(.vertical, 4)
+    /// Continue 空状态：刺猬插画 + 提示文案。
+    private var continueEmptyCard: some View {
+        VStack(spacing: 10) {
+            Image("EmptyStateContinue")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 110)
+            Text("Books you start reading will appear here.")
+                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.inkTertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Theme.card)
+        )
     }
 
     /// 满 1 小时显示 "Xh Y min"，否则显示 "N min"。

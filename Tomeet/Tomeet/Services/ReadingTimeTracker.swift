@@ -23,6 +23,7 @@ struct ReadingTimeTotals: Equatable {
 /// 阅读时长计时器：begin/end 配对累计，flush 后 reset 清零。
 /// 经 environment 全局共享，ReaderView / ListenPlayerView 各管一个通道。
 @MainActor
+@Observable
 final class ReadingTimeTracker {
     private let now: () -> Date
     private var accumulated = ReadingTimeTotals.zero

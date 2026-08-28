@@ -45,6 +45,8 @@ struct ReaderHostView: UIViewControllerRepresentable {
         private var pages: [Int: UIViewController] = [:]
         private var shownGlobalIndex: Int?
         private var appliedTheme: ReaderTheme?
+        /// 上次排版会话的标识；换边距/字号/旋转会重建 session，此时必须清掉旧页缓存。
+        private var cachedSessionID: ObjectIdentifier?
 
         init(viewModel: ReaderViewModel, onToggleChrome: (() -> Void)? = nil) {
             self.viewModel = viewModel
@@ -61,6 +63,15 @@ struct ReaderHostView: UIViewControllerRepresentable {
         }
 
         func reconcile(_ pageViewController: UIPageViewController) {
+            if let session = viewModel.session {
+                let id = ObjectIdentifier(session)
+                if id != cachedSessionID {
+                    cachedSessionID = id
+                    pages.removeAll()
+                    shownGlobalIndex = nil
+                    appliedTheme = nil
+                }
+            }
             guard viewModel.phase == .ready else { return }
             let target = viewModel.currentGlobalIndex
             guard target >= 0, target < viewModel.totalPages else { return }
@@ -89,7 +100,9 @@ struct ReaderHostView: UIViewControllerRepresentable {
             if let cached = pages[index] { return cached }
             guard let text = viewModel.session?.pageMap.textPage(globalIndex: index) else { return nil }
             let theme = viewModel.settings?.theme ?? .original
-            let pageVC = ReaderPageVC(theme: theme)
+            let horizontalInset = CGFloat(viewModel.settings?.horizontalMargin ?? 28)
+            let verticalInset = CGFloat(viewModel.settings?.verticalMargin ?? 36)
+            let pageVC = ReaderPageVC(theme: theme, horizontalInset: horizontalInset, verticalInset: verticalInset)
             pageVC.configure(text: text)
             pages[index] = pageVC
             return pageVC
@@ -182,18 +195,26 @@ struct ReaderHostView: UIViewControllerRepresentable {
     // MARK: - Page VC
 
     /// 单页：禁选禁滚动的 UITextView，只承载排版好的 attributed text。
+    /// 分页时正文宽度 = 屏宽 - 2*horizontalInset（ChapterPager），渲染时再用
+    /// textContainerInset 留出同宽边距，文字块恰好居中且不换行错位。
     @MainActor
     final class ReaderPageVC: UIViewController {
         private let textView = UITextView()
         private let theme: ReaderTheme
+        private let horizontalInset: CGFloat
+        private let verticalInset: CGFloat
 
-        init(theme: ReaderTheme) {
+        init(theme: ReaderTheme, horizontalInset: CGFloat = 28, verticalInset: CGFloat = 36) {
             self.theme = theme
+            self.horizontalInset = horizontalInset
+            self.verticalInset = verticalInset
             super.init(nibName: nil, bundle: nil)
         }
 
         required init?(coder: NSCoder) {
             self.theme = .original
+            self.horizontalInset = 28
+            self.verticalInset = 36
             super.init(coder: coder)
         }
 
@@ -203,7 +224,12 @@ struct ReaderHostView: UIViewControllerRepresentable {
             textView.isScrollEnabled = false
             textView.backgroundColor = UIColor(theme.backgroundColor)
             // 文字颜色由 NSAttributedString 携带的主题色/强调色控制。
-            textView.textContainerInset = .zero
+            textView.textContainerInset = UIEdgeInsets(
+                top: verticalInset,
+                left: horizontalInset,
+                bottom: verticalInset,
+                right: horizontalInset
+            )
             textView.textContainer.lineFragmentPadding = 0
             view = textView
         }

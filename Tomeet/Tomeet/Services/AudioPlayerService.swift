@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import os
 
-/// 听书播放服务：状态机 + 进度写回。App 内单例，经 environment 注入。
+/// 听书播放服务：状态机 + 进度写回 + 听书时长统计。App 内单例，经 environment 注入。
 /// 不知道"讲书稿"的存在——只认一个音频 URL + 展示元数据。
 @MainActor
 @Observable
@@ -16,21 +16,33 @@ final class AudioPlayerService {
     private(set) var currentTime: Double = 0
     private(set) var duration: Double = 0
     private(set) var rate: Float = 1.0
+    /// 当前加载的书（播放/暂停中可见），迷你播放条与重开全屏播放器用。
+    private(set) var currentBook: Book?
 
     static let ratePresets: [Float] = [1.0, 1.25, 1.5, 2.0, 0.75]
 
     private let player: AudioPlaying
     private let nowPlaying: NowPlayingControlling
+    private let readingTracker: ReadingTimeTracker
     private let modelContext: ModelContext
-    private var currentBook: Book?
     private var saveDebounce: Task<Void, Never>?
+    private var listeningFlushTask: Task<Void, Never>?
     private let logger = Logger(subsystem: "com.tomeet.audio", category: "player")
 
-    init(player: AudioPlaying, nowPlaying: NowPlayingControlling, modelContext: ModelContext) {
+    init(player: AudioPlaying, nowPlaying: NowPlayingControlling, readingTracker: ReadingTimeTracker, modelContext: ModelContext) {
         self.player = player
         self.nowPlaying = nowPlaying
+        self.readingTracker = readingTracker
         self.modelContext = modelContext
         wireCallbacks()
+    }
+
+    /// 迷你播放条是否显示：播放/暂停/加载中都显示，关闭或失败则隐藏。
+    var isNowPlayingBarVisible: Bool {
+        switch state {
+        case .loading, .playing, .paused: return true
+        case .idle, .failed: return false
+        }
     }
 
     func load(book: Book) async {
@@ -45,12 +57,12 @@ final class AudioPlayerService {
         currentBookID = nil
 
         guard let url = BookSourceResolver.audioURL(for: book) else {
-            state = .failed("音频文件缺失")
+            setState(.failed("音频文件缺失"))
             logger.error("audio file missing for book \(book.title)")
             return
         }
 
-        state = .loading
+        setState(.loading)
         do {
             let d = try await player.load(url: url)
             duration = d
@@ -63,10 +75,10 @@ final class AudioPlayerService {
             nowPlaying.update(elapsed: start, duration: d, rate: rate)
             player.rate = rate
             player.play()
-            state = .playing
+            setState(.playing)
             logger.info("loaded \(book.title) at \(start)s / \(d)s")
         } catch {
-            state = .failed("音频加载失败")
+            setState(.failed("音频加载失败"))
             logger.error("load failed for \(book.title): \(error.localizedDescription)")
         }
     }
@@ -75,12 +87,12 @@ final class AudioPlayerService {
         switch state {
         case .playing:
             player.pause()
-            state = .paused
+            setState(.paused)
             nowPlaying.update(elapsed: currentTime, duration: duration, rate: 0)
             saveProgress()
         case .paused:
             player.play()
-            state = .playing
+            setState(.playing)
             nowPlaying.update(elapsed: currentTime, duration: duration, rate: rate)
         default:
             break
@@ -119,7 +131,7 @@ final class AudioPlayerService {
         currentBookID = nil
         currentTime = 0
         duration = 0
-        state = .idle
+        setState(.idle)
     }
 
     /// 若正在播指定书则 unload；否则无操作（删书前调用）。
@@ -156,6 +168,54 @@ final class AudioPlayerService {
         }
     }
 
+    // MARK: - 状态迁移（听书时长统计挂在播放状态上，不依赖任何界面生命周期）
+
+    /// 唯一的状态写入口：进入播放开始计时，离开播放暂停计时并落库。
+    private func setState(_ newState: PlaybackState) {
+        state = newState
+        if newState == .playing {
+            readingTracker.begin(.listening)
+            startListeningFlushTimer()
+        } else {
+            readingTracker.end(.listening)
+            stopListeningFlushTimer()
+            flushListeningTime()
+        }
+    }
+
+    private func startListeningFlushTimer() {
+        listeningFlushTask?.cancel()
+        listeningFlushTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(10))
+                guard !Task.isCancelled else { return }
+                self?.flushListeningTime()
+            }
+        }
+    }
+
+    private func stopListeningFlushTimer() {
+        listeningFlushTask?.cancel()
+        listeningFlushTask = nil
+    }
+
+    /// 把累计的听书时长写入当日记录；失败则保留 pending，下个周期重试。
+    private func flushListeningTime() {
+        let totals = readingTracker.pending
+        guard totals != .zero else { return }
+        do {
+            try DailyReading.add(
+                readSeconds: totals.readSeconds,
+                listenSeconds: totals.listenSeconds,
+                on: Date(),
+                to: modelContext
+            )
+            readingTracker.reset()
+        } catch {
+            logger.error("failed to flush listening time: \(error.localizedDescription)")
+        }
+    }
+
     private func wireCallbacks() {
         player.onTimeUpdate = { [weak self] t in
             guard let self else { return }
@@ -164,7 +224,7 @@ final class AudioPlayerService {
         }
         player.onPlayToEnd = { [weak self] in
             guard let self else { return }
-            self.state = .paused
+            self.setState(.paused)
             // 锁屏 Now Playing 也要回到暂停样式（rate: 0），否则播完后锁屏仍显示播放键状态
             self.nowPlaying.update(elapsed: self.duration, duration: self.duration, rate: 0)
             self.saveProgress()  // 进度≈时长，下次 load 走"已听完→从头"
