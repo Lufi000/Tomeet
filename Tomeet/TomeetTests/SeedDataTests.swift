@@ -83,6 +83,48 @@ struct SeedDataTests {
 
     // MARK: - Bundle 资源存在性（防漏打包）
 
+    @Test func existingBookWithoutAudioIsBackfilledFromCatalog() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+
+        // 模拟老版本已种下的书：有 catalogID/sourceFileName，但还没有音频字段
+        let catalog = try InitialLibraryLoader.load()
+        let initial = try #require(catalog.books.first)
+        let legacy = Book(title: initial.title, author: initial.author, format: .epub)
+        legacy.sourceFileName = initial.id
+        legacy.catalogID = initial.id
+        context.insert(legacy)
+        try context.save()
+
+        try SeedData.seedIfNeeded(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.count == 1)
+        #expect(books.first?.audioFileName == initial.audio?.file)
+        #expect(books.first?.hasAudio == true)
+    }
+
+    @Test func legacyBookWithoutCatalogIDIsBackfilledViaSourceFileName() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+
+        // 更老的数据：有 sourceFileName 但 catalogID 还没引入（nil）
+        let catalog = try InitialLibraryLoader.load()
+        let initial = try #require(catalog.books.first)
+        let legacy = Book(title: initial.title, author: initial.author, format: .epub)
+        legacy.sourceFileName = initial.id
+        context.insert(legacy)
+        try context.save()
+
+        try SeedData.seedIfNeeded(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.count == 1)
+        #expect(books.first?.catalogID == initial.id)
+        #expect(books.first?.audioFileName == initial.audio?.file)
+        #expect(books.first?.hasAudio == true)
+    }
+
     @Test func catalogAudioFileExistsInBundle() throws {
         let catalog = try InitialLibraryLoader.load()
         for book in catalog.books {
