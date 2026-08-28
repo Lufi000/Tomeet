@@ -71,8 +71,6 @@ struct NowPlayingBar: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
     }
 
     private var progressFraction: Double {

@@ -4,6 +4,8 @@ struct RootView: View {
     @Environment(AudioPlayerService.self) private var audioPlayer
     @State private var selectedTab = 0
     @State private var showNowPlaying = false
+    /// TabBar 胶囊顶边距底部的距离（实测）；读到前按常见胶囊高度兜底
+    @State private var tabBarTopInset: CGFloat = 60
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -17,10 +19,19 @@ struct RootView: View {
                 .tabItem { tabLabel("AI", selectedImage: "TabAI", unselectedImage: "TabAIUnselected", tag: 2) }
                 .tag(2)
         }
-        // 听书迷你条：safeAreaInset 钉在 TabBar 上方（VStack 会把它压到屏幕最底端、TabBar 之下）
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            // DEBUG: 定位 inset 区域
-            Color.red.frame(height: 60)
+        // 听书迷你条：悬浮在 TabBar 上方。iOS 26 悬浮 TabBar 不吃 safeAreaInset
+        // （inset 内容会落到胶囊后面被盖住），只能 overlay + 实测 TabBar 帧定位。
+        .overlay(alignment: .bottom) {
+            if audioPlayer.isNowPlayingBarVisible {
+                NowPlayingBar {
+                    showNowPlaying = true
+                }
+                .padding(.bottom, tabBarTopInset + 8)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            // 零高占位：底边与 overlay 底对齐，作为 TabBar 帧的测量坐标系
+            TabBarTopInsetReader(inset: $tabBarTopInset)
+                .frame(height: 0)
         }
         .animation(.easeInOut(duration: 0.25), value: audioPlayer.isNowPlayingBarVisible)
         .fullScreenCover(isPresented: $showNowPlaying) {
