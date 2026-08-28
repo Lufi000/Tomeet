@@ -25,10 +25,10 @@ struct BookCoverView: View {
                         .scaledToFill()
                 } else {
                     ZStack {
-                        Color(.secondarySystemBackground)
+                        Theme.shell
                         Image(systemName: "book.closed")
                             .font(.title)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.inkTertiary)
                     }
                 }
             }
@@ -44,7 +44,7 @@ struct BookCoverView: View {
 
     private func loadEmbeddedCover() async {
         guard coverImage == nil, book.coverImageName == nil,
-              let directoryURL = BookSourceResolver.directoryURL(for: book) else {
+              let directoryURL = BookSourceResolver.existingDirectoryURL(for: book) else {
             return
         }
 

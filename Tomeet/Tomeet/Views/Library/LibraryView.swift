@@ -72,9 +72,10 @@ struct LibraryView: View {
                     themedContent
                 }
             }
-            .background(Color(.systemGray6)) // 页面默认深色系背景（§3.1）
-            .navigationTitle("Library")
-            .navigationBarTitleDisplayMode(.large)
+            .background(Theme.canvas)
+            // 系统大标题字体无法定制（iOS 26 不吃 UIKit appearance），标题自己画
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     libraryMenu
@@ -120,7 +121,7 @@ struct LibraryView: View {
                             VStack(spacing: 12) {
                                 ProgressView()
                                 Text("Importing...")
-                                    .font(.subheadline)
+                                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                             }
                         }
                 }
@@ -158,6 +159,7 @@ struct LibraryView: View {
                     Text("“\(book.title)” will be removed from your library.")
                 }
             }
+            .toolbarBackground(Theme.canvas, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .task {
                 catalog = try? InitialLibraryLoader.load()
@@ -198,9 +200,20 @@ struct LibraryView: View {
         }
     }
 
+    /// 页面顶部自定义大标题（字体用 Splendid 66）
+    private var libraryHeader: some View {
+        Text("Library")
+            .font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+    }
+
     private var themedContent: some View {
         ScrollView {
             LazyVStack(spacing: 24, pinnedViews: [.sectionHeaders]) {
+                libraryHeader
                 ForEach(booksByTheme, id: \.theme.id) { section in
                     Section {
                         LazyVGrid(
@@ -223,40 +236,45 @@ struct LibraryView: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        .scrollContentBackground(.hidden)
     }
 
     private func themeHeader(_ theme: InitialTheme) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(theme.name)
-                .font(.title2.bold())
-                .foregroundStyle(.primary)
+                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
             Text(theme.description)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
-        .background(Color(.systemGray6))
+        .background(Theme.canvas)
     }
 
     private func gridContent(for bookList: [Book]) -> some View {
         ScrollView {
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)],
-                spacing: 24
-            ) {
-                ForEach(bookList) { book in
-                    BookGridCell(book: book) {
-                        presentedReader = book
-                    } onDelete: {
-                        bookToDelete = book
+            LazyVStack(spacing: 24) {
+                libraryHeader
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)],
+                    spacing: 24
+                ) {
+                    ForEach(bookList) { book in
+                        BookGridCell(book: book) {
+                            presentedReader = book
+                        } onDelete: {
+                            bookToDelete = book
+                        }
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        .scrollContentBackground(.hidden)
     }
 
     private func listContent(for bookList: [Book]) -> some View {
@@ -267,12 +285,12 @@ struct LibraryView: View {
                 HStack(spacing: 12) {
                     BookCoverView(book: book).frame(width: 44)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(book.title).font(.body).lineLimit(1)
-                        Text(book.author).font(.caption).foregroundStyle(.secondary)
+                        Text(book.title).font(.splendid(.body)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink).lineLimit(1)
+                        Text(book.author).font(.splendid(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
                     }
                     Spacer()
                     if let progress = book.progressText {
-                        Text(progress).font(.caption).foregroundStyle(.secondary)
+                        Text(progress).font(.splendid(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
                     }
                 }
             }
@@ -287,6 +305,10 @@ struct LibraryView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            libraryHeader
+                .background(Theme.canvas)
+        }
     }
 
     private func deleteBook(_ book: Book) {

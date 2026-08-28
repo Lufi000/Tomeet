@@ -10,8 +10,10 @@ final class AIChatViewModel {
     var selectedBook: Book?
     var isResponding = false
 
-    init(chatService: any ChatService = DeepSeekChatService(), books: [Book] = []) {
-        self.chatService = chatService
+    init(chatService: (any ChatService)? = nil, books: [Book] = []) {
+        // 默认实参在调用点求值（非隔离上下文），DeepSeekChatService() 放这里会触发
+        // MainActor 隔离告警；改为可选参数，在 @MainActor 的 init 体内构造默认值。
+        self.chatService = chatService ?? DeepSeekChatService()
         // 默认选中最近在读的书（§AI Tab 设计：进入后自动带上当前阅读上下文）
         self.selectedBook = Self.mostRecentlyOpened(in: books)
     }

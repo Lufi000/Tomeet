@@ -6,10 +6,11 @@ import MediaPlayer
 /// 不可单测的部分集中在此；逻辑全在 AudioPlayerService。
 @MainActor
 final class SystemAudioController: NowPlayingControlling {
-    var onPlay: (() -> Void)?
-    var onPause: (() -> Void)?
-    var onSkip: ((Double) -> Void)?
-    var onSeek: ((Double) -> Void)?
+    // 远程控制/打断回调由系统在任意线程触发，存储本身不由 actor 保护。
+    nonisolated(unsafe) var onPlay: (() -> Void)?
+    nonisolated(unsafe) var onPause: (() -> Void)?
+    nonisolated(unsafe) var onSkip: ((Double) -> Void)?
+    nonisolated(unsafe) var onSeek: ((Double) -> Void)?
 
     private var interruptionObserver: NSObjectProtocol?
     private var configured = false
@@ -47,17 +48,20 @@ final class SystemAudioController: NowPlayingControlling {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .spokenAudio)
         // 激活不在此处：clear() 会 deactivate，激活逻辑放在 configure() 每次执行
+        // 先把回调取到局部 let：NotificationCenter 的 block 是 @Sendable，
+        // 直接 weak 捕获 var self 会在 Swift 6 报错。
+        let onPause = self.onPause
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: session,
             queue: .main
-        ) { [weak self] note in
+        ) { note in
             guard let typeValue = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt),
                   let type = AVAudioSession.InterruptionType(rawValue: typeValue)
             else { return }
             switch type {
             case .began:
-                Task { @MainActor in self?.onPause?() }  // 打断开始 → 暂停
+                Task { @MainActor in onPause?() }  // 打断开始 → 暂停
             case .ended:
                 // 打断结束后系统不保证自动重新激活 session，若不激活，用户再点播放会无声。
                 // 这里只复活 session，不自动恢复播放（spec：打断后需用户手动继续）。

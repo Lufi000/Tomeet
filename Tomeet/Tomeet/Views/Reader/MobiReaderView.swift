@@ -11,28 +11,32 @@ struct MobiReaderView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
+                HStack {
+                    Spacer()
+                    Button("Done") { dismiss() }
+                }
+
                 BookCoverView(book: book)
                     .frame(width: 140)
 
                 Text(book.title)
-                    .font(.title2.bold())
+                    .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
                     .multilineTextAlignment(.center)
 
                 Text(book.author)
-                    .font(.subheadline)
+                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                     .foregroundStyle(.secondary)
 
                 Text("MOBI reader is coming soon.")
+                    .font(.splendid(.body)).tracking(Theme.letterSpacing)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+
+                Spacer()
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .navigationTitle(book.title)
-            .navigationBarTitleDisplayMode(.inline)
+            .padding()
+            // 系统内联标题字体无法定制，Done 挪进页面顶部
+            .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
             book.lastOpenedDate = .now

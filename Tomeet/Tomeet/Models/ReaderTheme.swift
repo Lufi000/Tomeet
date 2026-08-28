@@ -30,7 +30,8 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .original: Color.black
         case .quiet: Color(hex: 0x1C1C1E)
-        case .paper: Color(hex: 0xF5F1E6)
+        // Paper 即全 App 统一米色画布（Theme.canvas）
+        case .paper: Color(hex: 0xF8EEE5)
         case .bold: Color.black
         case .calm: Color(hex: 0x2C2A24)
         case .focus: Color(hex: 0x2B2520)
@@ -38,12 +39,13 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// 阅读页文字色（SwiftUI）。
-    var textColor: Color {
+    /// 阅读页文字色（SwiftUI）。nonisolated：后台分页（ChapterPager）也要读。
+    nonisolated var textColor: Color {
         switch self {
         case .original: Color.white
         case .quiet: Color(hex: 0xF2F2F7)
-        case .paper: Color(hex: 0x3D352E)
+        // Paper 用全 App 正文墨棕（Theme.ink 的不透明基色）
+        case .paper: Color(hex: 0x413036)
         case .bold: Color(hex: 0xFFF8E7)
         case .calm: Color(hex: 0xE8E6D9)
         case .focus: Color(hex: 0xE5DDD4)
@@ -51,12 +53,13 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// 章节小标题/强调色（SwiftUI）。
-    var accentColor: Color {
+    /// 章节小标题/强调色（SwiftUI）。nonisolated：后台分页（ChapterPager）也要读。
+    nonisolated var accentColor: Color {
         switch self {
         case .original: Color(hex: 0x5EEAD4)
         case .quiet: Color(hex: 0x5EEAD4)
-        case .paper: Color(hex: 0x8B5E3C)
+        // Paper 用全 App 强调橄榄绿（Theme.accent）
+        case .paper: Color(hex: 0x6F8145)
         case .bold: Color(hex: 0xFFD700)
         case .calm: Color(hex: 0xA8D5BA)
         case .focus: Color(hex: 0xD4A373)
@@ -73,7 +76,7 @@ enum ReaderTheme: String, Codable, CaseIterable, Identifiable {
 // MARK: - Color helper
 
 private extension Color {
-    init(hex: UInt) {
+    nonisolated init(hex: UInt) {
         self.init(
             red: Double((hex >> 16) & 0xFF) / 255,
             green: Double((hex >> 8) & 0xFF) / 255,

@@ -49,19 +49,26 @@ enum BookSourceResolver {
             .appendingPathComponent("Books/\(sourceFileName)/\(name)")
     }
 
-    /// 检查 `Book` 对应的书源目录/文件是否存在（含 App Support 与 Bundle 回退）。
-    static func sourceExists(for book: Book) -> Bool {
-        guard let name = book.sourceFileName else { return false }
+    /// 返回 `Book` 已解压书源目录的真实位置（App Support 优先，Bundle 回退）；
+    /// 两处都不存在时返回 nil。封面等需要读取书源内容的场景使用此方法，
+    /// 不要用 `directoryURL(for:)`（它不做存在性检查，也不含 Bundle 回退）。
+    static func existingDirectoryURL(for book: Book) -> URL? {
+        guard let name = book.sourceFileName else { return nil }
 
         let appSupportDir = directoryURL(forSourceFileName: name)
         if FileManager.default.fileExists(atPath: appSupportDir.path) {
-            return true
+            return appSupportDir
         }
 
         return Bundle.main.url(
             forResource: name,
             withExtension: nil,
             subdirectory: "Books"
-        ) != nil
+        )
+    }
+
+    /// 检查 `Book` 对应的书源目录/文件是否存在（含 App Support 与 Bundle 回退）。
+    static func sourceExists(for book: Book) -> Bool {
+        existingDirectoryURL(for: book) != nil
     }
 }

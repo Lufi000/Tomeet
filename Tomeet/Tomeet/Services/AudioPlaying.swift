@@ -20,8 +20,9 @@ protocol AudioPlaying: AnyObject {
 @MainActor
 final class AVPlayerAudioPlayer: AudioPlaying {
     var rate: Float = 1.0
-    var onTimeUpdate: ((Double) -> Void)?
-    var onPlayToEnd: (() -> Void)?
+    // 回调可能被系统在主线程之外的派发队列触发，存储本身不由 actor 保护。
+    nonisolated(unsafe) var onTimeUpdate: ((Double) -> Void)?
+    nonisolated(unsafe) var onPlayToEnd: (() -> Void)?
 
     var currentTime: Double {
         guard let player else { return 0 }
@@ -50,14 +51,17 @@ final class AVPlayerAudioPlayer: AudioPlaying {
         ) { [weak self] time in
             let t = CMTimeGetSeconds(time)
             guard t.isFinite else { return }
-            Task { @MainActor in self?.onTimeUpdate?(t) }
+            // 先把回调取到局部 let，避免在并发闭包里捕获 var self（Swift 6 将报错）
+            let onTimeUpdate = self?.onTimeUpdate
+            Task { @MainActor in onTimeUpdate?(t) }
         }
         endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: item,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.onPlayToEnd?() }
+            let onPlayToEnd = self?.onPlayToEnd
+            Task { @MainActor in onPlayToEnd?() }
         }
         return seconds
     }

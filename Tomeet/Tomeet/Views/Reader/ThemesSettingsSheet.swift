@@ -14,27 +14,33 @@ struct ThemesSettingsSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    fontSizeSection
-                    brightnessSection
-                    themeGrid
-                    customizeButton
-                    if showAdvanced {
-                        advancedSection
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Themes & Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            VStack(spacing: 0) {
+                // 系统内联标题字体无法定制，标题与 Done 自己画
+                HStack {
+                    Text("Themes & Settings")
+                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                    Spacer()
                     Button("Done") { dismiss() }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                ScrollView {
+                    VStack(spacing: 24) {
+                        fontSizeSection
+                        brightnessSection
+                        themeGrid
+                        customizeButton
+                        if showAdvanced {
+                            advancedSection
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                    }
+                    .padding()
                 }
             }
             .background(Color(white: 0.15).ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
         }
         .onDisappear {
             try? modelContext.save()
@@ -86,7 +92,7 @@ struct ThemesSettingsSheet: View {
             try? modelContext.save()
         } label: {
             Text(isIncrease ? "A" : "A")
-                .font(.system(size: isIncrease ? 24 : 16, weight: .semibold))
+                .font(.splendid(isIncrease ? .title2 : .callout, weight: .semibold)).tracking(Theme.letterSpacing)
                 .foregroundStyle(.primary)
                 .frame(width: 44, height: 44)
         }
@@ -107,7 +113,7 @@ struct ThemesSettingsSheet: View {
                     set: { newValue in
                         settings.brightness = newValue
                         settings.hasCustomBrightness = true
-                        UIScreen.main.brightness = CGFloat(newValue)
+                        UIScreen.current?.brightness = CGFloat(newValue)
                         try? modelContext.save()
                     }
                 ),
@@ -154,7 +160,7 @@ struct ThemesSettingsSheet: View {
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(theme.textColor)
                 Text(theme.displayName)
-                    .font(.caption.weight(.medium))
+                    .font(.splendid(.caption, weight: .medium)).tracking(Theme.letterSpacing)
                     .foregroundStyle(theme.textColor.opacity(0.8))
             }
             .frame(maxWidth: .infinity, minHeight: 88)
@@ -181,7 +187,7 @@ struct ThemesSettingsSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: showAdvanced ? "chevron.up" : "gearshape")
                 Text(showAdvanced ? "Hide Details" : "Customize")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
             }
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)
@@ -261,10 +267,10 @@ struct ThemesSettingsSheet: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
                 Spacer()
                 Text(String(format: "%.2f", value.wrappedValue))
-                    .font(.caption.monospacedDigit())
+                    .font(.splendid(.caption).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
             Slider(value: value, in: range, step: step)
@@ -278,7 +284,7 @@ struct ThemesSettingsSheet: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
             Text(title)
-                .font(.subheadline.weight(.semibold))
+                .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
             Spacer()
             Stepper(
                 value: Binding(
@@ -292,7 +298,7 @@ struct ThemesSettingsSheet: View {
                 step: step
             ) {
                 Text(String(format: "%.1f em", value.wrappedValue))
-                    .font(.caption.monospacedDigit())
+                    .font(.splendid(.caption).monospacedDigit())
                     .foregroundStyle(.secondary)
             }
         }

@@ -35,7 +35,7 @@ final class ReaderSettings {
     var hasCustomBrightness: Bool
 
     init(
-        theme: ReaderTheme = .original,
+        theme: ReaderTheme = .paper,
         fontSizeOffset: Double = 0,
         lineSpacing: Double = 8,
         paragraphSpacing: Double = 12,
@@ -58,9 +58,9 @@ final class ReaderSettings {
         self.hasCustomBrightness = hasCustomBrightness
     }
 
-    /// 当前主题。若持久化值异常则回退到 `.original`。
+    /// 当前主题。若持久化值异常则回退到 `.paper`（全 App 米色主题）。
     var theme: ReaderTheme {
-        get { ReaderTheme(rawValue: themeRawValue) ?? .original }
+        get { ReaderTheme(rawValue: themeRawValue) ?? .paper }
         set { themeRawValue = newValue.rawValue }
     }
 
@@ -73,6 +73,12 @@ final class ReaderSettings {
     static func fetchOrCreate(in context: ModelContext) -> ReaderSettings {
         let descriptor = FetchDescriptor<ReaderSettings>()
         if let existing = try? context.fetch(descriptor).first {
+            // 一次性迁移：旧默认纯黑 Original → 全 App 米色 Paper。
+            // 区分不了"默认继承"还是"主动选择"，统一按产品决策收敛到 App 配色。
+            if existing.theme == .original {
+                existing.theme = .paper
+                try? context.save()
+            }
             return existing
         }
         let settings = ReaderSettings()

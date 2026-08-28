@@ -6,13 +6,13 @@ enum Block: Sendable, Equatable {
     case paragraph(String)
     case quote(String)
 
-    var text: String {
+    nonisolated var text: String {
         switch self {
         case let .heading(_, text), let .paragraph(text), let .quote(text): text
         }
     }
 
-    var length: Int { text.count }
+    nonisolated var length: Int { text.count }
 }
 
 /// 一章：标题 + 按 spine 顺序的文本块。`id` 为清单中 href 去扩展名，用于 Contents 稳定标识。
@@ -21,7 +21,7 @@ struct Chapter: Sendable, Equatable, Identifiable {
     let title: String
     let blocks: [Block]
 
-    var textLength: Int { blocks.reduce(0) { $0 + $1.length } }
+    nonisolated var textLength: Int { blocks.reduce(0) { $0 + $1.length } }
 }
 
 /// 全书：spine 顺序章节 + 预计算的全书字符位置表。
@@ -36,7 +36,8 @@ struct BookDocument: Sendable {
 
     var totalCharacters: Int { chapterStarts.last ?? 0 }
 
-    init(title: String, author: String?, language: String?, chapters: [Chapter]) {
+    /// 后台解析线程（EPUBParser）直接构造，非 MainActor。
+    nonisolated init(title: String, author: String?, language: String?, chapters: [Chapter]) {
         self.title = title
         self.author = author
         self.language = language

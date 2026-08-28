@@ -7,11 +7,11 @@ struct BookGridCell: View {
 
     private var newBadge: some View {
         Text("NEW")
-            .font(.caption2.bold())
+            .font(.splendid(.caption2, weight: .bold)).tracking(Theme.letterSpacing)
             .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background(Capsule().fill(Color.blue)) // §8.1 系统蓝底白字
+            .background(Capsule().fill(Theme.accent))
             .padding(6)
     }
 
@@ -45,14 +45,14 @@ struct BookGridCell: View {
             HStack(spacing: 4) {
                 if let progress = book.progressText {
                     Text(progress)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                        .foregroundStyle(Theme.inkSecondary)
                 }
                 Spacer()
                 if book.needsDownloadIcon {
                     Image(systemName: "icloud") // 未下载云朵（§3.2）
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.inkSecondary)
                 }
                 Menu {
                     Button(role: .destructive) {
@@ -63,16 +63,17 @@ struct BookGridCell: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.inkSecondary)
                 }
             }
 
             Text(book.title)
-                .font(.subheadline)
+                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
                 .lineLimit(2)
             Text(book.author)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(1)
         }
     }

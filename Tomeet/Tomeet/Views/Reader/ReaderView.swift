@@ -80,7 +80,7 @@ struct ReaderView: View {
                     .font(.largeTitle)
                     .foregroundStyle(themeForeground.opacity(0.6))
                 Text(message)
-                    .font(.subheadline)
+                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                     .foregroundStyle(themeForeground.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -124,11 +124,11 @@ struct ReaderView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(sectionLabel)
-                    .font(.caption2.weight(.medium))
+                    .font(.splendid(.caption2, weight: .medium)).tracking(Theme.letterSpacing)
                     .foregroundStyle(chromeColor.opacity(0.7))
                     .lineLimit(1)
                 Text(currentChapterTitle)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
                     .lineLimit(1)
             }
             Spacer()
@@ -182,7 +182,7 @@ struct ReaderView: View {
         HStack {
             Spacer()
             Text("\(viewModel.currentGlobalIndex + 1) / \(viewModel.totalPages)")
-                .font(.caption)
+                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
                 .foregroundStyle(themeForeground.opacity(0.5))
                 .monospacedDigit()
                 .padding(.trailing, 8)
@@ -191,7 +191,7 @@ struct ReaderView: View {
     }
 
     private var currentSize: CGSize {
-        UIScreen.main.bounds.size
+        UIScreen.current?.bounds.size ?? .zero
     }
 
     // MARK: - 悬浮菜单
@@ -217,7 +217,7 @@ struct ReaderView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
             }
@@ -284,7 +284,7 @@ struct ReaderView: View {
 
     private func applyBrightness(from settings: ReaderSettings) {
         guard settings.hasCustomBrightness else { return }
-        UIScreen.main.brightness = CGFloat(settings.brightness)
+        UIScreen.current?.brightness = CGFloat(settings.brightness)
     }
 }
 

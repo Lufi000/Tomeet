@@ -62,7 +62,7 @@ enum EPUBParser {
 
     // MARK: - 解析步骤
 
-    private static func rootfilePath(from containerURL: URL) throws -> String {
+    private static nonisolated func rootfilePath(from containerURL: URL) throws -> String {
         let data = try Self.data(at: containerURL, error: .invalidContainer(containerURL.path))
         let delegate = RootfileDelegate()
         let parser = XMLParser(data: data)
@@ -74,7 +74,7 @@ enum EPUBParser {
         return path
     }
 
-    private static func package(from opfURL: URL) throws -> Package {
+    private static nonisolated func package(from opfURL: URL) throws -> Package {
         let data = try Self.data(at: opfURL, error: .invalidOPF(opfURL.path))
         let delegate = OPFDelegate()
         let parser = XMLParser(data: data)
@@ -93,12 +93,12 @@ enum EPUBParser {
         )
     }
 
-    private static func data(at url: URL, error: ParseError) throws -> Data {
+    private static nonisolated func data(at url: URL, error: ParseError) throws -> Data {
         guard let data = try? Data(contentsOf: url) else { throw error }
         return data
     }
 
-    private static func parseChapter(at url: URL, fallbackTitle: String, id: String) -> Chapter? {
+    private static nonisolated func parseChapter(at url: URL, fallbackTitle: String, id: String) -> Chapter? {
         guard let data = try? Data(contentsOf: url) else { return nil }
         let delegate = ChapterDelegate(fallbackTitle: fallbackTitle)
         let parser = XMLParser(data: data)
@@ -112,7 +112,7 @@ enum EPUBParser {
 
 // MARK: - XML 委托（nonisolated，后台线程安全）
 
-private final class RootfileDelegate: NSObject, XMLParserDelegate {
+private final nonisolated class RootfileDelegate: NSObject, XMLParserDelegate {
     var fullPath: String?
 
     func parser(
@@ -128,7 +128,7 @@ private final class RootfileDelegate: NSObject, XMLParserDelegate {
     }
 }
 
-private final class OPFDelegate: NSObject, XMLParserDelegate {
+private final nonisolated class OPFDelegate: NSObject, XMLParserDelegate {
     var title = ""
     var creator: String?
     var language: String?
@@ -176,7 +176,7 @@ private final class OPFDelegate: NSObject, XMLParserDelegate {
     }
 }
 
-private final class ChapterDelegate: NSObject, XMLParserDelegate {
+private final nonisolated class ChapterDelegate: NSObject, XMLParserDelegate {
     let fallbackTitle: String
     var titleText: String?
     var blocks: [Block] = []

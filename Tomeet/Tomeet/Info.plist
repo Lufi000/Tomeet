@@ -8,5 +8,10 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>SplendidN.ttf</string>
+		<string>SplendidB.ttf</string>
+	</array>
 </dict>
 </plist>

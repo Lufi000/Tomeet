@@ -2,6 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct AIAssistantView: View {
+    /// 返回主页（RootView 切换回 Home tab）
+    var onBack: () -> Void = {}
+
     @Query private var books: [Book]
     @State private var viewModel = AIChatViewModel()
     @State private var input = ""
@@ -16,9 +19,17 @@ struct AIAssistantView: View {
                     .padding(.top, 8)
                 messageList
             }
-            .background(Color(.systemGray6))
-            .navigationTitle("AI")
-            .navigationBarTitleDisplayMode(.large)
+            .background(Theme.canvas)
+            // AI 对话页隐藏整条底部 TabBar，返回主页靠顶部返回按钮/左边缘右滑
+            .toolbar(.hidden, for: .tabBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { onBack() } label: {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
+            .simultaneousGesture(edgeSwipeBack)
             .safeAreaInset(edge: .bottom) { inputBar }
             .sheet(isPresented: $showBookPicker) { bookPicker }
             .onAppear { viewModel.applyDefaultBook(from: books) }
@@ -26,6 +37,17 @@ struct AIAssistantView: View {
                 viewModel.applyDefaultBook(from: newBooks)
             }
         }
+    }
+
+    /// tab 根视图没有系统的右滑 pop 手势，手动补一个左边缘右滑返回
+    private var edgeSwipeBack: some Gesture {
+        DragGesture(minimumDistance: 20)
+            .onEnded { value in
+                guard value.startLocation.x < 40,
+                      value.translation.width > 60,
+                      abs(value.translation.height) < 80 else { return }
+                onBack()
+            }
     }
 
     // MARK: - Context card
@@ -39,36 +61,36 @@ struct AIAssistantView: View {
                     BookCoverView(book: book).frame(width: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Asking about")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.inkTertiary)
                         Text(book.title)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.primary)
+                            .font(.splendid(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.ink)
                             .lineLimit(1)
                     }
                 } else {
                     Image(systemName: "bubble.left.and.text.bubble.right")
                         .font(.title3)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Theme.inkSecondary)
                         .frame(width: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Ask freely")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.primary)
+                            .font(.splendid(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.ink)
                         Text("Or pick a book to ask about")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                            .foregroundStyle(Theme.inkTertiary)
                     }
                 }
                 Spacer()
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkTertiary)
             }
             .padding(10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.12))
+                    .fill(Theme.card)
             )
         }
         .buttonStyle(.plain)
@@ -106,12 +128,13 @@ struct AIAssistantView: View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.largeTitle)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Theme.inkSecondary)
             Text("Meet the mind inside every book")
-                .font(.headline)
+                .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
             Text("Ask a question, dig into a concept,\nor compare what different books say.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.inkTertiary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -123,26 +146,33 @@ struct AIAssistantView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField(inputPlaceholder, text: $input, axis: .vertical)
+                .font(.splendid(.body))
+                .tracking(Theme.letterSpacing)
                 .lineLimit(1...4)
                 .focused($inputFocused)
+                .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.gray.opacity(0.12))
+                        .fill(Theme.card)
                 )
                 .onSubmit { send() }
 
             Button(action: send) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(canSend ? Color.blue : Color.gray.opacity(0.4))
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(canSend ? Theme.sendArrow : Theme.inkTertiary)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        Circle().fill(canSend ? Theme.sendEnabled : Theme.inkFaint)
+                    )
             }
             .disabled(!canSend)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(.bar)
+        .background(Theme.canvas)
     }
 
     private var inputPlaceholder: String {
@@ -170,53 +200,63 @@ struct AIAssistantView: View {
 
     private var bookPicker: some View {
         NavigationStack {
-            List {
-                Button {
-                    viewModel.selectBook(nil)
-                    showBookPicker = false
-                } label: {
-                    HStack {
-                        Label("Ask Freely", systemImage: "bubble.left.and.text.bubble.right")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        if viewModel.selectedBook == nil {
-                            Image(systemName: "checkmark").foregroundStyle(.blue)
-                        }
-                    }
+            VStack(spacing: 0) {
+                // 系统导航栏标题字体无法定制，标题与 Done 自己画
+                HStack {
+                    Text("Choose a Book")
+                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    Button("Done") { showBookPicker = false }
+                        .foregroundStyle(Theme.accent)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
 
-                ForEach(books.sorted(by: Book.sortRecentlyOpened)) { book in
+                List {
                     Button {
-                        viewModel.selectBook(book)
+                        viewModel.selectBook(nil)
                         showBookPicker = false
                     } label: {
-                        HStack(spacing: 12) {
-                            BookCoverView(book: book).frame(width: 32)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(book.title)
-                                    .font(.body)
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(1)
-                                Text(book.author)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
+                        HStack {
+                            Label("Ask Freely", systemImage: "bubble.left.and.text.bubble.right")
+                                .foregroundStyle(.primary)
                             Spacer()
-                            if viewModel.selectedBook?.id == book.id {
-                                Image(systemName: "checkmark").foregroundStyle(.blue)
+                            if viewModel.selectedBook == nil {
+                                Image(systemName: "checkmark").foregroundStyle(Theme.ink)
+                            }
+                        }
+                    }
+
+                    ForEach(books.sorted(by: Book.sortRecentlyOpened)) { book in
+                        Button {
+                            viewModel.selectBook(book)
+                            showBookPicker = false
+                        } label: {
+                            HStack(spacing: 12) {
+                                BookCoverView(book: book).frame(width: 32)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(book.title)
+                                        .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(1)
+                                    Text(book.author)
+                                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                if viewModel.selectedBook?.id == book.id {
+                                    Image(systemName: "checkmark").foregroundStyle(Theme.ink)
+                                }
                             }
                         }
                     }
                 }
+                .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Choose a Book")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { showBookPicker = false }
-                }
-            }
+            .background(Theme.canvas)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .presentationDetents([.medium, .large])
     }
@@ -228,16 +268,27 @@ private struct MessageBubble: View {
     var body: some View {
         HStack {
             if message.role == .user { Spacer(minLength: 48) }
-            Text(message.text.isEmpty ? "…" : message.text)
-                .font(.body)
-                .foregroundStyle(message.role == .user ? .white : .primary)
+            content
+                .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(message.role == .user ? Color.blue : Color.gray.opacity(0.15))
+                        .fill(message.role == .user ? Theme.userBubble : Theme.card)
                 )
             if message.role == .assistant { Spacer(minLength: 48) }
         }
+    }
+
+    /// AI 回复按 Markdown 渲染（斜体/粗体/列表），解析失败回退纯文本；
+    /// 流式追加时每次重解析，聊天长度下开销可忽略。
+    private var content: Text {
+        guard !message.text.isEmpty else { return Text("…") }
+        if message.role == .assistant,
+           let attributed = try? AttributedString(markdown: message.text) {
+            return Text(attributed)
+        }
+        return Text(message.text)
     }
 }

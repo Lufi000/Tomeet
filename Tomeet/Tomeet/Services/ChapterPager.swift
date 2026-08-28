@@ -54,13 +54,13 @@ enum ChapterPager {
         }
     }
 
-    private static func uiColor(from color: Color) -> UIColor {
+    private static nonisolated func uiColor(from color: Color) -> UIColor {
         UIColor(color)
     }
 
     // MARK: - 单章分页
 
-    private static func paginate(chapter: Chapter, language: String?, context: PaginationContext) -> [TextPage] {
+    private static nonisolated func paginate(chapter: Chapter, language: String?, context: PaginationContext) -> [TextPage] {
         let attributed = makeAttributedText(chapter: chapter, language: language, context: context)
         let text = attributed.string as NSString
         guard text.length > 0 else { return [] }
@@ -98,7 +98,7 @@ enum ChapterPager {
 
     // MARK: - 排版文本
 
-    private static func makeAttributedText(chapter: Chapter, language: String?, context: PaginationContext) -> NSAttributedString {
+    private static nonisolated func makeAttributedText(chapter: Chapter, language: String?, context: PaginationContext) -> NSAttributedString {
         let baseFont = UIFont(descriptor: fontDescriptor(for: language), size: context.fontSize)
         let isCJK = isCJKLanguage(language)
         let textColor = uiColor(from: context.theme.textColor)
@@ -161,7 +161,7 @@ enum ChapterPager {
         return result
     }
 
-    private static func paragraphStyle(
+    private static nonisolated func paragraphStyle(
         lineSpacing: CGFloat,
         lineHeightMultiple: CGFloat,
         paragraphSpacing: CGFloat,

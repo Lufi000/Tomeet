@@ -22,13 +22,8 @@ struct ContentsSheet: View {
                 chapterSection
             }
             .listStyle(.plain)
-            .navigationTitle("Contents")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
+            // 系统内联标题字体无法定制，Done 挪进封面行（见 headerSection）
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
@@ -42,14 +37,16 @@ struct ContentsSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(book.title)
-                    .font(.headline)
+                    .font(.splendid(.headline)).tracking(Theme.letterSpacing)
                     .lineLimit(2)
                 Text("Page \(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
-                    .font(.subheadline)
+                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
+
+            Button("Done") { dismiss() }
         }
         .padding(.vertical, 8)
         .listRowSeparator(.hidden)
@@ -65,12 +62,12 @@ struct ContentsSheet: View {
             } label: {
                 HStack {
                     Text(chapter.title)
-                        .font(.body)
+                        .font(.splendid(.body)).tracking(Theme.letterSpacing)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Spacer()
                     Text("\(chapterPageNumber(at: index))")
-                        .font(.subheadline)
+                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
