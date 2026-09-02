@@ -33,7 +33,7 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
     }
 }
 
-struct DeepSeekChatServiceTests {
+@Suite(.serialized) struct DeepSeekChatServiceTests {
     private func makeService(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> DeepSeekChatService {
@@ -69,6 +69,40 @@ struct DeepSeekChatServiceTests {
         }
         #expect(gotDeviceID == "test-device")
         #expect(text == "hi")
+    }
+
+    @Test func reportsQuotaRemainingFromResponseHeader() async throws {
+        final class Capture: @unchecked Sendable { var value: Int? }
+        let capture = Capture()
+        var service = makeService { request in
+            self.sseResponse(request, headers: ["X-Quota-Remaining": "6"])
+        }
+        service.onQuotaRemaining = { capture.value = $0 }
+
+        for try await _ in service.replyStream(
+            to: [ChatMessage(role: .user, text: "hello")], contextBook: nil
+        ) {}
+        #expect(capture.value == 6)
+    }
+
+    @Test func throwsQuotaExceededOn429() async {
+        let service = makeService { request in
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: 429, httpVersion: nil, headerFields: nil
+            )!
+            let body = #"{"error":"quota_exceeded","resetAt":"2026-09-03T00:00:00+08:00"}"#
+            return (response, Data(body.utf8))
+        }
+        do {
+            for try await _ in service.replyStream(
+                to: [ChatMessage(role: .user, text: "hello")], contextBook: nil
+            ) {}
+            Issue.record("expected quotaExceeded to be thrown")
+        } catch ChatServiceError.quotaExceeded(let resetAt) {
+            #expect(resetAt != nil)
+        } catch {
+            Issue.record("unexpected error: \(error)")
+        }
     }
 
     // MARK: - SSE line parsing
