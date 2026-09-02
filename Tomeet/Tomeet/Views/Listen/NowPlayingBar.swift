@@ -22,8 +22,8 @@ struct NowPlayingBar: View {
                         .splendidContentFont(.subheadline, weight: .semibold, text: book.title)
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
-                    Text("讲书 · \(book.author)")
-                        .splendidContentFont(.caption2, text: "讲书 · \(book.author)")
+                    Text(narrationLabel(for: book))
+                        .splendidContentFont(.caption2, text: narrationLabel(for: book))
                         .foregroundStyle(Theme.inkTertiary)
                         .lineLimit(1)
                 }
@@ -32,8 +32,8 @@ struct NowPlayingBar: View {
                 ProgressView()
                     .tint(Theme.accent)
                     .controlSize(.small)
-                Text("加载中…")
-                    .splendidContentFont(.subheadline, text: "加载中…")
+                Text(Self.loadingLabel)
+                    .splendidContentFont(.subheadline, text: Self.loadingLabel)
                     .foregroundStyle(Theme.inkSecondary)
             }
 
@@ -83,6 +83,14 @@ struct NowPlayingBar: View {
             }
         }
         .padding(.horizontal, 12)
+    }
+
+    /// 本地化后的副标题/占位文案。`splendidContentFont(text:)` 靠内容判断 CJK，
+    /// 必须传本地化后的实际文本，不能传英文 key。
+    private static let loadingLabel = String(localized: "Loading…")
+
+    private func narrationLabel(for book: Book) -> String {
+        String(localized: "Narration · \(book.author)")
     }
 
     private var progressFraction: Double {

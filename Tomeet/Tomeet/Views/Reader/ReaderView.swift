@@ -179,12 +179,12 @@ struct ReaderView: View {
         }
         let title = viewModel.session?.document.chapters[safe: ref.chapterIndex]?.title ?? book.title
         if title.hasPrefix("引言") || title.lowercased().contains("introduction") {
-            return "引言"
+            return String(localized: "Introduction")
         }
         if title.isEmpty {
             return book.title
         }
-        return "章节"
+        return String(localized: "Chapter")
     }
 
     private var currentChapterTitle: String {

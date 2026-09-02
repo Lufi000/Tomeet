@@ -30,9 +30,16 @@ struct AIAssistantView: View {
                 }
             }
             .simultaneousGesture(edgeSwipeBack)
-            .safeAreaInset(edge: .bottom) { inputBar }
+            .safeAreaInset(edge: .bottom) {
+                if viewModel.quota.isExhausted {
+                    exhaustedPanel
+                } else {
+                    inputBar
+                }
+            }
             .sheet(isPresented: $showBookPicker) { bookPicker }
             .onAppear { viewModel.applyDefaultBook(from: books) }
+            .task { await viewModel.quota.refresh() }
             .onChange(of: books) { _, newBooks in
                 viewModel.applyDefaultBook(from: newBooks)
             }
@@ -144,33 +151,58 @@ struct AIAssistantView: View {
     // MARK: - Input
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
-            TextField(inputPlaceholder, text: $input, axis: .vertical)
-                .font(.body)
-                .lineLimit(1...4)
-                .focused($inputFocused)
-                .foregroundStyle(Theme.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Theme.card)
-                )
-                .onSubmit { send() }
-
-            Button(action: send) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(canSend ? Theme.sendArrow : Theme.inkTertiary)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Circle().fill(canSend ? Theme.sendEnabled : Theme.inkFaint)
-                    )
+        VStack(spacing: 6) {
+            if let remaining = viewModel.quota.remaining {
+                Text(remaining == 1
+                     ? "1 free conversation left today"
+                     : "\(remaining) free conversations left today")
+                    .font(.caption2)
+                    .foregroundStyle(remaining <= 3 ? Theme.accent : Theme.inkTertiary)
             }
-            .disabled(!canSend)
+            HStack(spacing: 10) {
+                TextField(inputPlaceholder, text: $input, axis: .vertical)
+                    .font(.body)
+                    .lineLimit(1...4)
+                    .focused($inputFocused)
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Theme.card)
+                    )
+                    .onSubmit { send() }
+
+                Button(action: send) {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(canSend ? Theme.sendArrow : Theme.inkTertiary)
+                        .frame(width: 34, height: 34)
+                        .background(
+                            Circle().fill(canSend ? Theme.sendEnabled : Theme.inkFaint)
+                        )
+                }
+                .disabled(!canSend)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        .background(Theme.canvas)
+    }
+
+    private var exhaustedPanel: some View {
+        VStack(spacing: 8) {
+            Text("That's today's 10 free conversations")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.ink)
+            Text("Free conversations refresh at midnight.\nUnlimited conversations are coming with subscription.")
+                .font(.caption)
+                .foregroundStyle(Theme.inkTertiary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 16)
         .background(Theme.canvas)
     }
 

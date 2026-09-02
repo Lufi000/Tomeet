@@ -156,7 +156,7 @@ struct ThemesSettingsSheet: View {
             try? modelContext.save()
         } label: {
             VStack(spacing: 8) {
-                Text("大小")
+                Text("Size")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(theme.textColor)
                 Text(theme.displayName)

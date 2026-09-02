@@ -9,10 +9,11 @@ enum EPUBParser {
         case missingSpine
 
         var errorDescription: String? {
+            // 会经 ReaderViewModel 的 error.localizedDescription 显示在加载失败页，需本地化
             switch self {
-            case let .invalidContainer(path): "EPUB container.xml 缺失或无效：\(path)"
-            case let .invalidOPF(path): "EPUB OPF 缺失或无效：\(path)"
-            case .missingSpine: "EPUB spine 缺失"
+            case let .invalidContainer(path): String(localized: "EPUB container.xml missing or invalid: \(path)")
+            case let .invalidOPF(path): String(localized: "EPUB OPF missing or invalid: \(path)")
+            case .missingSpine: String(localized: "EPUB spine missing")
             }
         }
     }

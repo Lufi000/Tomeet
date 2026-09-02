@@ -59,11 +59,11 @@ struct SplashView<Content: View>: View {
                         .foregroundStyle(Theme.ink)
 
                     VStack(spacing: 8) {
-                        Text("阅读没有门槛")
+                        Text("Reading is for everyone")
                             .font(.splendid(.title3))
                             .splendidTracking(.title3)
                             .foregroundStyle(Theme.ink)
-                        Text("每一本书的思想，都愿意与你对话")
+                        Text("Every book's mind is waiting to talk with you")
                             .font(.splendid(.callout))
                             .splendidTracking(.callout)
                             .foregroundStyle(Theme.inkSecondary)
