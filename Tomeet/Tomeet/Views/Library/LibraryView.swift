@@ -27,6 +27,7 @@ enum LibraryGroupMode: String, CaseIterable, Identifiable {
 struct LibraryView: View {
     @Query private var books: [Book]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.tabContentBottomInset) private var tabContentBottomInset
     @Environment(AudioPlayerService.self) private var audioPlayer
     @State private var viewMode: LibraryViewMode = .grid
     @State private var sortMode: LibrarySortMode = .recent
@@ -123,7 +124,7 @@ struct LibraryView: View {
                             VStack(spacing: 12) {
                                 ProgressView()
                                 Text("Importing...")
-                                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                                    .font(.splendid(.subheadline)).splendidTracking(.subheadline)
                             }
                         }
                 }
@@ -169,6 +170,11 @@ struct LibraryView: View {
         }
     }
 
+    /// 底部留白：悬浮 TabBar 胶囊 + 播放条（RootView 实测注入）。
+    private var bottomClearance: some View {
+        Color.clear.frame(height: tabContentBottomInset)
+    }
+
     private var libraryMenu: some View {
         Menu {
             Button("Import Book...", systemImage: "square.and.arrow.down") {
@@ -205,7 +211,7 @@ struct LibraryView: View {
     /// 页面顶部自定义大标题（字体用 Splendid 66）
     private var libraryHeader: some View {
         Text("Library")
-            .font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+            .font(.splendid(.largeTitle, weight: .bold)).splendidTracking(.largeTitle)
             .foregroundStyle(Theme.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
@@ -224,17 +230,17 @@ struct LibraryView: View {
                     .scaledToFit()
                     .frame(width: 240)
                 Text("No books yet")
-                    .font(.splendid(.title3, weight: .bold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.title3, weight: .bold)).splendidTracking(.title3)
                     .foregroundStyle(Theme.ink)
                 Text("Import a book and meet the mind inside.")
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline)).splendidTracking(.subheadline)
                     .foregroundStyle(Theme.inkSecondary)
                     .multilineTextAlignment(.center)
                 Button {
                     showImporter = true
                 } label: {
                     Text("Import Book")
-                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                        .font(.splendid(.headline)).splendidTracking(.headline)
                         .foregroundStyle(Theme.accent)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
@@ -251,6 +257,7 @@ struct LibraryView: View {
             .padding(.horizontal, 32)
         }
         .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) { bottomClearance }
     }
 
     private var themedContent: some View {
@@ -280,15 +287,16 @@ struct LibraryView: View {
             .padding(.top, 8)
         }
         .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) { bottomClearance }
     }
 
     private func themeHeader(_ theme: InitialTheme) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(theme.name)
-                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                .splendidContentFont(.title2, weight: .bold, text: theme.name)
                 .foregroundStyle(Theme.ink)
             Text(theme.description)
-                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                .splendidContentFont(.subheadline, text: theme.description)
                 .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(1)
         }
@@ -318,6 +326,7 @@ struct LibraryView: View {
             .padding(.top, 8)
         }
         .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) { bottomClearance }
     }
 
     private func listContent(for bookList: [Book]) -> some View {
@@ -328,12 +337,12 @@ struct LibraryView: View {
                 HStack(spacing: 12) {
                     BookCoverView(book: book).frame(width: 44)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(book.title).font(.splendid(.body)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink).lineLimit(1)
-                        Text(book.author).font(.splendid(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
+                        Text(book.title).splendidContentFont(.body, text: book.title).foregroundStyle(Theme.ink).lineLimit(1)
+                        Text(book.author).splendidContentFont(.caption, text: book.author).foregroundStyle(Theme.inkSecondary)
                     }
                     Spacer()
                     if let progress = book.progressText {
-                        Text(progress).font(.splendid(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
+                        Text(progress).font(.splendid(.caption)).splendidTracking(.caption).foregroundStyle(Theme.inkSecondary)
                     }
                 }
             }
@@ -348,6 +357,7 @@ struct LibraryView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) { bottomClearance }
         .safeAreaInset(edge: .top, spacing: 0) {
             libraryHeader
                 .background(Theme.canvas)

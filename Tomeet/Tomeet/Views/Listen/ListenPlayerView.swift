@@ -18,7 +18,7 @@ struct ListenPlayerView: View {
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.splendid(.title2)).tracking(Theme.letterSpacing)
+                            .font(.splendid(.title2)).splendidTracking(.title2)
                             .foregroundStyle(.white.opacity(0.8))
                     }
                 }
@@ -31,9 +31,9 @@ struct ListenPlayerView: View {
 
                 VStack(spacing: 6) {
                     Text(book.title)
-                        .font(.splendid(.title3, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .splendidContentFont(.title3, weight: .semibold, text: book.title)
                     Text(subtitle)
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                        .splendidContentFont(.subheadline, text: subtitle)
                         .foregroundStyle(.secondary)
                 }
 
@@ -118,7 +118,7 @@ struct ListenPlayerView: View {
 
             Button { player.cycleRate() } label: {
                 Text(rateLabel)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(.white.opacity(0.15)))

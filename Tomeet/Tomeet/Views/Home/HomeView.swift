@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     @Query private var books: [Book]
     @Query private var dailyReadings: [DailyReading]
+    @Environment(\.tabContentBottomInset) private var tabContentBottomInset
     @State private var presentedReader: Book?
 
     /// 今日（本地时区 0 点起）的时长记录；没有则 nil。
@@ -32,7 +33,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     // iOS 26 的导航栏标题不吃 UIKit appearance，大字标题自己画
                     Text("Home")
-                        .font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+                        .font(.splendid(.largeTitle, weight: .bold)).splendidTracking(.largeTitle)
                         .foregroundStyle(Theme.ink)
                         .padding(.top, 16)
 
@@ -40,7 +41,7 @@ struct HomeView: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Continue")
-                            .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                            .font(.splendid(.title2, weight: .bold)).splendidTracking(.title2)
                             .foregroundStyle(Theme.ink)
                         if continueBooks.isEmpty {
                             continueEmptyCard
@@ -60,7 +61,7 @@ struct HomeView: View {
                                                 VStack(alignment: .leading, spacing: 6) {
                                                     BookCoverView(book: book).frame(width: 100)
                                                     Text(book.title)
-                                                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                                                        .splendidContentFont(.caption, text: book.title)
                                                         .lineLimit(1)
                                                         .foregroundStyle(Theme.ink)
                                                 }
@@ -81,6 +82,10 @@ struct HomeView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.canvas)
+            // 底部留白：悬浮 TabBar 胶囊 + 播放条（RootView 实测注入）
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Color.clear.frame(height: tabContentBottomInset)
+            }
             // 不用系统大标题（字体无法定制），顶栏整体隐藏
             .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(item: $presentedReader) { book in
@@ -94,7 +99,7 @@ struct HomeView: View {
     private var todayStatsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Today")
-                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                .font(.splendid(.title2, weight: .bold)).splendidTracking(.title2)
                 .foregroundStyle(Theme.ink)
             HStack(spacing: 0) {
                 statColumn(image: "TodayReading", title: "Reading", seconds: todayReading?.readSeconds ?? 0)
@@ -119,11 +124,11 @@ struct HomeView: View {
                 .scaledToFit()
                 .frame(height: 52)
             Text(timeText(seconds))
-                .font(.splendid(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
+                .font(.splendid(.headline, weight: .semibold)).splendidTracking(.headline)
                 .foregroundStyle(Theme.ink)
                 .monospacedDigit()
             Text(title)
-                .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                .font(.splendid(.caption2)).splendidTracking(.caption2)
                 .foregroundStyle(Theme.inkTertiary)
         }
         .frame(maxWidth: .infinity)
@@ -138,7 +143,7 @@ struct HomeView: View {
                 .scaledToFit()
                 .frame(height: 110)
             Text("Books you start reading will appear here.")
-                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                .font(.splendid(.caption)).splendidTracking(.caption)
                 .foregroundStyle(Theme.inkTertiary)
         }
         .frame(maxWidth: .infinity)

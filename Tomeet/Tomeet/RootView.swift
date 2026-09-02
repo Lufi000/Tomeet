@@ -22,7 +22,8 @@ struct RootView: View {
         // 听书迷你条：悬浮在 TabBar 上方。iOS 26 悬浮 TabBar 不吃 safeAreaInset
         // （inset 内容会落到胶囊后面被盖住），只能 overlay + 实测 TabBar 帧定位。
         .overlay(alignment: .bottom) {
-            if audioPlayer.isNowPlayingBarVisible {
+            // AI 聊天 tab 不显示迷你条，避免遮挡对话
+            if audioPlayer.isNowPlayingBarVisible && selectedTab != 2 {
                 NowPlayingBar {
                     showNowPlaying = true
                 }
@@ -34,6 +35,8 @@ struct RootView: View {
                 .frame(height: 0)
         }
         .animation(.easeInOut(duration: 0.25), value: audioPlayer.isNowPlayingBarVisible)
+        // 悬浮胶囊不占 safe area，把实测留白注入给各 tab 的滚动容器
+        .environment(\.tabContentBottomInset, tabContentBottomInset)
         .fullScreenCover(isPresented: $showNowPlaying) {
             if let book = audioPlayer.currentBook {
                 ListenPlayerView(book: book)
@@ -42,6 +45,15 @@ struct RootView: View {
         .tint(Theme.accent)
         // Theme 色板只有浅色一套，锁定浅色模式，避免系统深色翻转键盘/弹窗等系统表面。
         .preferredColorScheme(.light)
+    }
+
+    /// Home/Library 滚动容器的底部留白：胶囊高度；播放条出现时再加其高度(56)与间距(8)。
+    private var tabContentBottomInset: CGFloat {
+        var inset = tabBarTopInset
+        if audioPlayer.isNowPlayingBarVisible && selectedTab != 2 {
+            inset += 64
+        }
+        return inset
     }
 
     /// 水彩插画 Tab 图标：选中彩色、未选中灰调，均保持原色渲染。

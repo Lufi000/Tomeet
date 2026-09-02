@@ -1,6 +1,19 @@
 import SwiftUI
 import UIKit
 
+/// Tab 内容的底部留白：悬浮胶囊高度，播放条出现时再加播放条高度。
+/// 由 RootView 实测后注入，Home/Library 的滚动容器用它做 safeAreaInset。
+private struct TabContentBottomInsetKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
+}
+
+extension EnvironmentValues {
+    var tabContentBottomInset: CGFloat {
+        get { self[TabContentBottomInsetKey.self] }
+        set { self[TabContentBottomInsetKey.self] = newValue }
+    }
+}
+
 /// 实测 TabBar 胶囊顶边到安全区底边的距离（pt），写入 `inset`。
 /// iOS 26 悬浮 TabBar 不吃 safeAreaInset，迷你播放条要靠实测帧垫到胶囊上方。
 /// 参照系是 window 的安全区，与自身布局无关——避免"inset 改变布局反过来影响测量"的反馈环。

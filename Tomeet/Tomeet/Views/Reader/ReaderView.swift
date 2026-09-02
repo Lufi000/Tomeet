@@ -92,7 +92,7 @@ struct ReaderView: View {
                     .font(.largeTitle)
                     .foregroundStyle(themeForeground.opacity(0.6))
                 Text(message)
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline)).splendidTracking(.subheadline)
                     .foregroundStyle(themeForeground.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -109,6 +109,12 @@ struct ReaderView: View {
                         .frame(width: size.width, height: size.height)
 
                     if showChrome {
+                        topScrim
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .transition(.opacity)
+                        bottomScrim
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .transition(.opacity)
                         topBar
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             .transition(.move(edge: .top).combined(with: .opacity))
@@ -136,11 +142,11 @@ struct ReaderView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(sectionLabel)
-                    .font(.splendid(.caption2, weight: .medium)).tracking(Theme.letterSpacing)
+                    .splendidContentFont(.caption2, weight: .medium, text: sectionLabel)
                     .foregroundStyle(chromeColor.opacity(0.7))
                     .lineLimit(1)
                 Text(currentChapterTitle)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .splendidContentFont(.subheadline, weight: .semibold, text: currentChapterTitle)
                     .lineLimit(1)
             }
             Spacer()
@@ -194,12 +200,45 @@ struct ReaderView: View {
         HStack {
             Spacer()
             Text("\(viewModel.currentGlobalIndex + 1) / \(viewModel.totalPages)")
-                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                .font(.splendid(.caption)).splendidTracking(.caption)
                 .foregroundStyle(themeForeground.opacity(0.5))
                 .monospacedDigit()
                 .padding(.trailing, 8)
         }
         .padding(.vertical, 8)
+    }
+
+    /// 底部控件（页码 + 悬浮按钮）直接压在书页文字上看不清，
+    /// 垫一层主题色渐变遮罩：底部一段实色、向上快速淡出。
+    /// 随 chrome 一起显隐，不拦截点击。
+    /// 注意不能用 ignoresSafeArea：那会把色带顶出安全区，反而盖不住按钮。
+    private var bottomScrim: some View {
+        LinearGradient(
+            stops: [
+                .init(color: themeBackground.opacity(0), location: 0),
+                .init(color: themeBackground.opacity(0.9), location: 0.45),
+                .init(color: themeBackground, location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 150)
+        .allowsHitTesting(false)
+    }
+
+    /// 顶部同理：章节标题 + 关闭按钮下的渐变遮罩。
+    private var topScrim: some View {
+        LinearGradient(
+            stops: [
+                .init(color: themeBackground, location: 0),
+                .init(color: themeBackground.opacity(0.9), location: 0.55),
+                .init(color: themeBackground.opacity(0), location: 1),
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 130)
+        .allowsHitTesting(false)
     }
 
     private var currentSize: CGSize {
@@ -250,7 +289,7 @@ struct ReaderView: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Text(title)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
             }
@@ -304,7 +343,7 @@ struct ReaderView: View {
     private func scheduleChromeHide() {
         chromeHideTask?.cancel()
         chromeHideTask = Task {
-            try? await Task.sleep(for: .seconds(4))
+            try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
             withAnimation(.easeInOut(duration: 0.2)) {
                 showMenu = false

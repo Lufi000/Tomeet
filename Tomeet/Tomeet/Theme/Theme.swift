@@ -29,8 +29,12 @@ enum Theme {
     /// 由 sendEnabled 加深得来，保证在 canvas/card 浅色底上对比度足够。
     static let accent = Color(hex: 0x6F8145)
 
-    /// 全局字距：Splendid 66 字号放大后默认字距偏松，统一收紧。
-    /// 正值加宽、负值收紧，只改这一处全 App 生效。
+    /// 阅读进度文字（Continue 卡片右下角）的嫩绿色。
+    static let progress = Color(hex: 0x96CB78)
+
+    /// 全局字距基准：Splendid 66 字号放大后默认字距偏松，统一收紧。
+    /// 该值按大标题（48pt 基准）标定；请通过 `.splendidTracking(style)` 使用，
+    /// 它会按字号比例缩放（小字直接套 -3.5pt 会挤在一起）。
     static let letterSpacing: Double = -3.5
 
     // MARK: 备用色（分隔线、封面点缀、空状态等）
