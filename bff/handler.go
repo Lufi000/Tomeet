@@ -179,6 +179,37 @@ func (p *Proxy) HandleCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HandleQuota 返回设备当日剩余免费额度;只读,不计数。
+func (p *Proxy) HandleQuota(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+	token := r.Header.Get("X-App-Token")
+	if _, ok := p.AppTokens[token]; !ok || token == "" {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+	deviceID := r.Header.Get("X-Device-ID")
+	if deviceID == "" {
+		http.Error(w, `{"error":"device_id_required"}`, http.StatusBadRequest)
+		return
+	}
+	used, err := p.Store.deviceCount(deviceID)
+	if err != nil {
+		log.Printf("quota store error: %v", err)
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+	remaining := p.DailyFreeQuota - used
+	if remaining < 0 {
+		remaining = 0
+	}
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, `{"remaining":%d,"resetAt":%q}`,
+		remaining, p.Store.resetAt().Format(time.RFC3339))
+}
+
 // peekStream 不完整解析 JSON，只看 "stream" 字段。
 func peekStream(body []byte) bool {
 	var peek struct {

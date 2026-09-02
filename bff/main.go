@@ -27,15 +27,29 @@ func main() {
 		addr = ":8088"
 	}
 
+	quotaDBPath := os.Getenv("QUOTA_DB_PATH")
+	if quotaDBPath == "" {
+		quotaDBPath = "./quota.db"
+	}
+	store, err := OpenQuotaStore(quotaDBPath)
+	if err != nil {
+		log.Fatalf("open quota store %s: %v", quotaDBPath, err)
+	}
+	defer store.Close()
+
 	proxy := &Proxy{
 		APIKey:               apiKey,
 		AppTokens:            tokens,
 		AllowUnauthenticated: envBool("ALLOW_UNAUTHENTICATED_APP"),
 		UnauthRatePerMinute:  envInt("UNAUTH_RATE_LIMIT_PER_MINUTE", defaultUnauthRatePerMin),
+		Store:                store,
+		DailyFreeQuota:       envInt("DAILY_FREE_QUOTA", 10),
+		DailyGlobalBudget:    envInt("DAILY_GLOBAL_BUDGET", 3000),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/chat/completions", proxy.HandleCompletions)
+	mux.HandleFunc("/v1/quota", proxy.HandleQuota)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
@@ -45,8 +59,9 @@ func main() {
 	for _, l := range tokens {
 		labels = append(labels, l)
 	}
-	log.Printf("BFF proxy listening on %s (version=%s, apps: %s, allow_unauthenticated=%t)",
-		addr, version, strings.Join(labels, ", "), proxy.AllowUnauthenticated)
+	log.Printf("BFF proxy listening on %s (version=%s, apps: %s, allow_unauthenticated=%t, daily_free_quota=%d, daily_global_budget=%d, quota_db=%s)",
+		addr, version, strings.Join(labels, ", "), proxy.AllowUnauthenticated,
+		proxy.DailyFreeQuota, proxy.DailyGlobalBudget, quotaDBPath)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}

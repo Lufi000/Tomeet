@@ -254,6 +254,54 @@ func TestUnauthenticatedDoesNotWriteDeviceQuota(t *testing.T) {
 	}
 }
 
+func TestQuotaEndpointReturnsRemainingAndResetAt(t *testing.T) {
+	p := newTestProxy(t)
+	// 预置:dev-1 今日已用 3 次
+	for i := 0; i < 3; i++ {
+		if err := p.Store.increment("dev-1"); err != nil {
+			t.Fatalf("increment: %v", err)
+		}
+	}
+	req := httptest.NewRequest(http.MethodGet, "/v1/quota", nil)
+	req.Header.Set("X-App-Token", "test-token")
+	req.Header.Set("X-Device-ID", "dev-1")
+	rec := httptest.NewRecorder()
+	p.HandleQuota(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `"remaining":7`) {
+		t.Fatalf("expected remaining 7, got %q", body)
+	}
+	if !strings.Contains(body, "resetAt") {
+		t.Fatalf("expected resetAt, got %q", body)
+	}
+	// 只读:不计数
+	if got, _ := p.Store.globalCount(); got != 3 {
+		t.Fatalf("quota endpoint must not count, global=%d", got)
+	}
+}
+
+func TestQuotaEndpointRejectsBadAuth(t *testing.T) {
+	p := newTestProxy(t)
+	req := httptest.NewRequest(http.MethodGet, "/v1/quota", nil)
+	rec := httptest.NewRecorder()
+	p.HandleQuota(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", rec.Code)
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "/v1/quota", nil)
+	req2.Header.Set("X-App-Token", "test-token")
+	rec2 := httptest.NewRecorder()
+	p.HandleQuota(rec2, req2)
+	if rec2.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 without device id, got %d", rec2.Code)
+	}
+}
+
 func TestGlobalBudgetExceededReturns503(t *testing.T) {
 	newOKUpstream(t)
 	p := newTestProxy(t)
