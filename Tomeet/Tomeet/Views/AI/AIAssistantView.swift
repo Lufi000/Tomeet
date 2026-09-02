@@ -61,10 +61,10 @@ struct AIAssistantView: View {
                     BookCoverView(book: book).frame(width: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Asking about")
-                            .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                            .font(.caption2)
                             .foregroundStyle(Theme.inkTertiary)
                         Text(book.title)
-                            .font(.splendid(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(Theme.ink)
                             .lineLimit(1)
                     }
@@ -75,10 +75,10 @@ struct AIAssistantView: View {
                         .frame(width: 36)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Ask freely")
-                            .font(.splendid(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(Theme.ink)
                         Text("Or pick a book to ask about")
-                            .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                            .font(.caption2)
                             .foregroundStyle(Theme.inkTertiary)
                     }
                 }
@@ -130,10 +130,10 @@ struct AIAssistantView: View {
                 .font(.largeTitle)
                 .foregroundStyle(Theme.inkSecondary)
             Text("Meet the mind inside every book")
-                .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                .font(.headline)
                 .foregroundStyle(Theme.ink)
             Text("Ask a question, dig into a concept,\nor compare what different books say.")
-                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                .font(.subheadline)
                 .foregroundStyle(Theme.inkTertiary)
                 .multilineTextAlignment(.center)
         }
@@ -146,8 +146,7 @@ struct AIAssistantView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField(inputPlaceholder, text: $input, axis: .vertical)
-                .font(.splendid(.body))
-                .tracking(Theme.letterSpacing)
+                .font(.body)
                 .lineLimit(1...4)
                 .focused($inputFocused)
                 .foregroundStyle(Theme.ink)
@@ -204,7 +203,7 @@ struct AIAssistantView: View {
                 // 系统导航栏标题字体无法定制，标题与 Done 自己画
                 HStack {
                     Text("Choose a Book")
-                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                        .font(.headline)
                         .foregroundStyle(Theme.ink)
                     Spacer()
                     Button("Done") { showBookPicker = false }
@@ -237,11 +236,11 @@ struct AIAssistantView: View {
                                 BookCoverView(book: book).frame(width: 32)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(book.title)
-                                        .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                                        .font(.body)
                                         .foregroundStyle(.primary)
                                         .lineLimit(1)
                                     Text(book.author)
-                                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                                        .font(.caption)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
@@ -269,7 +268,7 @@ private struct MessageBubble: View {
         HStack {
             if message.role == .user { Spacer(minLength: 48) }
             content
-                .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                .font(.body)
                 .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)

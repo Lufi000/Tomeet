@@ -15,13 +15,6 @@ struct ChapterPagerTests {
         PaginationContext(pageSize: CGSize(width: 390, height: 700))
     }
 
-    @Test func isSerifLanguageFlag() {
-        #expect(ChapterPager.isSerifLanguage("en") == true)
-        #expect(ChapterPager.isSerifLanguage("en-GB") == true)
-        #expect(ChapterPager.isSerifLanguage("zh") == false)
-        #expect(ChapterPager.isSerifLanguage(nil) == false)
-    }
-
     @Test func cjkLanguageDetection() {
         #expect(ChapterPager.isCJKLanguage("zh") == true)
         #expect(ChapterPager.isCJKLanguage("zh-Hans") == true)

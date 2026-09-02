@@ -132,7 +132,11 @@ func (p *Proxy) HandleCompletions(w http.ResponseWriter, r *http.Request) {
 	defer upResp.Body.Close()
 
 	if upResp.StatusCode >= 200 && upResp.StatusCode < 300 {
-		if err := p.Store.increment(deviceID); err != nil {
+		countedDeviceID := ""
+		if authenticated {
+			countedDeviceID = deviceID
+		}
+		if err := p.Store.increment(countedDeviceID); err != nil {
 			log.Printf("quota increment failed: %v", err)
 		}
 		if authenticated {

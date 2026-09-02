@@ -30,22 +30,15 @@ struct PaginationContext: Sendable, Equatable {
 /// TextKit 章节优先分页：每章从新页开始，章节绝不跨页。
 /// `nonisolated`：纯计算，可在后台线程整书分页。
 enum ChapterPager {
-    /// dc:language 前缀为 en 时用衬线字体（Apple Books 惯例）；CJK 与未知语言使用系统默认（PingFang SC/TC）。
+    /// dc:language 前缀为 zh/ja/ko 视为 CJK（影响首行缩进等排版）。
     static nonisolated func isCJKLanguage(_ language: String?) -> Bool {
         guard let language = language?.lowercased() else { return false }
         return language.hasPrefix("zh") || language.hasPrefix("ja") || language.hasPrefix("ko")
     }
 
-    static nonisolated func isSerifLanguage(_ language: String?) -> Bool {
-        language?.lowercased().hasPrefix("en") == true
-    }
-
+    /// 正文统一用系统默认字体（中文苹方 / 英文 SF），长时间阅读比衬线更舒服。
     static nonisolated func fontDescriptor(for language: String?) -> UIFontDescriptor {
-        let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
-        guard !isCJKLanguage(language), isSerifLanguage(language), let serif = descriptor.withDesign(.serif) else {
-            return descriptor
-        }
-        return serif
+        UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
     }
 
     static nonisolated func paginate(book: BookDocument, context: PaginationContext) -> [PaginatedChapter] {

@@ -30,7 +30,9 @@ struct TomeetApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            SplashView {
+                RootView()
+            }
         }
         .modelContainer(modelContainer)
         .environment(audioPlayer)

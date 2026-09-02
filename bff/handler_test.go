@@ -235,6 +235,25 @@ func TestUpstreamErrorDoesNotConsumeQuota(t *testing.T) {
 	}
 }
 
+func TestUnauthenticatedDoesNotWriteDeviceQuota(t *testing.T) {
+	newOKUpstream(t)
+	p := newTestProxy(t)
+	p.AllowUnauthenticated = true
+	req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"stream":false}`))
+	req.Header.Set("X-Device-ID", "dev-x") // 无 X-App-Token,但携带设备 ID
+	rec := httptest.NewRecorder()
+	p.HandleCompletions(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	if got, _ := p.Store.globalCount(); got != 1 {
+		t.Fatalf("global budget must count unauthenticated requests, got %d", got)
+	}
+	if got, _ := p.Store.deviceCount("dev-x"); got != 0 {
+		t.Fatalf("unauthenticated request must not write device quota, got %d", got)
+	}
+}
+
 func TestGlobalBudgetExceededReturns503(t *testing.T) {
 	newOKUpstream(t)
 	p := newTestProxy(t)
