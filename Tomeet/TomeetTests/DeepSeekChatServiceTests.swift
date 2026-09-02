@@ -2,7 +2,75 @@ import Foundation
 import Testing
 @testable import Tomeet
 
+/// 测试用 URL 拦截器。handler 返回 (响应, 响应体)。
+final class MockURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var handler: (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let handler = Self.handler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.unknown))
+            return
+        }
+        do {
+            let (response, data) = try handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
+
+    static func makeSession() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockURLProtocol.self]
+        return URLSession(configuration: config)
+    }
+}
+
 struct DeepSeekChatServiceTests {
+    private func makeService(
+        handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
+    ) -> DeepSeekChatService {
+        MockURLProtocol.handler = handler
+        return DeepSeekChatService(
+            appToken: "test-token",
+            deviceID: "test-device",
+            session: MockURLProtocol.makeSession()
+        )
+    }
+
+    private func sseResponse(_ request: URLRequest, headers: [String: String] = [:]) -> (HTTPURLResponse, Data) {
+        var allHeaders = ["Content-Type": "text/event-stream"]
+        allHeaders.merge(headers) { _, new in new }
+        let response = HTTPURLResponse(
+            url: request.url!, statusCode: 200, httpVersion: nil, headerFields: allHeaders
+        )!
+        let body = "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\ndata: [DONE]\n\n"
+        return (response, Data(body.utf8))
+    }
+
+    @Test func sendsDeviceIDHeader() async throws {
+        nonisolated(unsafe) var gotDeviceID: String?
+        let service = makeService { request in
+            gotDeviceID = request.value(forHTTPHeaderField: "X-Device-ID")
+            return self.sseResponse(request)
+        }
+        var text = ""
+        for try await chunk in service.replyStream(
+            to: [ChatMessage(role: .user, text: "hello")], contextBook: nil
+        ) {
+            text += chunk
+        }
+        #expect(gotDeviceID == "test-device")
+        #expect(text == "hi")
+    }
+
     // MARK: - SSE line parsing
 
     @Test func sseDataParsesStandardLine() {
@@ -72,5 +140,12 @@ struct DeepSeekChatServiceTests {
         #expect(apiMessages?.first?["role"] == "system")
         #expect(apiMessages?.last?["role"] == "user")
         #expect(apiMessages?.last?["content"] == "hi")
+    }
+}
+
+struct DeviceIDProviderTests {
+    @Test func idIsNonEmptyAndStable() {
+        #expect(!DeviceIDProvider().id.isEmpty)
+        #expect(DeviceIDProvider().id == DeviceIDProvider().id)
     }
 }

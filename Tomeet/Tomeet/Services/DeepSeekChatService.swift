@@ -19,12 +19,16 @@ struct DeepSeekChatService: ChatService {
     var maxTokens = 1024
     var temperature = 0.7
     var baseURL = URL(string: "https://tomeet-api.smallbeebee.com/v1/chat/completions")!
+    var deviceID: String
 
     private let appToken: String
     private let session: URLSession
 
-    init(appToken: String = Secrets.bffAppToken, session: URLSession = .shared) {
+    init(appToken: String = Secrets.bffAppToken,
+         deviceID: String = DeviceIDProvider().id,
+         session: URLSession = .shared) {
         self.appToken = appToken
+        self.deviceID = deviceID
         self.session = session
     }
 
@@ -76,6 +80,7 @@ struct DeepSeekChatService: ChatService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(appToken, forHTTPHeaderField: "X-App-Token")
+        request.setValue(deviceID, forHTTPHeaderField: "X-Device-ID")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
     }
