@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +30,10 @@ type Proxy struct {
 	AppTokens            map[string]string // token -> app label
 	AllowUnauthenticated bool
 	UnauthRatePerMinute  int
+
+	Store             *QuotaStore
+	DailyFreeQuota    int // 每设备每日免费次数
+	DailyGlobalBudget int // 全局每日请求熔断
 
 	mu           sync.Mutex
 	unauthCounts map[string]rateCounter
@@ -69,6 +75,41 @@ func (p *Proxy) HandleCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deviceID := r.Header.Get("X-Device-ID")
+	authenticated := ok && token != ""
+	if authenticated && deviceID == "" {
+		http.Error(w, `{"error":"device_id_required"}`, http.StatusBadRequest)
+		return
+	}
+
+	globalUsed, err := p.Store.globalCount()
+	if err != nil {
+		log.Printf("quota store error: %v", err)
+		http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+		return
+	}
+	if globalUsed >= p.DailyGlobalBudget {
+		http.Error(w, `{"error":"service_unavailable"}`, http.StatusServiceUnavailable)
+		return
+	}
+
+	deviceUsed := 0
+	if authenticated {
+		deviceUsed, err = p.Store.deviceCount(deviceID)
+		if err != nil {
+			log.Printf("quota store error: %v", err)
+			http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+			return
+		}
+		if deviceUsed >= p.DailyFreeQuota {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			fmt.Fprintf(w, `{"error":"quota_exceeded","resetAt":%q}`,
+				p.Store.resetAt().Format(time.RFC3339))
+			return
+		}
+	}
+
 	isStream := peekStream(body)
 	log.Printf("app=%s stream=%t bytes=%d", appLabel, isStream, len(body))
 
@@ -89,6 +130,19 @@ func (p *Proxy) HandleCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer upResp.Body.Close()
+
+	if upResp.StatusCode >= 200 && upResp.StatusCode < 300 {
+		if err := p.Store.increment(deviceID); err != nil {
+			log.Printf("quota increment failed: %v", err)
+		}
+		if authenticated {
+			remaining := p.DailyFreeQuota - deviceUsed - 1
+			if remaining < 0 {
+				remaining = 0
+			}
+			w.Header().Set("X-Quota-Remaining", strconv.Itoa(remaining))
+		}
+	}
 
 	if !isStream {
 		w.Header().Set("Content-Type", "application/json")
