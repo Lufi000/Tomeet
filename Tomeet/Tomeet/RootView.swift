@@ -1,7 +1,9 @@
+import SwiftData
 import SwiftUI
 
 struct RootView: View {
     @Environment(AudioPlayerService.self) private var audioPlayer
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedTab = 0
     @State private var showNowPlaying = false
     /// TabBar 胶囊顶边距底部的距离（实测）；读到前按常见胶囊高度兜底
@@ -43,6 +45,17 @@ struct RootView: View {
             }
         }
         .tint(Theme.accent)
+        // 临时调试：-DebugTogglePlayback 启动参数下自动播放并周期切换播放/暂停，复现迷你条图标闪烁
+        .task {
+            guard CommandLine.arguments.contains("-DebugTogglePlayback") else { return }
+            let books = (try? modelContext.fetch(FetchDescriptor<Book>())) ?? []
+            guard let book = books.first(where: { BookSourceResolver.audioURL(for: $0) != nil }) else { return }
+            await audioPlayer.load(book: book)
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.5))
+                audioPlayer.togglePlayPause()
+            }
+        }
         // Theme 色板只有浅色一套，锁定浅色模式，避免系统深色翻转键盘/弹窗等系统表面。
         .preferredColorScheme(.light)
     }
