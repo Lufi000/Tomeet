@@ -2,6 +2,8 @@ import Foundation
 import Testing
 @testable import Tomeet
 
+// MockURLProtocol 使用全局静态 handler,必须串行执行
+@Suite(.serialized)
 @MainActor
 struct AIChatViewModelTests {
     private struct FailingChatService: ChatService {
@@ -12,6 +14,38 @@ struct AIChatViewModelTests {
 
     private func makeViewModel(books: [Book] = []) -> AIChatViewModel {
         AIChatViewModel(chatService: MockChatService(chunkDelay: .zero), books: books)
+    }
+
+    private func makeQuota() -> QuotaService {
+        QuotaService(
+            baseURL: URL(string: "https://example.com/v1/quota")!,
+            appToken: "test-token",
+            deviceID: "test-device",
+            session: MockURLProtocol.makeSession()
+        )
+    }
+
+    @Test func sendIsBlockedWhenQuotaExhausted() async {
+        let quota = makeQuota()
+        quota.noteExhausted(resetAt: nil)
+        let viewModel = AIChatViewModel(
+            chatService: MockChatService(chunkDelay: .zero),
+            quota: quota,
+            books: []
+        )
+        await viewModel.send("hello")
+        #expect(viewModel.messages.isEmpty)
+    }
+
+    @Test func sendStreamsWhenQuotaAvailable() async {
+        let viewModel = AIChatViewModel(
+            chatService: MockChatService(chunkDelay: .zero),
+            quota: makeQuota(),
+            books: []
+        )
+        await viewModel.send("hello")
+        #expect(viewModel.messages.count == 2)
+        #expect(viewModel.messages.last?.text.isEmpty == false)
     }
 
     @Test func sendShowsErrorInAssistantMessageWhenServiceFails() async {

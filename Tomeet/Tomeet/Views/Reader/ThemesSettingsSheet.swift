@@ -18,7 +18,7 @@ struct ThemesSettingsSheet: View {
                 // 系统内联标题字体无法定制，标题与 Done 自己画
                 HStack {
                     Text("Themes & Settings")
-                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                        .font(.splendid(.headline)).splendidTracking(.headline)
                     Spacer()
                     Button("Done") { dismiss() }
                 }
@@ -92,7 +92,7 @@ struct ThemesSettingsSheet: View {
             try? modelContext.save()
         } label: {
             Text(isIncrease ? "A" : "A")
-                .font(.splendid(isIncrease ? .title2 : .callout, weight: .semibold)).tracking(Theme.letterSpacing)
+                .font(.splendid(isIncrease ? .title2 : .callout, weight: .semibold)).splendidTracking(isIncrease ? .title2 : .callout)
                 .foregroundStyle(.primary)
                 .frame(width: 44, height: 44)
         }
@@ -156,11 +156,11 @@ struct ThemesSettingsSheet: View {
             try? modelContext.save()
         } label: {
             VStack(spacing: 8) {
-                Text("大小")
+                Text("Size")
                     .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(theme.textColor)
                 Text(theme.displayName)
-                    .font(.splendid(.caption, weight: .medium)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.caption, weight: .medium)).splendidTracking(.caption)
                     .foregroundStyle(theme.textColor.opacity(0.8))
             }
             .frame(maxWidth: .infinity, minHeight: 88)
@@ -187,7 +187,7 @@ struct ThemesSettingsSheet: View {
             HStack(spacing: 8) {
                 Image(systemName: showAdvanced ? "chevron.up" : "gearshape")
                 Text(showAdvanced ? "Hide Details" : "Customize")
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
             }
             .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)
@@ -267,7 +267,7 @@ struct ThemesSettingsSheet: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                 Text(title)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
                 Spacer()
                 Text(String(format: "%.2f", value.wrappedValue))
                     .font(.splendid(.caption).monospacedDigit())
@@ -284,7 +284,7 @@ struct ThemesSettingsSheet: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
             Text(title)
-                .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
             Spacer()
             Stepper(
                 value: Binding(

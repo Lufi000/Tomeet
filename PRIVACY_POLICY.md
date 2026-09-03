@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last Updated:** 2026-08-26
+**Last Updated:** 2026-09-03
 
 ## Introduction
 
@@ -17,7 +17,7 @@ Tomeet (“we”, “us”, or “the App”) is an AI reading app designed to h
 
 ### Information Collected Automatically
 
-- **Device information**: device model, iOS version, app version, and unique device identifiers used solely for crash analytics.
+- **Device information**: device model, iOS version, app version, and unique device identifiers used solely for crash analytics and for metering the daily free AI conversation quota (the vendor device identifier is stored with a daily counter on our server; it is not linked to your identity and is not used for tracking).
 - **Usage data**: feature usage frequency and screen visits, used to improve the product experience.
 - **Diagnostic information**: crash logs and performance data, used only for technical troubleshooting.
 

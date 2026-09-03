@@ -57,7 +57,7 @@ final class AudioPlayerService {
         currentBookID = nil
 
         guard let url = BookSourceResolver.audioURL(for: book) else {
-            setState(.failed("音频文件缺失"))
+            setState(.failed(String(localized: "Audio file missing")))
             logger.error("audio file missing for book \(book.title)")
             return
         }
@@ -71,14 +71,14 @@ final class AudioPlayerService {
             let start = Self.clampedStart(listenPosition: book.listenPosition, duration: d)
             player.seek(to: start)
             currentTime = start
-            nowPlaying.configure(title: book.title, artist: book.author, album: "讲书 · Tomeet")
+            nowPlaying.configure(title: book.title, artist: book.author, album: String(localized: "Narration · Tomeet"))
             nowPlaying.update(elapsed: start, duration: d, rate: rate)
             player.rate = rate
             player.play()
             setState(.playing)
             logger.info("loaded \(book.title) at \(start)s / \(d)s")
         } catch {
-            setState(.failed("音频加载失败"))
+            setState(.failed(String(localized: "Failed to load audio")))
             logger.error("load failed for \(book.title): \(error.localizedDescription)")
         }
     }

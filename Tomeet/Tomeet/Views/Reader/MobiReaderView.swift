@@ -20,15 +20,15 @@ struct MobiReaderView: View {
                     .frame(width: 140)
 
                 Text(book.title)
-                    .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                    .splendidContentFont(.title2, weight: .bold, text: book.title)
                     .multilineTextAlignment(.center)
 
                 Text(book.author)
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .splendidContentFont(.subheadline, text: book.author)
                     .foregroundStyle(.secondary)
 
                 Text("MOBI reader is coming soon.")
-                    .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.body)).splendidTracking(.body)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
 

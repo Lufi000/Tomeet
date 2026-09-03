@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// 全屏听书播放器：封面 + 进度 + 控制区。风格沿用阅读器主题语义。
+/// 全屏听书播放器：封面 + 进度 + 控制区。配色沿用首页主题（Theme 色板）。
 /// 听书时长统计在 AudioPlayerService 里按播放状态计，这里只管进度写回。
 struct ListenPlayerView: View {
     let book: Book
@@ -12,14 +12,14 @@ struct ListenPlayerView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Theme.canvas.ignoresSafeArea()
             VStack(spacing: 28) {
                 HStack {
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.splendid(.title2)).tracking(Theme.letterSpacing)
-                            .foregroundStyle(.white.opacity(0.8))
+                            .font(.splendid(.title2)).splendidTracking(.title2)
+                            .foregroundStyle(Theme.inkTertiary)
                     }
                 }
                 .padding()
@@ -27,14 +27,14 @@ struct ListenPlayerView: View {
                 BookCoverView(book: book)
                     .frame(width: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(radius: 16)
+                    .shadow(color: .black.opacity(0.12), radius: 16, y: 4)
 
                 VStack(spacing: 6) {
                     Text(book.title)
-                        .font(.splendid(.title3, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .splendidContentFont(.title3, weight: .semibold, text: book.title)
                     Text(subtitle)
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
-                        .foregroundStyle(.secondary)
+                        .splendidContentFont(.subheadline, text: subtitle)
+                        .foregroundStyle(Theme.inkSecondary)
                 }
 
                 switch player.state {
@@ -42,11 +42,12 @@ struct ListenPlayerView: View {
                     VStack(spacing: 12) {
                         Text(message)
                             .font(.splendid(.body))
-                            .foregroundStyle(.secondary)
-                        Button("重试") {
+                            .foregroundStyle(Theme.inkSecondary)
+                        Button("Retry") {
                             Task { await player.load(book: book) }
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(Theme.accent)
                     }
                 default:
                     controls
@@ -54,7 +55,7 @@ struct ListenPlayerView: View {
 
                 Spacer()
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.ink)
         }
         .task {
             await player.load(book: book)
@@ -77,9 +78,9 @@ struct ListenPlayerView: View {
 
     private var subtitle: String {
         if let durationMinutes {
-            return "讲书 · 约 \(durationMinutes) 分钟"
+            return String(localized: "Narration · ~\(durationMinutes) min")
         }
-        return "讲书"
+        return String(localized: "Narration")
     }
 
     private var controls: some View {
@@ -92,13 +93,14 @@ struct ListenPlayerView: View {
                     ),
                     in: 0...max(player.duration, 1)
                 )
+                .tint(Theme.accent)
                 HStack {
                     Text(formatTime(player.currentTime))
                     Spacer()
                     Text("-\(formatTime(max(0, player.duration - player.currentTime)))")
                 }
                 .font(.splendid(.caption).monospacedDigit())
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
             }
             .padding(.horizontal, 32)
 
@@ -109,19 +111,21 @@ struct ListenPlayerView: View {
                 Button { player.togglePlayPause() } label: {
                     Image(systemName: player.state == .playing ? "pause.circle.fill" : "play.circle.fill")
                         .font(.system(size: 72))
+                        .foregroundStyle(Theme.accent)
                 }
                 Button { player.skip(by: 15) } label: {
                     Image(systemName: "goforward.15").font(.title)
                 }
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.ink)
 
             Button { player.cycleRate() } label: {
                 Text(rateLabel)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline, weight: .semibold)).splendidTracking(.subheadline)
+                    .foregroundStyle(Theme.inkSecondary)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
-                    .background(Capsule().fill(.white.opacity(0.15)))
+                    .background(Capsule().fill(Theme.inkTertiary.opacity(0.12)))
             }
             .buttonStyle(.plain)
         }

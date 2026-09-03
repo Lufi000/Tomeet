@@ -10,6 +10,8 @@ struct BookCoverView: View {
     let book: Book
 
     @State private var coverImage: UIImage?
+    /// 封面已加载的书：SwiftUI 复用 view 时 @State 不重置，靠它识别换书并重载
+    @State private var loadedBookID: UUID?
 
     var body: some View {
         Color.clear
@@ -37,13 +39,16 @@ struct BookCoverView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
             }
-            .task {
+            .task(id: book.id) {
                 await loadEmbeddedCover()
             }
     }
 
     private func loadEmbeddedCover() async {
-        guard coverImage == nil, book.coverImageName == nil,
+        guard loadedBookID != book.id else { return }
+        loadedBookID = book.id
+        coverImage = nil
+        guard book.coverImageName == nil,
               let directoryURL = BookSourceResolver.existingDirectoryURL(for: book) else {
             return
         }

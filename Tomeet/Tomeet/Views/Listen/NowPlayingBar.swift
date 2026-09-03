@@ -19,11 +19,11 @@ struct NowPlayingBar: View {
                     .frame(width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(book.title)
-                        .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .splendidContentFont(.subheadline, weight: .semibold, text: book.title)
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
-                    Text("讲书 · \(book.author)")
-                        .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                    Text(narrationLabel(for: book))
+                        .splendidContentFont(.caption2, text: narrationLabel(for: book))
                         .foregroundStyle(Theme.inkTertiary)
                         .lineLimit(1)
                 }
@@ -32,8 +32,8 @@ struct NowPlayingBar: View {
                 ProgressView()
                     .tint(Theme.accent)
                     .controlSize(.small)
-                Text("加载中…")
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                Text(Self.loadingLabel)
+                    .splendidContentFont(.subheadline, text: Self.loadingLabel)
                     .foregroundStyle(Theme.inkSecondary)
             }
 
@@ -48,6 +48,18 @@ struct NowPlayingBar: View {
             }
             .buttonStyle(.plain)
             .disabled(player.currentBook == nil)
+
+            // 关闭：停止播放并收起迷你条
+            Button {
+                player.unload()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.inkTertiary)
+                    .frame(width: 28, height: 28)
+                    .background(Theme.inkTertiary.opacity(0.12), in: Circle())
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .frame(height: 56)
@@ -71,8 +83,14 @@ struct NowPlayingBar: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
+    }
+
+    /// 本地化后的副标题/占位文案。`splendidContentFont(text:)` 靠内容判断 CJK，
+    /// 必须传本地化后的实际文本，不能传英文 key。
+    private static let loadingLabel = String(localized: "Loading…")
+
+    private func narrationLabel(for book: Book) -> String {
+        String(localized: "Narration · \(book.author)")
     }
 
     private var progressFraction: Double {

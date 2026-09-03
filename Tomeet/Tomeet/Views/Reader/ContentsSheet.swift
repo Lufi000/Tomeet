@@ -37,10 +37,10 @@ struct ContentsSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(book.title)
-                    .font(.splendid(.headline)).tracking(Theme.letterSpacing)
+                    .splendidContentFont(.headline, text: book.title)
                     .lineLimit(2)
                 Text("Page \(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.splendid(.subheadline)).splendidTracking(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
@@ -62,12 +62,12 @@ struct ContentsSheet: View {
             } label: {
                 HStack {
                     Text(chapter.title)
-                        .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                        .splendidContentFont(.body, text: chapter.title)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                     Spacer()
                     Text("\(chapterPageNumber(at: index))")
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                        .font(.splendid(.subheadline)).splendidTracking(.subheadline)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }

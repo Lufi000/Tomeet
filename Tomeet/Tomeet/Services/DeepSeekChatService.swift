@@ -3,11 +3,13 @@ import Foundation
 enum ChatServiceError: LocalizedError {
     case http(statusCode: Int)
     case emptyResponse
+    case quotaExceeded(resetAt: Date?)
 
     var errorDescription: String? {
         switch self {
         case .http(let code): return "AI service returned HTTP \(code)."
         case .emptyResponse: return "AI service returned an empty response."
+        case .quotaExceeded: return "Daily free conversation quota exhausted."
         }
     }
 }
@@ -19,12 +21,19 @@ struct DeepSeekChatService: ChatService {
     var maxTokens = 1024
     var temperature = 0.7
     var baseURL = URL(string: "https://tomeet-api.smallbeebee.com/v1/chat/completions")!
+    var deviceID: String
+
+    /// 每次成功响应带上 X-Quota-Remaining 时回调(用于 QuotaService 本地更新)。
+    var onQuotaRemaining: (@Sendable (Int) -> Void)?
 
     private let appToken: String
     private let session: URLSession
 
-    init(appToken: String = Secrets.bffAppToken, session: URLSession = .shared) {
+    init(appToken: String = Secrets.bffAppToken,
+         deviceID: String = DeviceIDProvider().id,
+         session: URLSession = .shared) {
         self.appToken = appToken
+        self.deviceID = deviceID
         self.session = session
     }
 
@@ -36,8 +45,20 @@ struct DeepSeekChatService: ChatService {
                 do {
                     let request = try buildURLRequest(messages: messages, contextBook: contextBook)
                     let (bytes, response) = try await session.bytes(for: request)
-                    guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                        throw ChatServiceError.http(statusCode: (response as? HTTPURLResponse)?.statusCode ?? -1)
+                    guard let http = response as? HTTPURLResponse else {
+                        throw ChatServiceError.http(statusCode: -1)
+                    }
+                    if http.statusCode == 429 {
+                        throw ChatServiceError.quotaExceeded(
+                            resetAt: try await Self.readResetAt(from: bytes)
+                        )
+                    }
+                    guard http.statusCode == 200 else {
+                        throw ChatServiceError.http(statusCode: http.statusCode)
+                    }
+                    if let remaining = http.value(forHTTPHeaderField: "X-Quota-Remaining")
+                        .flatMap(Int.init) {
+                        onQuotaRemaining?(remaining)
                     }
                     for try await line in bytes.lines {
                         guard let data = Self.sseData(from: line),
@@ -76,6 +97,7 @@ struct DeepSeekChatService: ChatService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(appToken, forHTTPHeaderField: "X-App-Token")
+        request.setValue(deviceID, forHTTPHeaderField: "X-Device-ID")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
     }
@@ -89,6 +111,19 @@ struct DeepSeekChatService: ChatService {
     }
 
     // MARK: - SSE parsing
+
+    /// 从 429 响应体 {"error":"quota_exceeded","resetAt":"..."} 解析重置时间;失败返回 nil。
+    nonisolated static func readResetAt(from bytes: URLSession.AsyncBytes) async throws -> Date? {
+        struct QuotaErrorBody: Decodable { let resetAt: String? }
+        var data = Data()
+        for try await line in bytes.lines {
+            data.append(contentsOf: line.utf8)
+        }
+        guard let decoded = try? JSONDecoder().decode(QuotaErrorBody.self, from: data),
+              let raw = decoded.resetAt
+        else { return nil }
+        return ISO8601DateFormatter().date(from: raw)
+    }
 
     /// 兼容 `data: xxx` 与 `data:xxx` 两种 SSE 行格式，忽略 [DONE]、空行和注释行。
     nonisolated static func sseData(from line: String) -> Data? {
