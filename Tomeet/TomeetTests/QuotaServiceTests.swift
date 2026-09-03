@@ -9,9 +9,10 @@ struct QuotaServiceTests {
     private func makeService(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> QuotaService {
-        MockURLProtocol.handler = handler
+        let baseURL = URL(string: "https://example.com/v1/quota")!
+        MockURLProtocol.setHandler(handler, for: baseURL)
         return QuotaService(
-            baseURL: URL(string: "https://example.com/v1/quota")!,
+            baseURL: baseURL,
             appToken: "test-token",
             deviceID: "test-device",
             session: MockURLProtocol.makeSession()

@@ -2,15 +2,36 @@ import Foundation
 import Testing
 @testable import Tomeet
 
-/// 测试用 URL 拦截器。handler 返回 (响应, 响应体)。
+/// 测试用 URL 拦截器。handler 按请求 URL 注册与分发（host+path），
+/// 因为 Swift Testing 的 `.serialized` 只保证同一 Suite 内串行，
+/// 不同 Suite 仍会并行，全局单一 handler 会被并行 Suite 覆盖。
 final class MockURLProtocol: URLProtocol, @unchecked Sendable {
-    nonisolated(unsafe) static var handler: (@Sendable (URLRequest) throws -> (HTTPURLResponse, Data))?
+    typealias Handler = @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
+
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var handlers: [String: Handler] = [:]
+
+    static func setHandler(_ handler: @escaping Handler, for url: URL) {
+        lock.lock()
+        handlers[key(for: url)] = handler
+        lock.unlock()
+    }
+
+    private static func handler(for url: URL?) -> Handler? {
+        lock.lock()
+        defer { lock.unlock() }
+        return url.flatMap { handlers[key(for: $0)] }
+    }
+
+    private static func key(for url: URL) -> String {
+        (url.host() ?? "") + url.path()
+    }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        guard let handler = Self.handler else {
+        guard let handler = Self.handler(for: request.url) else {
             client?.urlProtocol(self, didFailWithError: URLError(.unknown))
             return
         }
@@ -37,12 +58,13 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
     private func makeService(
         handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> DeepSeekChatService {
-        MockURLProtocol.handler = handler
-        return DeepSeekChatService(
+        let service = DeepSeekChatService(
             appToken: "test-token",
             deviceID: "test-device",
             session: MockURLProtocol.makeSession()
         )
+        MockURLProtocol.setHandler(handler, for: service.baseURL)
+        return service
     }
 
     private func sseResponse(_ request: URLRequest, headers: [String: String] = [:]) -> (HTTPURLResponse, Data) {
