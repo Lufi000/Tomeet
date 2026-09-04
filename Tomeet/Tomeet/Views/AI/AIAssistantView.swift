@@ -153,9 +153,11 @@ struct AIAssistantView: View {
     private var inputBar: some View {
         VStack(spacing: 6) {
             if let remaining = viewModel.quota.remaining {
+                // 三目会先求值成 String 丢掉 LocalizedStringKey,导致运行时永远不走
+                // xcstrings;两个分支显式声明为 LocalizedStringKey 才能本地化。
                 Text(remaining == 1
-                     ? "1 free conversation left today"
-                     : "\(remaining) free conversations left today")
+                     ? LocalizedStringKey("1 free conversation left today")
+                     : LocalizedStringKey("\(remaining) free conversations left today"))
                     .font(.caption2)
                     .foregroundStyle(remaining <= 3 ? Theme.accent : Theme.inkTertiary)
             }

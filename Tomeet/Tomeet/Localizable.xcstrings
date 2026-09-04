@@ -1,377 +1,303 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "" : {
-
-    },
-    "-%@" : {
-
-    },
-    "…" : {
-
-    },
-    "“%@” will be removed from your library." : {
-
-    },
-    "%@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ · %2$@"
+  "sourceLanguage": "en",
+  "strings": {
+    "": {},
+    "-%@": {},
+    "…": {},
+    "“%@” will be removed from your library.": {},
+    "%@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@"
           }
         }
       }
     },
-    "%@ complete" : {
-
-    },
-    "%lld" : {
-
-    },
-    "%lld / %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld / %2$lld"
+    "%@ complete": {},
+    "%lld": {},
+    "%lld / %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld / %2$lld"
           }
         }
       }
     },
-    "%lld free conversations left today" : {
-
-    },
-    "1 free conversation left today" : {
-
-    },
-    "A" : {
-
-    },
-    "Ask a question, dig into a concept,\nor compare what different books say." : {
-
-    },
-    "Ask freely" : {
-
-    },
-    "Ask Freely" : {
-
-    },
-    "Asking about" : {
-
-    },
-    "Audio file missing" : {
-      "comment" : "听书：找不到音频文件时的错误",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "音频文件缺失"
+    "%lld free conversations left today": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日还可免费对话 %lld 次"
           }
         }
       }
     },
-    "Author" : {
-
-    },
-    "Books you start reading will appear here." : {
-
-    },
-    "Cancel" : {
-
-    },
-    "Chapter" : {
-      "comment" : "阅读器顶部章节小标签",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "章节"
+    "1 free conversation left today": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日还可免费对话 1 次"
           }
         }
       }
     },
-    "Choose a Book" : {
-
-    },
-    "Continue" : {
-
-    },
-    "Customize" : {
-
-    },
-    "Done" : {
-
-    },
-    "EPUB container.xml missing or invalid: %@" : {
-      "comment" : "EPUB 解析错误（%@ 为路径）",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EPUB container.xml 缺失或无效：%@"
+    "A": {},
+    "Ask a question, dig into a concept,\nor compare what different books say.": {},
+    "Ask freely": {},
+    "Ask Freely": {},
+    "Asking about": {},
+    "Audio file missing": {
+      "comment": "听书：找不到音频文件时的错误",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频文件缺失"
           }
         }
       }
     },
-    "EPUB OPF missing or invalid: %@" : {
-      "comment" : "EPUB 解析错误（%@ 为路径）",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EPUB OPF 缺失或无效：%@"
+    "Author": {},
+    "Books you start reading will appear here.": {},
+    "Cancel": {},
+    "Chapter": {
+      "comment": "阅读器顶部章节小标签",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "章节"
           }
         }
       }
     },
-    "EPUB spine missing" : {
-      "comment" : "EPUB 解析错误",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "EPUB spine 缺失"
+    "Choose a Book": {},
+    "Continue": {},
+    "Customize": {},
+    "Done": {},
+    "EPUB container.xml missing or invalid: %@": {
+      "comment": "EPUB 解析错误（%@ 为路径）",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EPUB container.xml 缺失或无效：%@"
           }
         }
       }
     },
-    "Every book's mind is waiting to talk with you" : {
-      "comment" : "开屏品牌宣言第二行",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每一本书的思想，都愿意与你对话"
+    "EPUB OPF missing or invalid: %@": {
+      "comment": "EPUB 解析错误（%@ 为路径）",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EPUB OPF 缺失或无效：%@"
           }
         }
       }
     },
-    "Failed to load audio" : {
-      "comment" : "听书：音频加载失败",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "音频加载失败"
+    "EPUB spine missing": {
+      "comment": "EPUB 解析错误",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EPUB spine 缺失"
           }
         }
       }
     },
-    "Free conversations refresh at midnight.\nUnlimited conversations are coming with subscription." : {
-
-    },
-    "Group by" : {
-
-    },
-    "Hide Details" : {
-
-    },
-    "Home" : {
-
-    },
-    "Import a book and meet the mind inside." : {
-
-    },
-    "Import Book" : {
-
-    },
-    "Import Book..." : {
-
-    },
-    "Import Failed" : {
-
-    },
-    "Importing..." : {
-
-    },
-    "Introduction" : {
-      "comment" : "阅读器顶部引言小标签",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "引言"
+    "Every book's mind is waiting to talk with you": {
+      "comment": "开屏品牌宣言第二行",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每一本书的思想，都愿意与你对话"
           }
         }
       }
     },
-    "L'élégance du hérisson" : {
-
-    },
-    "Library" : {
-
-    },
-    "Loading…" : {
-      "comment" : "迷你播放条加载占位",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加载中…"
+    "Failed to load audio": {
+      "comment": "听书：音频加载失败",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频加载失败"
           }
         }
       }
     },
-    "Manual" : {
-
-    },
-    "Meet the mind inside every book" : {
-
-    },
-    "MOBI reader is coming soon." : {
-
-    },
-    "More" : {
-
-    },
-    "Narration" : {
-      "comment" : "听书副标题（无时长时）",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "讲书"
+    "Free conversations refresh at midnight.\nUnlimited conversations are coming with subscription.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "免费对话将于 0 点刷新。\n订阅版即将上线，无限畅聊。"
           }
         }
       }
     },
-    "Narration · %@" : {
-      "comment" : "迷你播放条副标题（%@ 为作者）",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "讲书 · %@"
+    "Group by": {},
+    "Hide Details": {},
+    "Home": {},
+    "Import a book and meet the mind inside.": {},
+    "Import Book": {},
+    "Import Book...": {},
+    "Import Failed": {},
+    "Importing...": {},
+    "Introduction": {
+      "comment": "阅读器顶部引言小标签",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "引言"
           }
         }
       }
     },
-    "Narration · ~%lld min" : {
-      "comment" : "听书副标题（%lld 为分钟数）",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "讲书 · 约 %lld 分钟"
+    "L'élégance du hérisson": {},
+    "Library": {},
+    "Loading…": {
+      "comment": "迷你播放条加载占位",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加载中…"
           }
         }
       }
     },
-    "Narration · Tomeet" : {
-      "comment" : "锁屏 Now Playing 专辑名",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "讲书 · Tomeet"
+    "Manual": {},
+    "Meet the mind inside every book": {},
+    "MOBI reader is coming soon.": {},
+    "More": {},
+    "Narration": {
+      "comment": "听书副标题（无时长时）",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讲书"
           }
         }
       }
     },
-    "NEW" : {
-
-    },
-    "No books yet" : {
-
-    },
-    "Not Downloaded" : {
-
-    },
-    "OK" : {
-
-    },
-    "Or pick a book to ask about" : {
-
-    },
-    "Page %lld of %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Page %1$lld of %2$lld"
+    "Narration · %@": {
+      "comment": "迷你播放条副标题（%@ 为作者）",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讲书 · %@"
           }
         }
       }
     },
-    "PDF Not Found" : {
-
-    },
-    "Reading is for everyone" : {
-      "comment" : "开屏品牌宣言第一行",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "阅读没有门槛"
+    "Narration · ~%lld min": {
+      "comment": "听书副标题（%lld 为分钟数）",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讲书 · 约 %lld 分钟"
           }
         }
       }
     },
-    "Recent" : {
-
-    },
-    "Remove" : {
-
-    },
-    "Remove Book" : {
-
-    },
-    "Remove Downloads" : {
-
-    },
-    "Remove Failed" : {
-
-    },
-    "Retry" : {
-      "comment" : "失败重试按钮",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重试"
+    "Narration · Tomeet": {
+      "comment": "锁屏 Now Playing 专辑名",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讲书 · Tomeet"
           }
         }
       }
     },
-    "Select" : {
-
-    },
-    "Size" : {
-      "comment" : "主题设置面板预览卡片上的字号示例字",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "大小"
+    "NEW": {},
+    "No books yet": {},
+    "Not Downloaded": {},
+    "OK": {},
+    "Or pick a book to ask about": {},
+    "Page %lld of %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Page %1$lld of %2$lld"
           }
         }
       }
     },
-    "Sort by" : {
-
+    "PDF Not Found": {},
+    "Reading is for everyone": {
+      "comment": "开屏品牌宣言第一行",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阅读没有门槛"
+          }
+        }
+      }
     },
-    "That's today's 10 free conversations" : {
-
+    "Recent": {},
+    "Remove": {},
+    "Remove Book": {},
+    "Remove Downloads": {},
+    "Remove Failed": {},
+    "Retry": {
+      "comment": "失败重试按钮",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重试"
+          }
+        }
+      }
     },
-    "The PDF file is missing from storage." : {
-
+    "Select": {},
+    "Size": {
+      "comment": "主题设置面板预览卡片上的字号示例字",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大小"
+          }
+        }
+      }
     },
-    "Themes & Settings" : {
-
+    "Sort by": {},
+    "That's today's 10 free conversations": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天的 10 次免费对话已用完"
+          }
+        }
+      }
     },
-    "Title" : {
-
-    },
-    "Today" : {
-
-    },
-    "Tomeet" : {
-
-    },
-    "View" : {
-
-    }
+    "The PDF file is missing from storage.": {},
+    "Themes & Settings": {},
+    "Title": {},
+    "Today": {},
+    "Tomeet": {},
+    "View": {}
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
