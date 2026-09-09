@@ -279,6 +279,6 @@ struct SeedDataTests {
         let books = try context.fetch(FetchDescriptor<Book>())
         let seeded = try #require(books.first { $0.id == legacy.id })
         #expect(seeded.summary == initial.summary)
-        // #expect(seeded.summary != nil)  // Task 2 恢复:JSON 暂无简介数据,Task 2 填数据后取消注释
+        #expect(seeded.summary != nil)
     }
 }

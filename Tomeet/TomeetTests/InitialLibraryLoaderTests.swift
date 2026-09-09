@@ -34,6 +34,14 @@ struct InitialLibraryLoaderTests {
         #expect(found.name == "爱与关系")
     }
 
+    @Test func everyBookHasSummary() throws {
+        let catalog = try InitialLibraryLoader.load()
+        for book in catalog.books {
+            let summary = try #require(book.summary, "缺少简介: \(book.id)")
+            #expect(summary.count >= 20, "简介太短: \(book.id)")
+        }
+    }
+
     @Test func summaryIsOptionalInJSON() throws {
         // 不带 summary 的 JSON 片段也能解码(导入的书/旧数据兼容)
         let json = """

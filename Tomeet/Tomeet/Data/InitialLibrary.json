@@ -37,6 +37,7 @@
       "id": "george-macdonald_if-i-had-a-father",
       "title": "If I Had a Father",
       "author": "George MacDonald",
+      "summary": "一部关于缺席与寻找的小说。MacDonald 以维多利亚时代的笔触,写一个没有父亲的人如何在想象与信仰中重建自己的来处。温柔、缓慢,却直指人心最深处的渴望。",
       "year": 1886,
       "themes": [
         "know-yourself",
@@ -66,6 +67,7 @@
       "id": "01_1342_Pride_and_Prejudice",
       "title": "Pride and Prejudice",
       "author": "Jane Austen",
+      "summary": "奥斯丁最负盛名的小说。乡绅之女伊丽莎白与傲慢的达西先生从互相误解到彼此看清,写尽婚恋中的自尊与偏见。机锋四溢的对话,让它两百年后读来依然鲜活。",
       "category": "文学小说",
       "themes": []
     },
@@ -73,6 +75,7 @@
       "id": "02_2701_Moby_Dick",
       "title": "Moby Dick; Or, The Whale",
       "author": "Herman Melville",
+      "summary": "亚哈船长倾尽一切追捕咬断他一条腿的白鲸莫比·迪克。梅尔维尔把捕鲸知识、哲学沉思与复仇悲剧熔于一炉,写出人类执念与自然伟力的对峙,是美国文学的一座高峰。",
       "category": "文学小说",
       "themes": []
     },
@@ -80,6 +83,7 @@
       "id": "03_1727_The_Odyssey",
       "title": "The Odyssey / Rendered into English prose for the use of those who cannot read the original",
       "author": "Homer",
+      "summary": "特洛伊战争结束后,奥德修斯漂泊十年,历尽神怪与诱惑才回到家乡。荷马史诗的另一半,关于归途、坚忍与身份的辨认,是西方叙事传统的源头之一。",
       "category": "古典文学",
       "themes": []
     },
@@ -87,6 +91,7 @@
       "id": "04_2554_Crime_and_Punishment",
       "title": "Crime and Punishment",
       "author": "Fyodor Dostoyevsky",
+      "summary": "穷大学生拉斯柯尔尼科夫杀死放高利贷的老太婆,自以为替天行道,却从此被良心追缉。陀思妥耶夫斯基借一桩罪案,逼问人有没有权利越过道德的底线。",
       "category": "文学小说",
       "themes": []
     },
@@ -94,6 +99,7 @@
       "id": "05_2641_A_Room_with_a_View",
       "title": "A Room with a View",
       "author": "E. M. Forster",
+      "summary": "英国小姐露西在佛罗伦萨旅行时邂逅自由不羁的乔治,回国后要在体面婚约与内心真实之间抉择。福斯特以轻盈笔触,写出爱德华时代礼教下一次安静的觉醒。",
       "category": "文学小说",
       "themes": []
     },
@@ -101,6 +107,7 @@
       "id": "06_65238_The_Secret_of_Chimneys",
       "title": "The Secret of Chimneys",
       "author": "Agatha Christie",
+      "summary": "烟囱别墅的一场聚会演变成命案,背后牵动着欧洲小国的王位之争与一笔失踪的宝物。克里斯蒂早期的惊险小说,巴特尔警司在此登场,比她的纯推理更添冒险气息。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -108,6 +115,7 @@
       "id": "07_1513_Romeo_and_Juliet",
       "title": "Romeo and Juliet",
       "author": "William Shakespeare",
+      "summary": "维罗纳两大世仇家族的孩子一见钟情、秘密成婚,却被仇恨与命运推向绝境。莎士比亚最著名的爱情悲剧,写青春之爱的炽烈,也写成人世界仇恨的代价。",
       "category": "古典文学",
       "themes": []
     },
@@ -115,6 +123,7 @@
       "id": "08_3268_The_Mysteries_of_Udolpho",
       "title": "The Mysteries of Udolpho",
       "author": "Ann Ward Radcliffe",
+      "summary": "孤女艾米丽被囚于深山中的乌多尔福城堡,怪影与秘辛接踵而至。拉德克利夫的哥特小说经典,以悬念与风景写恐惧,是后来整个哥特与惊悚传统的源头之一。",
       "category": "古典文学",
       "themes": []
     },
@@ -122,6 +131,7 @@
       "id": "09_2465_Carmen",
       "title": "Carmen",
       "author": "Prosper Mérimée",
+      "summary": "士兵唐·何塞爱上桀骜不驯的吉普赛女郎卡门,被她一步步拖入走私与毁灭的轨道。梅里美的短篇名作,写自由与占有的不可调和,比歌剧更冷峻。",
       "category": "文学小说",
       "themes": []
     },
@@ -129,6 +139,7 @@
       "id": "10_1661_The_Adventures_of_Sherlock_Holmes",
       "title": "The Adventures of Sherlock Holmes",
       "author": "Arthur Conan Doyle",
+      "summary": "福尔摩斯与华生的十二个短篇案件,从《波希米亚丑闻》到《铜山毛榉案》。柯南·道尔把演绎法写成一种看世界的方式,短篇节奏最见功力,是入门福尔摩斯的首选。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -136,6 +147,7 @@
       "id": "11_2868_The_Green_Mummy",
       "title": "The Green Mummy",
       "author": "Fergus Hume",
+      "summary": "一具珍贵的绿色木乃伊牵扯出命案与遗产争夺,考古学的光环下藏着贪婪。弗格斯·休姆曾凭《双轮马车的秘密》风靡一时,本作延续他布局诡谲的侦探小说路数。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -143,6 +155,7 @@
       "id": "12_1260_Jane_Eyre",
       "title": "Jane Eyre: An Autobiography",
       "author": "Charlotte Brontë",
+      "summary": "孤女简·爱做家庭教师谋生,与阴郁的主人罗切斯特相爱,却在婚礼上撞见庄园的秘密。勃朗特写一个平凡女子对平等与尊严的坚持,是文学史上最独立的声音之一。",
       "category": "文学小说",
       "themes": []
     },
@@ -150,6 +163,7 @@
       "id": "14_11_Alice's_Adventures_in_Wonderland",
       "title": "Alice's Adventures in Wonderland",
       "author": "Lewis Carroll",
+      "summary": "爱丽丝追着白兔掉进兔子洞,在一个逻辑颠倒的世界里经历一连串荒诞奇遇。卡罗尔把语言游戏和数学式幽默藏进童话,孩子读出热闹,成人读出机锋。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -157,6 +171,7 @@
       "id": "15_67979_The_Blue_Castle",
       "title": "The Blue Castle: a novel",
       "author": "L. M. Montgomery",
+      "summary": "二十九岁的瓦兰西在家人眼中一无是处,一张诊断书却让她决心抛开讨好,去过真正想要的生活。《绿山墙的安妮》作者少见的成人小说,写一个女人迟来的自我与爱情。",
       "category": "文学小说",
       "themes": []
     },
@@ -164,6 +179,7 @@
       "id": "18_100_The_Complete_Works_of_William_Shakespeare",
       "title": "The Complete Works of William Shakespeare",
       "author": "William Shakespeare",
+      "summary": "莎士比亚全部戏剧与诗歌的合集,从《哈姆雷特》到十四行诗。英语文学的大半家底都在其中,任何读者都能在这里找到自己的入口。",
       "category": "古典文学",
       "themes": []
     },
@@ -171,6 +187,7 @@
       "id": "20_34413_The_Love_Letters_of_Mary_Wollstonecraft",
       "title": "The Love Letters of Mary Wollstonecraft to Gilbert Imlay",
       "author": "Mary Wollstonecraft",
+      "summary": "女权主义先驱沃斯通克拉夫特写给情人伊姆利的私人书信,记录一段感情从炽热到冷却的过程。没有著作里的理论姿态,只有一个独立女性在爱里的坦诚与挣扎。",
       "category": "传记纪实",
       "themes": []
     },
@@ -178,6 +195,7 @@
       "id": "21_1695_The_Man_Who_Was_Thursday",
       "title": "The Man Who Was Thursday: A Nightmare",
       "author": "G. K. Chesterton",
+      "summary": "诗人赛姆潜入七人组成的无政府主义秘密议会,代号「星期四」,却发现同僚个个另有身份。切斯特顿自称「噩梦」的寓言小说,悬疑外壳下是一场关于秩序与信仰的游戏。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -185,6 +203,7 @@
       "id": "23_6133_The_Extraordinary_Adventures_of_Arsene_Lupin",
       "title": "The Extraordinary Adventures of Arsène Lupin, Gentleman-Burglar",
       "author": "Maurice Leblanc",
+      "summary": "绅士怪盗亚森·罗平的九桩奇案:易容、调包、预告犯罪,他总能在警察眼皮底下全身而退。勒布朗创造的法国侠盗,其优雅与机智至今仍是同类角色的模板。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -192,6 +211,7 @@
       "id": "24_5197_My_Life_Volume_1",
       "title": "My Life — Volume 1",
       "author": "Richard Wagner",
+      "summary": "瓦格纳亲笔写下的前半生:求学、革命、流亡,以及《漂泊的荷兰人》《罗恩格林》的诞生。无论你是否喜欢他的音乐,这都是观察十九世纪欧洲艺术圈的直白自述。",
       "category": "传记纪实",
       "themes": []
     },
@@ -199,6 +219,7 @@
       "id": "25_21839_Sense_and_Sensibility",
       "title": "Sense and Sensibility",
       "author": "Jane Austen",
+      "summary": "达什伍德家两姐妹面对爱情与生计:姐姐埃莉诺克制隐忍,妹妹玛丽安率真炽热。奥斯丁的长篇处女作,借两种性情追问感情里理智与真心各应占几分。",
       "category": "文学小说",
       "themes": []
     },
@@ -206,6 +227,7 @@
       "id": "28_51252_The_Book_of_the_Thousand_Nights_and_a_Night",
       "title": "The Book of the Thousand Nights and a Night — Volume 01 (of 10)",
       "author": "",
+      "summary": "山鲁佐德用一夜一夜的故事留住国王的刀,伯顿的英译本以详尽注释著称。这是第一卷:框架故事与早期名篇都在其中,民间想象的丰饶远超童话印象。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -213,6 +235,7 @@
       "id": "29_831_Four_Arthurian_Romances",
       "title": "Four Arthurian Romances",
       "author": "active 12th century de Troyes Chrétien",
+      "summary": "十二世纪法国诗人克雷蒂安·德·特鲁瓦的四篇骑士传奇,兰斯洛特与圣杯的雏形都在其中。亚瑟王故事从史书走向文学的关键一站,后世骑士浪漫的共同源头。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -220,6 +243,7 @@
       "id": "30_145_Middlemarch",
       "title": "Middlemarch",
       "author": "George Eliot",
+      "summary": "外省小镇米德尔马契上,理想主义者多萝西娅与医生利德盖特各自在婚姻和事业里碰壁。艾略特以显微镜般的笔法写一个时代的抱负如何被现实磨耗,常被誉为最伟大的英语小说之一。",
       "category": "文学小说",
       "themes": []
     },
@@ -227,6 +251,7 @@
       "id": "31_564_The_Mystery_of_Edwin_Drood",
       "title": "The Mystery of Edwin Drood",
       "author": "Charles Dickens",
+      "summary": "唱诗班指挥贾斯珀表面体面,暗中沉迷鸦片并觊觎侄子的未婚妻,而侄子埃德温突然失踪。狄更斯未完成的长篇遗作,谜底的永远缺席反而成了文学史上一桩公案。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -234,6 +259,7 @@
       "id": "32_24739_Bidwell's_Travels",
       "title": "Bidwell's Travels, from Wall Street to London Prison: Fifteen Years in Solitude",
       "author": "Austin Bidwell",
+      "summary": "十九世纪轰动一时的诈骗犯奥斯汀·比德韦尔自述:从华尔街到伪造英格兰银行汇票,再到十五年单独监禁。一部真实的犯罪回忆录,经历比小说更离奇。",
       "category": "传记纪实",
       "themes": []
     },
@@ -241,6 +267,7 @@
       "id": "34_76639_Eloisa",
       "title": "Eloisa",
       "author": "Jean-Jacques Rousseau",
+      "summary": "女学生朱莉与家庭教师圣普乐相爱,却被门第与礼教拆散,全书以书信写感情的进退。卢梭唯一的小说曾让整个欧洲落泪,也是理解浪漫主义情感观的入口。",
       "category": "文学小说",
       "themes": []
     },
@@ -248,6 +275,7 @@
       "id": "35_2680_Meditations",
       "title": "Meditations",
       "author": "Emperor of Rome Marcus Aurelius",
+      "summary": "罗马皇帝马可·奥勒留在军营中写给自己的笔记,谈命运、死亡与如何不被情绪奴役。斯多葛哲学最朴素也最有力的文本,近两千年后仍是安顿内心的手册。",
       "category": "哲学宗教",
       "themes": []
     },
@@ -255,6 +283,7 @@
       "id": "36_468_Manon_Lescaut",
       "title": "Manon Lescaut",
       "author": "abbé Prévost",
+      "summary": "青年骑士德·格里厄邂逅玛侬,从此为她抛弃前程、屡次沉沦。普莱沃神甫的短篇经典,把「为爱毁掉一生」写得既动人又清醒,后来还催生了两部同名歌剧。",
       "category": "文学小说",
       "themes": []
     },
@@ -262,6 +291,7 @@
       "id": "37_47530_Oliver_Twist_Vol_2",
       "title": "Oliver Twist, Vol. 2 (of 3)",
       "author": "Charles Dickens",
+      "summary": "《雾都孤儿》中卷:奥利弗逃出贼窝又被命运拖回,身世之谜开始浮出水面。狄更斯在连载中段加快悬念,对济贫院与伦敦底层的描写至今读来刺眼。",
       "category": "文学小说",
       "themes": []
     },
@@ -269,6 +299,7 @@
       "id": "38_22541_The_Misplaced_Battleship",
       "title": "The Misplaced Battleship",
       "author": "Harry Harrison",
+      "summary": "一艘星际战舰在档案里凭空消失,「不锈钢老鼠」吉姆奉命顺着官僚系统的缝隙把它找回来。哈里森该系列的开山短篇,幽默机敏,讽刺的是整个宇宙级的官僚机器。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -276,6 +307,7 @@
       "id": "39_75201_A_Farewell_to_Arms",
       "title": "A farewell to arms",
       "author": "Ernest Hemingway",
+      "summary": "一战前线,美国救护车司机弗雷德里克与英国护士凯瑟琳相爱,战争却一步步收紧罗网。海明威的成名长篇,冰山式的简洁文字下,是对战争与命运的冷峻告别。",
       "category": "文学小说",
       "themes": []
     },
@@ -283,6 +315,7 @@
       "id": "40_37106_Little_Women",
       "title": "Little Women; Or, Meg, Jo, Beth, and Amy",
       "author": "Louisa May Alcott",
+      "summary": "南北战争期间,马奇家四姐妹在清贫中长大:梅格的温柔、乔的倔强、贝丝的安静、艾米的娇憨。奥尔科特写日常如何塑造品格,至今仍是成长小说的坐标。",
       "category": "文学小说",
       "themes": []
     },
@@ -290,6 +323,7 @@
       "id": "41_71046_Modern_English_biography_volume_2",
       "title": "Modern English biography, volume 2 (of 4), I-Q",
       "author": "Frederic Boase",
+      "summary": "十九世纪末编成的传记工具书,收录1851年之后去世的英国各界人物小传,本卷为I至Q部分。它不适合通读,却是查证维多利亚时代人物的原始门径。",
       "category": "传记纪实",
       "themes": []
     },
@@ -297,6 +331,7 @@
       "id": "42_3011_The_Lady_of_the_Lake",
       "title": "The Lady of the Lake",
       "author": "Walter Scott",
+      "summary": "苏格兰高地上,被放逐的骑士、隐居的湖中美人与国王的军队在狩猎与追捕中交错。司各特的叙事长诗曾让整个英语世界迷上高地,也直接带火了洛蒙德湖一带的游历。",
       "category": "古典文学",
       "themes": []
     },
@@ -304,6 +339,7 @@
       "id": "43_244_A_Study_in_Scarlet",
       "title": "A Study in Scarlet",
       "author": "Arthur Conan Doyle",
+      "summary": "华生军医与咨询侦探福尔摩斯的相遇,以及一桩横跨伦敦与美洲荒原的复仇案。柯南·道尔的第一部福尔摩斯长篇,演绎法由此登场,侦探小说的现代传统从这里开始。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -311,6 +347,7 @@
       "id": "45_36462_King_Arthur_and_the_Knights_of_the_Round_Table",
       "title": "King Arthur and the Knights of the Round Table",
       "author": "Sir Thomas Malory",
+      "summary": "马洛礼以散文重述亚瑟王与圆桌骑士的完整传说:圣剑、圣杯、兰斯洛特与桂妮薇儿、王朝的黄昏。英文亚瑟王文学的定本,后世一切改写都从这里出发。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -318,6 +355,7 @@
       "id": "46_3296_The_Confessions_of_St_Augustine",
       "title": "The Confessions of St. Augustine",
       "author": "Saint of Hippo Augustine",
+      "summary": "奥古斯丁坦诚回望自己放纵的前半生,直到在米兰经历信仰的转向。西方文学中第一部真正意义上的自传,对罪、时间与记忆的内省至今仍是基督教思想的基石。",
       "category": "哲学宗教",
       "themes": []
     },
@@ -325,6 +363,7 @@
       "id": "47_40284_The_Sex_Life_of_the_Gods",
       "title": "The Sex Life of the Gods",
       "author": "M. E. Knerr",
+      "summary": "一部上世纪中叶的美式通俗科幻,讲述地球人与天外来客的相遇如何搅动凡俗生活。题材大胆、节奏轻快,作为纸浆科幻的时代标本,比作为名著更值得一看。",
       "category": "科幻奇幻",
       "themes": []
     },
@@ -332,6 +371,7 @@
       "id": "48_393_The_Blue_Lagoon",
       "title": "The Blue Lagoon: A Romance",
       "author": "H. De Vere Stacpoole",
+      "summary": "两个孩子因海难流落南太平洋的荒岛,在没有成人教化的世界里相依为命地长大。斯塔克普尔的浪漫名作,写文明之外爱与人性的自然生长,后来多次被搬上银幕。",
       "category": "文学小说",
       "themes": []
     },
@@ -339,6 +379,7 @@
       "id": "49_2852_The_Hound_of_the_Baskervilles",
       "title": "The Hound of the Baskervilles",
       "author": "Arthur Conan Doyle",
+      "summary": "巴斯克维尔家族世代死于传说中的魔犬,新一任继承人刚回国,雾夜里的嚎叫再次响起。福尔摩斯最著名的一案,哥特氛围与严密推理的结合几乎无可超越。",
       "category": "悬疑推理",
       "themes": []
     },
@@ -346,6 +387,7 @@
       "id": "50_70854_The_Countess_of_Pembroke's_Arcadia",
       "title": "The Countess of Pembroke's Arcadia",
       "author": "Philip Sidney",
+      "summary": "两位王子易装混入阿卡迪亚的田园,追逐公爵家的一对姐妹,骑士冒险与爱情喜剧交错。锡德尼为妹妹写下的文艺复兴散文传奇,影响了莎士比亚之后的几代英国作家。",
       "category": "古典文学",
       "themes": []
     }
