@@ -33,4 +33,13 @@ struct InitialLibraryLoaderTests {
         let found = try #require(theme)
         #expect(found.name == "爱与关系")
     }
+
+    @Test func summaryIsOptionalInJSON() throws {
+        // 不带 summary 的 JSON 片段也能解码(导入的书/旧数据兼容)
+        let json = """
+        {"id":"x","title":"T","author":"A","themes":[]}
+        """
+        let book = try JSONDecoder().decode(InitialBook.self, from: Data(json.utf8))
+        #expect(book.summary == nil)
+    }
 }

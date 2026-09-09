@@ -27,6 +27,9 @@ final class Book {
     /// 对应 InitialLibrary.json 中的书籍 id，用于查找元数据/讨论问题。
     var catalogID: String?
 
+    /// 书籍简介(来自 InitialLibrary.json);导入的书为 nil。
+    var summary: String?
+
     /// bundle 内音频文件名（相对书源目录，如 "jiangshu.mp3"）；nil = 不可听。
     var audioFileName: String?
 
@@ -52,6 +55,7 @@ final class Book {
         currentLocation: String? = nil,
         themes: [String] = [],
         catalogID: String? = nil,
+        summary: String? = nil,
         audioFileName: String? = nil,
         listenPosition: Double? = nil,
         audioAlignmentFileName: String? = nil
@@ -71,6 +75,7 @@ final class Book {
         self.currentLocation = currentLocation
         self.themes = themes
         self.catalogID = catalogID
+        self.summary = summary
         self.audioFileName = audioFileName
         self.listenPosition = listenPosition
         self.audioAlignmentFileName = audioAlignmentFileName

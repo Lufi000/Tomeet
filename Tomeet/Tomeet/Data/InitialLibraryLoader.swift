@@ -28,6 +28,8 @@ struct InitialBook: Codable, Identifiable {
     let themes: [String]
     let sourceHint: SourceHint?
     let qualitySignals: QualitySignals?
+    /// 书籍简介(2~3 句中文);缺失 = 详情页显示「暂无简介」。
+    let summary: String?
     let discussionQuestions: [String]?
     let audio: InitialAudio?
 }

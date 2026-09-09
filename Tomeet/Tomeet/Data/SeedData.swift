@@ -15,6 +15,7 @@ enum SeedData {
             book.sourceFileName = initialBook.id
             book.themes = initialBook.themes
             book.catalogID = initialBook.id
+            book.summary = initialBook.summary
             book.collection = initialBook.category
             book.audioFileName = initialBook.audio?.file
             book.isDownloaded = true
@@ -76,7 +77,7 @@ enum SeedData {
     private static func backfillFromCatalog(in modelContext: ModelContext) throws {
         let catalog = try InitialLibraryLoader.load()
         let byID = Dictionary(
-            catalog.books.map { ($0.id, (audio: $0.audio?.file, category: $0.category)) },
+            catalog.books.map { ($0.id, (audio: $0.audio?.file, category: $0.category, summary: $0.summary)) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -96,6 +97,10 @@ enum SeedData {
             }
             if book.collection != entry.category {
                 book.collection = entry.category
+                changed = true
+            }
+            if book.summary != entry.summary {
+                book.summary = entry.summary
                 changed = true
             }
         }
