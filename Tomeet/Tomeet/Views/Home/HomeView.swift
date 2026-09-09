@@ -41,8 +41,30 @@ struct HomeView: View {
         // .fullScreenCover(item: $presentedChat) { book in
         //     AIAssistantView(book: book, onBack: { presentedChat = nil })
         // }
-        // Book Sheet 在 Task 6 接入:
-        // .overlay { if let book = selectedBook { BookSheetView(...) } }
+        .overlay {
+            if let book = selectedBook {
+                BookSheetView(
+                    book: book,
+                    onClose: { dismissSheet() },
+                    onRead: { openAfterSheetDismiss { presentedReader = book } },
+                    onListen: { openAfterSheetDismiss { presentedListen = book } },
+                    onChat: { openAfterSheetDismiss { presentedChat = book } }
+                )
+            }
+        }
+    }
+
+    private func dismissSheet() {
+        withAnimation(.spring) { selectedBook = nil }
+    }
+
+    /// 先关 Sheet 再全屏推出目标页,避免全屏 cover 叠在磨砂遮罩上造成层级闪烁。
+    private func openAfterSheetDismiss(_ action: @escaping () -> Void) {
+        dismissSheet()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
+            action()
+        }
     }
 
     // MARK: - 固定层
