@@ -61,6 +61,293 @@
         "file": "jiangshu.mp3",
         "durationMinutes": 61
       }
+    },
+    {
+      "id": "01_1342_Pride_and_Prejudice",
+      "title": "Pride and Prejudice",
+      "author": "Jane Austen",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "02_2701_Moby_Dick",
+      "title": "Moby Dick; Or, The Whale",
+      "author": "Herman Melville",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "03_1727_The_Odyssey",
+      "title": "The Odyssey / Rendered into English prose for the use of those who cannot read the original",
+      "author": "Homer",
+      "category": "古典文学",
+      "themes": []
+    },
+    {
+      "id": "04_2554_Crime_and_Punishment",
+      "title": "Crime and Punishment",
+      "author": "Fyodor Dostoyevsky",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "05_2641_A_Room_with_a_View",
+      "title": "A Room with a View",
+      "author": "E. M. Forster",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "06_65238_The_Secret_of_Chimneys",
+      "title": "The Secret of Chimneys",
+      "author": "Agatha Christie",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "07_1513_Romeo_and_Juliet",
+      "title": "Romeo and Juliet",
+      "author": "William Shakespeare",
+      "category": "古典文学",
+      "themes": []
+    },
+    {
+      "id": "08_3268_The_Mysteries_of_Udolpho",
+      "title": "The Mysteries of Udolpho",
+      "author": "Ann Ward Radcliffe",
+      "category": "古典文学",
+      "themes": []
+    },
+    {
+      "id": "09_2465_Carmen",
+      "title": "Carmen",
+      "author": "Prosper Mérimée",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "10_1661_The_Adventures_of_Sherlock_Holmes",
+      "title": "The Adventures of Sherlock Holmes",
+      "author": "Arthur Conan Doyle",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "11_2868_The_Green_Mummy",
+      "title": "The Green Mummy",
+      "author": "Fergus Hume",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "12_1260_Jane_Eyre",
+      "title": "Jane Eyre: An Autobiography",
+      "author": "Charlotte Brontë",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "14_11_Alice's_Adventures_in_Wonderland",
+      "title": "Alice's Adventures in Wonderland",
+      "author": "Lewis Carroll",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "15_67979_The_Blue_Castle",
+      "title": "The Blue Castle: a novel",
+      "author": "L. M. Montgomery",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "18_100_The_Complete_Works_of_William_Shakespeare",
+      "title": "The Complete Works of William Shakespeare",
+      "author": "William Shakespeare",
+      "category": "古典文学",
+      "themes": []
+    },
+    {
+      "id": "20_34413_The_Love_Letters_of_Mary_Wollstonecraft",
+      "title": "The Love Letters of Mary Wollstonecraft to Gilbert Imlay",
+      "author": "Mary Wollstonecraft",
+      "category": "传记纪实",
+      "themes": []
+    },
+    {
+      "id": "21_1695_The_Man_Who_Was_Thursday",
+      "title": "The Man Who Was Thursday: A Nightmare",
+      "author": "G. K. Chesterton",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "23_6133_The_Extraordinary_Adventures_of_Arsene_Lupin",
+      "title": "The Extraordinary Adventures of Arsène Lupin, Gentleman-Burglar",
+      "author": "Maurice Leblanc",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "24_5197_My_Life_Volume_1",
+      "title": "My Life — Volume 1",
+      "author": "Richard Wagner",
+      "category": "传记纪实",
+      "themes": []
+    },
+    {
+      "id": "25_21839_Sense_and_Sensibility",
+      "title": "Sense and Sensibility",
+      "author": "Jane Austen",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "28_51252_The_Book_of_the_Thousand_Nights_and_a_Night",
+      "title": "The Book of the Thousand Nights and a Night — Volume 01 (of 10)",
+      "author": "",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "29_831_Four_Arthurian_Romances",
+      "title": "Four Arthurian Romances",
+      "author": "active 12th century de Troyes Chrétien",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "30_145_Middlemarch",
+      "title": "Middlemarch",
+      "author": "George Eliot",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "31_564_The_Mystery_of_Edwin_Drood",
+      "title": "The Mystery of Edwin Drood",
+      "author": "Charles Dickens",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "32_24739_Bidwell's_Travels",
+      "title": "Bidwell's Travels, from Wall Street to London Prison: Fifteen Years in Solitude",
+      "author": "Austin Bidwell",
+      "category": "传记纪实",
+      "themes": []
+    },
+    {
+      "id": "34_76639_Eloisa",
+      "title": "Eloisa",
+      "author": "Jean-Jacques Rousseau",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "35_2680_Meditations",
+      "title": "Meditations",
+      "author": "Emperor of Rome Marcus Aurelius",
+      "category": "哲学宗教",
+      "themes": []
+    },
+    {
+      "id": "36_468_Manon_Lescaut",
+      "title": "Manon Lescaut",
+      "author": "abbé Prévost",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "37_47530_Oliver_Twist_Vol_2",
+      "title": "Oliver Twist, Vol. 2 (of 3)",
+      "author": "Charles Dickens",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "38_22541_The_Misplaced_Battleship",
+      "title": "The Misplaced Battleship",
+      "author": "Harry Harrison",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "39_75201_A_Farewell_to_Arms",
+      "title": "A farewell to arms",
+      "author": "Ernest Hemingway",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "40_37106_Little_Women",
+      "title": "Little Women; Or, Meg, Jo, Beth, and Amy",
+      "author": "Louisa May Alcott",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "41_71046_Modern_English_biography_volume_2",
+      "title": "Modern English biography, volume 2 (of 4), I-Q",
+      "author": "Frederic Boase",
+      "category": "传记纪实",
+      "themes": []
+    },
+    {
+      "id": "42_3011_The_Lady_of_the_Lake",
+      "title": "The Lady of the Lake",
+      "author": "Walter Scott",
+      "category": "古典文学",
+      "themes": []
+    },
+    {
+      "id": "43_244_A_Study_in_Scarlet",
+      "title": "A Study in Scarlet",
+      "author": "Arthur Conan Doyle",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "45_36462_King_Arthur_and_the_Knights_of_the_Round_Table",
+      "title": "King Arthur and the Knights of the Round Table",
+      "author": "Sir Thomas Malory",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "46_3296_The_Confessions_of_St_Augustine",
+      "title": "The Confessions of St. Augustine",
+      "author": "Saint of Hippo Augustine",
+      "category": "哲学宗教",
+      "themes": []
+    },
+    {
+      "id": "47_40284_The_Sex_Life_of_the_Gods",
+      "title": "The Sex Life of the Gods",
+      "author": "M. E. Knerr",
+      "category": "科幻奇幻",
+      "themes": []
+    },
+    {
+      "id": "48_393_The_Blue_Lagoon",
+      "title": "The Blue Lagoon: A Romance",
+      "author": "H. De Vere Stacpoole",
+      "category": "文学小说",
+      "themes": []
+    },
+    {
+      "id": "49_2852_The_Hound_of_the_Baskervilles",
+      "title": "The Hound of the Baskervilles",
+      "author": "Arthur Conan Doyle",
+      "category": "悬疑推理",
+      "themes": []
+    },
+    {
+      "id": "50_70854_The_Countess_of_Pembroke's_Arcadia",
+      "title": "The Countess of Pembroke's Arcadia",
+      "author": "Philip Sidney",
+      "category": "古典文学",
+      "themes": []
     }
   ]
 }

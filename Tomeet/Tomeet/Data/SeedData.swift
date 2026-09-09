@@ -15,6 +15,7 @@ enum SeedData {
             book.sourceFileName = initialBook.id
             book.themes = initialBook.themes
             book.catalogID = initialBook.id
+            book.collection = initialBook.category
             book.audioFileName = initialBook.audio?.file
             book.isDownloaded = true
             return book
@@ -43,16 +44,39 @@ enum SeedData {
             return
         }
 
-        // 存量数据回填：catalog 后来新增的字段（如讲书音频）同步到已种下的书。
+        // 存量库增量更新：catalog 新增的书插入进来（老用户升级自动获得新书）。
+        try upsertCatalogBooks(in: modelContext)
+
+        // 存量数据回填：catalog 后来新增的字段（如讲书音频、分类）同步到已种下的书。
         try backfillFromCatalog(in: modelContext)
     }
 
+    /// 按 catalogID（老数据回退 sourceFileName，两者都与 JSON 的 id 一致）找出库里
+    /// 还没有的 catalog 书并插入；已存在的书不动，避免覆盖阅读进度等用户数据。
+    private static func upsertCatalogBooks(in modelContext: ModelContext) throws {
+        let catalog = try InitialLibraryLoader.load()
+        let existingIDs = Set(
+            try modelContext.fetch(FetchDescriptor<Book>())
+                .map { $0.catalogID ?? $0.sourceFileName }
+                .compactMap { $0 }
+        )
+
+        var inserted = false
+        for book in makeBooks(from: catalog) where book.catalogID.map({ !existingIDs.contains($0) }) ?? false {
+            modelContext.insert(book)
+            inserted = true
+        }
+        if inserted {
+            try modelContext.save()
+        }
+    }
+
     /// 按 catalogID（老数据回退 sourceFileName，两者都与 JSON 的 id 一致）对齐 catalog 里的
-    /// 音频信息，避免老用户升级后看不到听书入口。
+    /// 音频与分类信息，避免老用户升级后看不到听书入口/书库分类。
     private static func backfillFromCatalog(in modelContext: ModelContext) throws {
         let catalog = try InitialLibraryLoader.load()
-        let audioByID = Dictionary(
-            catalog.books.map { ($0.id, $0.audio?.file) },
+        let byID = Dictionary(
+            catalog.books.map { ($0.id, (audio: $0.audio?.file, category: $0.category)) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -60,14 +84,18 @@ enum SeedData {
         for book in try modelContext.fetch(FetchDescriptor<Book>()) {
             let catalogID = book.catalogID ?? book.sourceFileName
             guard let catalogID,
-                  let audioFile = audioByID[catalogID] ?? nil
+                  let entry = byID[catalogID]
             else { continue }
             if book.catalogID == nil {
                 book.catalogID = catalogID
                 changed = true
             }
-            if book.audioFileName != audioFile {
-                book.audioFileName = audioFile
+            if book.audioFileName != entry.audio {
+                book.audioFileName = entry.audio
+                changed = true
+            }
+            if book.collection != entry.category {
+                book.collection = entry.category
                 changed = true
             }
         }

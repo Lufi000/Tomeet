@@ -5,18 +5,18 @@ import Testing
 
 @MainActor
 struct SeedDataTests {
-    @Test func fixtureHasOneRealBook() throws {
+    @Test func fixtureSeedsEntireCatalog() throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         try SeedData.seedIfNeeded(in: container.mainContext)
         let books = try container.mainContext.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 1)
-        #expect(books.allSatisfy { $0.sourceFileName != nil })
-        #expect(books.allSatisfy { !$0.themes.isEmpty })
-        #expect(books.allSatisfy { $0.catalogID != nil })
-        #expect(books.allSatisfy { $0.format == .epub })
 
         let catalog = try InitialLibraryLoader.load()
-        #expect(catalog.books.count == 1)
+        #expect(books.count == catalog.books.count)
+        #expect(books.allSatisfy { $0.sourceFileName != nil })
+        #expect(books.allSatisfy { $0.catalogID != nil })
+        #expect(books.allSatisfy { $0.format == .epub })
+        // 策展主题只挂在 curated 书上，但每本书都必须有分类
+        #expect(books.contains { !$0.themes.isEmpty })
     }
 
     @Test func legacyFakeBooksAreRebuilt() throws {
@@ -29,9 +29,46 @@ struct SeedDataTests {
 
         try SeedData.seedIfNeeded(in: context)
 
+        let catalog = try InitialLibraryLoader.load()
         let books = try context.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 1)
+        #expect(books.count == catalog.books.count)
         #expect(books.allSatisfy { $0.sourceFileName != nil })
+    }
+
+    @Test func newCatalogBooksAreUpsertedIntoExistingLibrary() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        let context = container.mainContext
+        let catalog = try InitialLibraryLoader.load()
+        try #require(catalog.books.count > 1)
+
+        // 模拟老版本安装：库里只有第一版 curated 的那本书
+        let first = try #require(catalog.books.first)
+        let legacy = Book(title: first.title, author: first.author, format: .epub)
+        legacy.sourceFileName = first.id
+        legacy.catalogID = first.id
+        context.insert(legacy)
+        try context.save()
+
+        try SeedData.seedIfNeeded(in: context)
+
+        let books = try context.fetch(FetchDescriptor<Book>())
+        #expect(books.count == catalog.books.count)
+        // 幂等：再 seed 一次不得重复
+        try SeedData.seedIfNeeded(in: context)
+        #expect(try context.fetchCount(FetchDescriptor<Book>()) == catalog.books.count)
+        // 老书进度字段不被 upsert 覆盖
+        #expect(books.first { $0.catalogID == first.id }?.id == legacy.id)
+    }
+
+    @Test func categoryFromCatalogIsWrittenToCollection() throws {
+        let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
+        try SeedData.seedIfNeeded(in: container.mainContext)
+
+        let catalog = try InitialLibraryLoader.load()
+        let categorized = try #require(catalog.books.first { $0.category != nil })
+        let books = try container.mainContext.fetch(FetchDescriptor<Book>())
+        let book = try #require(books.first { $0.catalogID == categorized.id })
+        #expect(book.collection == categorized.category)
     }
 
     @Test func realBooksAreNotReplacedByRebuild() throws {
@@ -58,8 +95,9 @@ struct SeedDataTests {
         let context = container.mainContext
 
         try SeedData.seedIfNeeded(in: context)
+        let catalog = try InitialLibraryLoader.load()
         let firstBookCount = try context.fetchCount(FetchDescriptor<Book>())
-        #expect(firstBookCount == 1)
+        #expect(firstBookCount == catalog.books.count)
 
         // 第二次调用（模拟再次启动）不得重复插入
         try SeedData.seedIfNeeded(in: context)
@@ -70,13 +108,13 @@ struct SeedDataTests {
     @Test func seedWritesAudioMetadataFromCatalog() throws {
         let container = try ModelContainerFactory.make(isStoredInMemoryOnly: true)
         try SeedData.seedIfNeeded(in: container.mainContext)
-        let books = try container.mainContext.fetch(FetchDescriptor<Book>())
-        let book = try #require(books.first)
-        #expect(book.audioFileName == "jiangshu.mp3")
-        #expect(book.hasAudio == true)
 
         let catalog = try InitialLibraryLoader.load()
-        let initial = try #require(catalog.books.first)
+        let initial = try #require(catalog.books.first { $0.audio != nil })
+        let books = try container.mainContext.fetch(FetchDescriptor<Book>())
+        let book = try #require(books.first { $0.catalogID == initial.id })
+        #expect(book.audioFileName == "jiangshu.mp3")
+        #expect(book.hasAudio == true)
         #expect(initial.audio?.file == "jiangshu.mp3")
         #expect(initial.audio?.durationMinutes == 61)
     }
@@ -99,9 +137,10 @@ struct SeedDataTests {
         try SeedData.seedIfNeeded(in: context)
 
         let books = try context.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 1)
-        #expect(books.first?.audioFileName == initial.audio?.file)
-        #expect(books.first?.hasAudio == true)
+        #expect(books.count == catalog.books.count)
+        let seeded = books.first { $0.id == legacy.id }
+        #expect(seeded?.audioFileName == initial.audio?.file)
+        #expect(seeded?.hasAudio == true)
     }
 
     @Test func legacyBookWithoutCatalogIDIsBackfilledViaSourceFileName() throws {
@@ -119,10 +158,11 @@ struct SeedDataTests {
         try SeedData.seedIfNeeded(in: context)
 
         let books = try context.fetch(FetchDescriptor<Book>())
-        #expect(books.count == 1)
-        #expect(books.first?.catalogID == initial.id)
-        #expect(books.first?.audioFileName == initial.audio?.file)
-        #expect(books.first?.hasAudio == true)
+        #expect(books.count == catalog.books.count)
+        let seeded = books.first { $0.id == legacy.id }
+        #expect(seeded?.catalogID == initial.id)
+        #expect(seeded?.audioFileName == initial.audio?.file)
+        #expect(seeded?.hasAudio == true)
     }
 
     @Test func catalogAudioFileExistsInBundle() throws {

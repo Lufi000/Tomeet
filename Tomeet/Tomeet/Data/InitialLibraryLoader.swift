@@ -22,11 +22,13 @@ struct InitialBook: Codable, Identifiable {
     let id: String
     let title: String
     let author: String
-    let year: Int
+    /// 书库分类（如「悬疑推理」），来自 gutenberg_top50_classified 文件夹名；curated 书为 nil。
+    let category: String?
+    let year: Int?
     let themes: [String]
-    let sourceHint: SourceHint
-    let qualitySignals: QualitySignals
-    let discussionQuestions: [String]
+    let sourceHint: SourceHint?
+    let qualitySignals: QualitySignals?
+    let discussionQuestions: [String]?
     let audio: InitialAudio?
 }
 
