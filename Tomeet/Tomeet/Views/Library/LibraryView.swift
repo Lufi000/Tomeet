@@ -34,8 +34,6 @@ struct LibraryView: View {
     @State private var presentedReader: Book?
     @State private var bookToDelete: Book?
     @State private var showImporter = false
-    @State private var isImporting = false
-    @State private var importError: Error?
     @State private var deleteError: Error?
     @State private var catalog: InitialLibraryCatalog?
 
@@ -84,58 +82,9 @@ struct LibraryView: View {
                 }
             }
             .fullScreenCover(item: $presentedReader) { book in
-                switch book.format {
-                case .pdf:
-                    PDFReaderView(book: book)
-                case .mobi:
-                    MobiReaderView(book: book)
-                case .epub, .audiobook:
-                    ReaderView(book: book)
-                }
+                BookReaderPresenter.view(for: book)
             }
-            .fileImporter(
-                isPresented: $showImporter,
-                allowedContentTypes: BookImporter.supportedContentTypes,
-                allowsMultipleSelection: false
-            ) { result in
-                Task {
-                    isImporting = true
-                    defer { isImporting = false }
-                    do {
-                        switch result {
-                        case .success(let urls):
-                            guard let url = urls.first else { return }
-                            _ = try await BookImporter.importBook(from: url, modelContext: modelContext)
-                        case .failure(let error):
-                            throw error
-                        }
-                    } catch {
-                        importError = error
-                    }
-                }
-            }
-            .overlay {
-                if isImporting {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 160, height: 120)
-                        .overlay {
-                            VStack(spacing: 12) {
-                                ProgressView()
-                                Text("Importing...")
-                                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
-                            }
-                        }
-                }
-            }
-            .alert("Import Failed", isPresented: Binding(
-                get: { importError != nil },
-                set: { if !$0 { importError = nil } }
-            )) {
-                Button("OK") { importError = nil }
-            } message: {
-                Text(importError?.localizedDescription ?? "Unknown error")
-            }
+            .bookImportPresentation(isPresented: $showImporter)
             .alert("Remove Failed", isPresented: Binding(
                 get: { deleteError != nil },
                 set: { if !$0 { deleteError = nil } }
