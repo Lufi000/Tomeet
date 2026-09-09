@@ -3,159 +3,97 @@ import SwiftData
 
 struct HomeView: View {
     @Query private var books: [Book]
-    @Query private var dailyReadings: [DailyReading]
+    @State private var selectedBook: Book?       // Book Sheet(Task 6)
     @State private var presentedReader: Book?
+    @State private var presentedListen: Book?
+    @State private var presentedChat: Book?
+    @State private var showImporter = false
 
-    /// 今日（本地时区 0 点起）的时长记录；没有则 nil。
-    private var todayReading: DailyReading? {
-        let start = Calendar.current.startOfDay(for: Date())
-        return dailyReadings.first { $0.date == start }
-    }
-
+    /// 最近在读:有打开记录的按时间倒序(沿用旧 Continue 区取数逻辑)。
     private var recentlyOpened: [Book] {
         books.filter { $0.lastOpenedDate != nil }
             .sorted(by: Book.sortRecentlyOpened)
     }
 
-    private var continueBooks: [Book] {
-        Array(recentlyOpened.prefix(3))
-    }
-
-    /// Continue 里前 3 本之后的书，以封面书架形式接在大卡片下方。
-    private var previousBooks: [Book] {
-        Array(recentlyOpened.dropFirst(continueBooks.count))
-    }
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    // iOS 26 的导航栏标题不吃 UIKit appearance，大字标题自己画
-                    Text("Home")
-                        .font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
-                        .foregroundStyle(Theme.ink)
-                        .padding(.top, 16)
+        ZStack(alignment: .bottom) {
+            Theme.canvas.ignoresSafeArea()
 
-                    todayStatsCard
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Continue")
-                            .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
-                            .foregroundStyle(Theme.ink)
-                        if continueBooks.isEmpty {
-                            continueEmptyCard
-                        } else {
-                            ForEach(continueBooks) { book in
-                                ContinueCard(book: book) {
-                                    presentedReader = book
-                                }
-                            }
-                            if !previousBooks.isEmpty {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 14) {
-                                        ForEach(previousBooks) { book in
-                                            Button {
-                                                presentedReader = book
-                                            } label: {
-                                                VStack(alignment: .leading, spacing: 6) {
-                                                    BookCoverView(book: book).frame(width: 100)
-                                                    Text(book.title)
-                                                        .font(.splendid(.caption)).tracking(Theme.letterSpacing)
-                                                        .lineLimit(1)
-                                                        .foregroundStyle(Theme.ink)
-                                                }
-                                                .frame(width: 100)
-                                            }
-                                            .buttonStyle(.plain)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
+            if recentlyOpened.isEmpty {
+                emptyState
+            } else {
+                ReadingGridView(books: recentlyOpened) { book in
+                    withAnimation(.spring) { selectedBook = book }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
             }
-            .scrollContentBackground(.hidden)
-            .background(Theme.canvas)
-            // 不用系统大标题（字体无法定制），顶栏整体隐藏
-            .toolbar(.hidden, for: .navigationBar)
-            .fullScreenCover(item: $presentedReader) { book in
-                ReaderView(book: book)
-            }
+
+            header
+            addBookButton
         }
+        .bookImportPresentation(isPresented: $showImporter)
+        .fullScreenCover(item: $presentedReader) { book in
+            BookReaderPresenter.view(for: book)
+        }
+        .fullScreenCover(item: $presentedListen) { book in
+            ListenPlayerView(book: book)
+        }
+        // Task 7 接入:AIAssistantView(book:onBack:) 签名落地后恢复
+        // .fullScreenCover(item: $presentedChat) { book in
+        //     AIAssistantView(book: book, onBack: { presentedChat = nil })
+        // }
+        // Book Sheet 在 Task 6 接入:
+        // .overlay { if let book = selectedBook { BookSheetView(...) } }
     }
 
-    // MARK: - 今日时长
+    // MARK: - 固定层
 
-    private var todayStatsCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Today")
-                .font(.splendid(.title2, weight: .bold)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.ink)
-            HStack(spacing: 0) {
-                statColumn(image: "TodayReading", title: "Reading", seconds: todayReading?.readSeconds ?? 0)
-                Rectangle()
-                    .fill(Theme.inkFaint)
-                    .frame(width: 1, height: 40)
-                statColumn(image: "TodayListening", title: "Listening", seconds: todayReading?.listenSeconds ?? 0)
+    /// 顶部固定大标题 + 头像,不随网格滚动。
+    private var header: some View {
+        VStack {
+            HStack(alignment: .top) {
+                Text("I'm\nNow\nReading")
+                    .font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Circle()
+                    .fill(LinearGradient(colors: [Theme.sendEnabled, Theme.accent],
+                                         startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 44, height: 44)
             }
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Theme.card)
-            )
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+            Spacer()
         }
+        .allowsHitTesting(false)
     }
 
-    private func statColumn(image: String, title: String, seconds: TimeInterval) -> some View {
-        VStack(spacing: 6) {
-            Image(image)
-                .renderingMode(.original)
-                .resizable()
-                .scaledToFit()
-                .frame(height: 52)
-            Text(timeText(seconds))
+    private var addBookButton: some View {
+        Button { showImporter = true } label: {
+            Text("Add New Book")
                 .font(.splendid(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.ink)
-                .monospacedDigit()
-            Text(title)
-                .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.inkTertiary)
+                .foregroundStyle(Theme.cream)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 14)
+                .background(Color.black, in: Capsule())
         }
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.plain)
+        .padding(.bottom, 12)
     }
 
-    /// Continue 空状态：刺猬插画 + 提示文案。
-    private var continueEmptyCard: some View {
-        VStack(spacing: 10) {
+    /// 空态:刺猬插画 + 引导(沿用旧 Continue 空态视觉)。
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer()
             Image("EmptyStateContinue")
                 .renderingMode(.original)
                 .resizable()
                 .scaledToFit()
-                .frame(height: 110)
+                .frame(height: 160)
             Text("Books you start reading will appear here.")
-                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
                 .foregroundStyle(Theme.inkTertiary)
+            Spacer()
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Theme.card)
-        )
-    }
-
-    /// 满 1 小时显示 "Xh Y min"，否则显示 "N min"。
-    private func timeText(_ seconds: TimeInterval) -> String {
-        let totalMinutes = Int(seconds / 60)
-        guard totalMinutes > 0 else { return "0 min" }
-        if totalMinutes >= 60 {
-            return "\(totalMinutes / 60)h \(totalMinutes % 60) min"
-        }
-        return "\(totalMinutes) min"
     }
 }
