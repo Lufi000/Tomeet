@@ -8,6 +8,8 @@ struct HomeView: View {
     @State private var presentedListen: Book?
     @State private var presentedChat: Book?
     @State private var showImporter = false
+    /// Sheet 关闭后延迟推出全屏页的 pending Task,可取消(见 openAfterSheetDismiss)。
+    @State private var pendingOpen: Task<Void, Never>?
 
     /// 最近在读:有打开记录的按时间倒序(沿用旧 Continue 区取数逻辑)。
     private var recentlyOpened: [Book] {
@@ -31,6 +33,9 @@ struct HomeView: View {
             addBookButton
         }
         .bookImportPresentation(isPresented: $showImporter)
+        .onChange(of: books, initial: false) { _, newBooks in
+            reconcileStaleSelections(with: newBooks)
+        }
         .fullScreenCover(item: $presentedReader) { book in
             BookReaderPresenter.view(for: book)
         }
@@ -58,12 +63,25 @@ struct HomeView: View {
     }
 
     /// 先关 Sheet 再全屏推出目标页,避免全屏 cover 叠在磨砂遮罩上造成层级闪烁。
+    /// 重复触发时取消上一个 pending Task,防止旧 action 延迟误触。
     private func openAfterSheetDismiss(_ action: @escaping () -> Void) {
         dismissSheet()
-        Task { @MainActor in
+        pendingOpen?.cancel()
+        pendingOpen = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
             action()
         }
+    }
+
+    /// Sheet/全屏页打开期间书可能在 Library tab 被删除,对账清掉指向已删对象的选中态,
+    /// 避免后续访问已失效的 SwiftData 对象。
+    private func reconcileStaleSelections(with currentBooks: [Book]) {
+        let ids = Set(currentBooks.map(\.id))
+        if let book = selectedBook, !ids.contains(book.id) { selectedBook = nil }
+        if let book = presentedReader, !ids.contains(book.id) { presentedReader = nil }
+        if let book = presentedListen, !ids.contains(book.id) { presentedListen = nil }
+        if let book = presentedChat, !ids.contains(book.id) { presentedChat = nil }
     }
 
     // MARK: - 固定层

@@ -19,13 +19,28 @@ struct BookSheetView: View {
                 panel
                     .frame(height: proxy.size.height * 0.8)
                     .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                    .ignoresSafeArea()
+                    // 磨砂背景单独 ignoresSafeArea 延伸到屏幕底边;
+                    // panel 内容不 ignore,按钮行由安全区自然抬离 Home 指示条。
+                    .background {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                    }
+                    .simultaneousGesture(swipeDownToClose)
             }
             .ignoresSafeArea()
         }
         .transition(.move(edge: .bottom))
+    }
+
+    /// 下滑关闭:垂直下拖超过 80pt 且横向位移小于纵向时关闭,不拦截按钮点击。
+    private var swipeDownToClose: some Gesture {
+        DragGesture(minimumDistance: 10)
+            .onEnded { value in
+                let t = value.translation
+                guard t.height > 80, abs(t.width) < t.height else { return }
+                onClose()
+            }
     }
 
     private var panel: some View {
@@ -71,7 +86,6 @@ struct BookSheetView: View {
                 actionButton(title: "对话", systemImage: "bubble.left.and.bubble.right", primary: false,
                              enabled: true, action: onChat)
             }
-            .padding(.bottom, 8)
         }
         .padding(.horizontal, 24)
         .padding(.top, 18)

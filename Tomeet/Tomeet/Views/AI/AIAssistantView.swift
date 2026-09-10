@@ -1,19 +1,22 @@
 import SwiftUI
-import SwiftData
 
 struct AIAssistantView: View {
     /// 对话绑定的书(从 Book Sheet 的「对话」按钮进入,上下文固定)。
     let book: Book
+    /// 关闭全屏对话页(由父视图把 presentedChat 置 nil)。
     var onBack: () -> Void
 
     @State private var viewModel: AIChatViewModel
     @State private var input = ""
+    /// 建议问题在 init 算一次,避免每次 body 重算都重读磁盘 JSON。
+    @State private var suggestedPrompts: [String]
     @FocusState private var inputFocused: Bool
 
     init(book: Book, onBack: @escaping () -> Void) {
         self.book = book
         self.onBack = onBack
         _viewModel = State(wrappedValue: AIChatViewModel(selectedBook: book))
+        _suggestedPrompts = State(wrappedValue: SuggestedPrompts.prompts(for: book))
     }
 
     var body: some View {
@@ -25,8 +28,6 @@ struct AIAssistantView: View {
                 messageList
             }
             .background(Theme.canvas)
-            // AI 对话页隐藏整条底部 TabBar，返回主页靠顶部返回按钮/左边缘右滑
-            .toolbar(.hidden, for: .tabBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { onBack() } label: {
@@ -126,7 +127,7 @@ struct AIAssistantView: View {
             if viewModel.showsSuggestedPrompts {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(SuggestedPrompts.prompts(for: book), id: \.self) { prompt in
+                        ForEach(suggestedPrompts, id: \.self) { prompt in
                             Button {
                                 Task { await viewModel.send(prompt) }
                             } label: {
