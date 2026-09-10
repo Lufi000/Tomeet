@@ -6,17 +6,9 @@ struct AIAssistantView: View {
     /// 关闭全屏对话页(由父视图把 presentedChat 置 nil)。
     var onBack: () -> Void
 
-    @State private var viewModel: AIChatViewModel
-    @State private var input = ""
-    /// 建议问题在 init 算一次,避免每次 body 重算都重读磁盘 JSON。
-    @State private var suggestedPrompts: [String]
-    @FocusState private var inputFocused: Bool
-
     init(book: Book, onBack: @escaping () -> Void) {
         self.book = book
         self.onBack = onBack
-        _viewModel = State(wrappedValue: AIChatViewModel(selectedBook: book))
-        _suggestedPrompts = State(wrappedValue: SuggestedPrompts.prompts(for: book))
     }
 
     var body: some View {
@@ -25,7 +17,7 @@ struct AIAssistantView: View {
                 contextCard
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                messageList
+                BookChatView(book: book)
             }
             .background(Theme.canvas)
             .toolbar {
@@ -36,7 +28,6 @@ struct AIAssistantView: View {
                 }
             }
             .simultaneousGesture(edgeSwipeBack)
-            .safeAreaInset(edge: .bottom) { inputBar }
         }
     }
 
@@ -73,158 +64,5 @@ struct AIAssistantView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Theme.card)
         )
-    }
-
-    // MARK: - Messages
-
-    private var messageList: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                if viewModel.messages.isEmpty {
-                    emptyState
-                } else {
-                    LazyVStack(spacing: 12) {
-                        ForEach(viewModel.messages) { message in
-                            MessageBubble(message: message)
-                                .id(message.id)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-            }
-            .onChange(of: viewModel.messages.last?.text) { _, _ in
-                if let lastID = viewModel.messages.last?.id {
-                    proxy.scrollTo(lastID, anchor: .bottom)
-                }
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .onTapGesture { inputFocused = false }
-        }
-    }
-
-    private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.largeTitle)
-                .foregroundStyle(Theme.inkSecondary)
-            Text("Meet the mind inside every book")
-                .font(.splendid(.headline)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.ink)
-            Text("Ask a question, dig into a concept,\nor compare what different books say.")
-                .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.inkTertiary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 120)
-    }
-
-    // MARK: - Input
-
-    private var inputBar: some View {
-        VStack(spacing: 8) {
-            if viewModel.showsSuggestedPrompts {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(suggestedPrompts, id: \.self) { prompt in
-                            Button {
-                                Task { await viewModel.send(prompt) }
-                            } label: {
-                                Text(prompt)
-                                    .font(.splendid(.caption)).tracking(Theme.letterSpacing)
-                                    .foregroundStyle(Theme.ink)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(Theme.card, in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                }
-            }
-
-            HStack(spacing: 10) {
-                TextField(inputPlaceholder, text: $input, axis: .vertical)
-                    .font(.splendid(.body))
-                    .tracking(Theme.letterSpacing)
-                    .lineLimit(1...4)
-                    .focused($inputFocused)
-                    .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Theme.card)
-                    )
-                    .onSubmit { send() }
-
-                Button(action: send) {
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(canSend ? Theme.sendArrow : Theme.inkTertiary)
-                        .frame(width: 34, height: 34)
-                        .background(
-                            Circle().fill(canSend ? Theme.sendEnabled : Theme.inkFaint)
-                        )
-                }
-                .disabled(!canSend)
-            }
-            .padding(.horizontal, 16)
-        }
-        .padding(.vertical, 8)
-        .background(Theme.canvas)
-    }
-
-    private var inputPlaceholder: String {
-        "Ask about \"\(book.title)\"..."
-    }
-
-    private var canSend: Bool {
-        !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !viewModel.isResponding
-    }
-
-    private func send() {
-        let text = input
-        // 持焦的 TextField 会完全忽略外部对 binding 的写入（内部缓冲直到失焦才同步），
-        // 必须先失焦再清空，随后立即恢复焦点让键盘不收起。
-        inputFocused = false
-        input = ""
-        Task { @MainActor in inputFocused = true }
-        Task { await viewModel.send(text) }
-    }
-}
-
-private struct MessageBubble: View {
-    let message: ChatMessage
-
-    var body: some View {
-        HStack {
-            if message.role == .user { Spacer(minLength: 48) }
-            content
-                .font(.splendid(.body)).tracking(Theme.letterSpacing)
-                .foregroundStyle(Theme.ink)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(message.role == .user ? Theme.userBubble : Theme.card)
-                )
-            if message.role == .assistant { Spacer(minLength: 48) }
-        }
-    }
-
-    /// AI 回复按 Markdown 渲染（斜体/粗体/列表），解析失败回退纯文本；
-    /// 流式追加时每次重解析，聊天长度下开销可忽略。
-    private var content: Text {
-        guard !message.text.isEmpty else {
-            return Text(message.role == .assistant ? "Thinking…" : "…")
-        }
-        if message.role == .assistant,
-           let attributed = try? AttributedString(markdown: message.text) {
-            return Text(attributed)
-        }
-        return Text(message.text)
     }
 }
