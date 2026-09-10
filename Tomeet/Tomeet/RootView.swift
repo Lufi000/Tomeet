@@ -16,8 +16,7 @@ struct RootView: View {
         }
         // 听书迷你条：safeAreaInset 钉在 TabBar 上方（VStack 会把它压到屏幕最底端、TabBar 之下）
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            // DEBUG: 定位 inset 区域
-            Color.red.frame(height: 60)
+            NowPlayingBar(onExpand: { showNowPlaying = true })
         }
         .animation(.easeInOut(duration: 0.25), value: audioPlayer.isNowPlayingBarVisible)
         .fullScreenCover(isPresented: $showNowPlaying) {
