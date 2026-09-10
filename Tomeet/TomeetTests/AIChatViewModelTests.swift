@@ -10,12 +10,12 @@ struct AIChatViewModelTests {
         }
     }
 
-    private func makeViewModel(books: [Book] = []) -> AIChatViewModel {
-        AIChatViewModel(chatService: MockChatService(chunkDelay: .zero), books: books)
+    private func makeViewModel(book: Book? = nil) -> AIChatViewModel {
+        AIChatViewModel(chatService: MockChatService(chunkDelay: .zero), selectedBook: book)
     }
 
     @Test func sendShowsErrorInAssistantMessageWhenServiceFails() async {
-        let viewModel = AIChatViewModel(chatService: FailingChatService(), books: [])
+        let viewModel = AIChatViewModel(chatService: FailingChatService())
 
         await viewModel.send("你好")
 
@@ -52,66 +52,22 @@ struct AIChatViewModelTests {
         #expect(!viewModel.isResponding)
     }
 
-    @Test func defaultBookIsMostRecentlyOpened() {
-        let older = Book(title: "旧书", author: "A", format: .epub,
-                         lastOpenedDate: Date(timeIntervalSinceNow: -3600))
-        let newer = Book(title: "新书", author: "B", format: .epub,
-                         lastOpenedDate: Date(timeIntervalSinceNow: -60))
-        let unopened = Book(title: "未读", author: "C", format: .epub)
-
-        let viewModel = makeViewModel(books: [older, unopened, newer])
-
-        #expect(viewModel.selectedBook?.title == "新书")
-    }
-
-    @Test func defaultBookIsNilWhenNothingOpened() {
-        let viewModel = makeViewModel(books: [Book(title: "未读", author: "C", format: .epub)])
-
-        #expect(viewModel.selectedBook == nil)
-    }
-
-    @Test func applyDefaultBookSelectsMostRecentlyOpened() {
-        let newer = Book(title: "新书", author: "B", format: .epub,
-                         lastOpenedDate: Date(timeIntervalSinceNow: -60))
-        let viewModel = makeViewModel()
-
-        viewModel.applyDefaultBook(from: [newer])
-
-        #expect(viewModel.selectedBook?.title == "新书")
-    }
-
-    @Test func applyDefaultBookDoesNotOverrideExistingSelection() {
-        let newer = Book(title: "新书", author: "B", format: .epub,
-                         lastOpenedDate: Date(timeIntervalSinceNow: -60))
-        let chosen = Book(title: "沉思录", author: "Marcus Aurelius", format: .epub)
-        let viewModel = makeViewModel()
-        viewModel.selectBook(chosen)
-
-        viewModel.applyDefaultBook(from: [newer])
-
-        #expect(viewModel.selectedBook?.title == "沉思录")
-    }
-
-    @Test func selectBookChangesContextOfNextReply() async {
-        let viewModel = makeViewModel()
+    @Test func selectedBookComesFromInitializer() async {
         let book = Book(title: "沉思录", author: "Marcus Aurelius", format: .epub)
+        let viewModel = makeViewModel(book: book)
 
-        viewModel.selectBook(book)
         await viewModel.send("核心观点是什么？")
 
         #expect(viewModel.selectedBook?.title == "沉思录")
         #expect(viewModel.messages.last?.text.contains("沉思录") == true)
     }
 
-    @Test func selectBookNilClearsContext() async {
-        let book = Book(title: "沉思录", author: "Marcus Aurelius", format: .epub)
-        let viewModel = makeViewModel(books: [])
+    @Test func suggestedPromptsHideAfterFirstMessage() async {
+        let viewModel = makeViewModel()
+        #expect(viewModel.showsSuggestedPrompts)
 
-        viewModel.selectBook(book)
-        viewModel.selectBook(nil)
-        await viewModel.send("随便聊聊")
+        await viewModel.send("你好")
 
-        #expect(viewModel.selectedBook == nil)
-        #expect(viewModel.messages.last?.text.contains("沉思录") == false)
+        #expect(!viewModel.showsSuggestedPrompts)
     }
 }

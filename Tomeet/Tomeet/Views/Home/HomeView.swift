@@ -37,10 +37,9 @@ struct HomeView: View {
         .fullScreenCover(item: $presentedListen) { book in
             ListenPlayerView(book: book)
         }
-        // Task 7 接入:AIAssistantView(book:onBack:) 签名落地后恢复
-        // .fullScreenCover(item: $presentedChat) { book in
-        //     AIAssistantView(book: book, onBack: { presentedChat = nil })
-        // }
+        .fullScreenCover(item: $presentedChat) { book in
+            AIAssistantView(book: book, onBack: { presentedChat = nil })
+        }
         .overlay {
             if let book = selectedBook {
                 BookSheetView(

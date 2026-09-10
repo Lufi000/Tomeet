@@ -7,31 +7,18 @@ final class AIChatViewModel {
     private let chatService: any ChatService
 
     var messages: [ChatMessage] = []
-    var selectedBook: Book?
+    /// 对话上下文固定为创建时传入的书(详情页「对话」入口,不再支持换书)。
+    let selectedBook: Book?
     var isResponding = false
 
-    init(chatService: (any ChatService)? = nil, books: [Book] = []) {
-        // 默认实参在调用点求值（非隔离上下文），DeepSeekChatService() 放这里会触发
-        // MainActor 隔离告警；改为可选参数，在 @MainActor 的 init 体内构造默认值。
+    /// 消息为空才显示预设问题 chips。
+    var showsSuggestedPrompts: Bool { messages.isEmpty }
+
+    init(chatService: (any ChatService)? = nil, selectedBook: Book? = nil) {
+        // 默认实参在调用点求值(非隔离上下文),DeepSeekChatService() 放这里会触发
+        // MainActor 隔离告警;改为可选参数,在 @MainActor 的 init 体内构造默认值。
         self.chatService = chatService ?? DeepSeekChatService()
-        // 默认选中最近在读的书（§AI Tab 设计：进入后自动带上当前阅读上下文）
-        self.selectedBook = Self.mostRecentlyOpened(in: books)
-    }
-
-    /// 视图侧 @Query 数据就绪后补选默认书；已手动选择过则不覆盖。
-    func applyDefaultBook(from books: [Book]) {
-        guard selectedBook == nil else { return }
-        selectedBook = Self.mostRecentlyOpened(in: books)
-    }
-
-    private static func mostRecentlyOpened(in books: [Book]) -> Book? {
-        books.filter { $0.lastOpenedDate != nil }
-            .sorted(by: Book.sortRecentlyOpened)
-            .first
-    }
-
-    func selectBook(_ book: Book?) {
-        selectedBook = book
+        self.selectedBook = selectedBook
     }
 
     func send(_ text: String) async {

@@ -13,9 +13,6 @@ struct RootView: View {
             LibraryView()
                 .tabItem { tabLabel("Library", selectedImage: "TabLibrary", unselectedImage: "TabLibraryUnselected", tag: 1) }
                 .tag(1)
-            AIAssistantView(onBack: { selectedTab = 0 })
-                .tabItem { tabLabel("AI", selectedImage: "TabAI", unselectedImage: "TabAIUnselected", tag: 2) }
-                .tag(2)
         }
         // 听书迷你条：safeAreaInset 钉在 TabBar 上方（VStack 会把它压到屏幕最底端、TabBar 之下）
         .safeAreaInset(edge: .bottom, spacing: 0) {
