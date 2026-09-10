@@ -33,7 +33,7 @@ ZStack 三层不变:顶部固定 "I'm Now Reading" 标题 + 渐变圆头像、�
 
 ### 轮播层
 
-- `ScrollView(.horizontal, showsIndicators: false)` + `LazyHStack`。
+- `ScrollView(.horizontal, showsIndicators: false)` + `LazyHStack(spacing: 16)`(视觉间距主要由缩放置出)。
 - 每个 item:封面(宽 = 屏宽 × 0.42,2:3 比例)+ 下方书名(Splendid 粗体)+ 作者(灰色小字),文字随封面一起滚动。
 - `.scrollTargetBehavior(.viewAligned)` 松手吸附居中,惯性交给系统。
 - 每个 item `.visualEffect` 取 `frame(in: .scrollView).midX`,映射缩放与透明度:
@@ -43,12 +43,15 @@ enum CarouselScale {
     static let minScale: CGFloat = 0.7    // 相邻 item
     static let minOpacity: Double = 0.5
 
+    /// 0 = 屏幕中心,1 = 屏幕边缘(超界 clamp)
+    static func normalized(midX: CGFloat, screenWidth: CGFloat) -> CGFloat {
+        min(abs(midX - screenWidth / 2) / (screenWidth / 2), 1)
+    }
     static func scale(midX: CGFloat, screenWidth: CGFloat) -> CGFloat {
-        let normalized = min(abs(midX - screenWidth / 2) / (screenWidth / 2), 1)
-        return 1 - (1 - minScale) * normalized
+        1 - (1 - minScale) * normalized(midX: midX, screenWidth: screenWidth)
     }
     static func opacity(midX: CGFloat, screenWidth: CGFloat) -> Double {
-        1 - (1 - minOpacity) * Double(normalized)   // 同上归一化
+        1 - (1 - minOpacity) * Double(normalized(midX: midX, screenWidth: screenWidth))
     }
 }
 ```
