@@ -22,10 +22,10 @@ struct ReadingGridView: View {
                         .buttonStyle(.plain)
                         // visualEffect 只改呈现不改布局,滚动中逐帧拿到 global 位置
                         .visualEffect { content, proxy in
-                            let midY = proxy.frame(in: .global).midY
+                            let midX = proxy.frame(in: .global).midX
                             return content
-                                .scaleEffect(BreathingScale.scale(midY: midY, screenHeight: stage.size.height))
-                                .opacity(BreathingScale.opacity(midY: midY, screenHeight: stage.size.height))
+                                .scaleEffect(CarouselScale.scale(midX: midX, screenWidth: stage.size.width))
+                                .opacity(CarouselScale.opacity(midX: midX, screenWidth: stage.size.width))
                         }
                     }
                 }
