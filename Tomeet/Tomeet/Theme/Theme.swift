@@ -6,6 +6,8 @@ import SwiftUI
 enum Theme {
     /// 页面背景。
     static let canvas = Color(hex: 0xF8EEE5)
+    /// Manta 浅灰:仅首页 + 书籍详情面板,不动全局米色。
+    static let homeCanvas = Color(hex: 0xF0F0F3)
     /// 卡片底色：上下文卡片、AI 气泡、输入框。
     static let card = Color(hex: 0xFFF9F3)
     /// 用户消息气泡（淡绿）。
