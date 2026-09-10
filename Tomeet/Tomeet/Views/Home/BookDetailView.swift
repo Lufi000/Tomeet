@@ -12,8 +12,8 @@ struct BookDetailView: View {
         GeometryReader { proxy in
             ZStack(alignment: .bottom) {
                 panel
-                    // 顶部只留安全区 + 12pt,近全屏;键盘弹出时 proxy 高度收缩,面板随之被顶起
-                    .frame(height: proxy.size.height - proxy.safeAreaInsets.top - 12)
+                    // 顶部留安全区 + 12pt,近全屏;键盘弹出时 proxy 高度收缩,面板随之被顶起
+                    .frame(height: proxy.size.height - 12)
                     .frame(maxWidth: .infinity)
                     // 磨砂背景单独延伸到屏幕底边;内容不 ignore,由 padding 抬离 Home 指示条
                     .background {
@@ -23,8 +23,6 @@ struct BookDetailView: View {
                     }
                     .simultaneousGesture(swipeDownToClose)
             }
-            // 只忽略 container,保留 keyboard 避让
-            .ignoresSafeArea(.container)
         }
         .transition(.move(edge: .bottom))
     }
@@ -64,24 +62,21 @@ struct BookDetailView: View {
                 }
             }
 
-            // 书籍区:封面可点 → 进阅读器
-            HStack(alignment: .top, spacing: 16) {
+            // 书籍区:封面在上、书名作者在下方,全左对齐;封面可点 → 进阅读器
+            VStack(alignment: .leading, spacing: 8) {
                 Button(action: onRead) {
                     BookCoverView(book: book)
                         .frame(height: 120)
                 }
                 .buttonStyle(.plain)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(book.title)
-                        .font(.splendid(.title3, weight: .bold)).tracking(Theme.letterSpacing)
-                        .foregroundStyle(Theme.ink)
-                    Text(book.author)
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
-                        .foregroundStyle(Theme.inkSecondary)
-                }
-                .padding(.top, 4)
-                Spacer(minLength: 0)
+                Text(book.title)
+                    .font(.splendid(.title3, weight: .bold)).tracking(Theme.letterSpacing)
+                    .foregroundStyle(Theme.ink)
+                Text(book.author)
+                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .foregroundStyle(Theme.inkSecondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             BookChatView(book: book)
         }

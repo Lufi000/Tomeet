@@ -30,6 +30,7 @@ struct HomeView: View {
             addBookButton
         }
         .bookImportPresentation(isPresented: $showImporter)
+        .toolbar(selectedBook == nil ? .visible : .hidden, for: .tabBar)
         .onChange(of: books, initial: false) { _, newBooks in
             reconcileStaleSelections(with: newBooks)
         }
@@ -109,6 +110,7 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .padding(.bottom, 12)
+        .opacity(selectedBook == nil ? 1 : 0)
     }
 
     /// 空态:刺猬插画 + 引导。
