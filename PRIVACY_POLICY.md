@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last Updated:** 2026-08-26
+**Last Updated:** 2026-09-18
 
 ## Introduction
 
@@ -30,7 +30,15 @@ Tomeet (“we”, “us”, or “the App”) is an AI reading app designed to h
 
 ## AI Services and Third Parties
 
-The App uses third-party AI services, including OpenAI, to process your natural-language questions. Content sent to AI services is used solely to generate responses and is handled in accordance with OpenAI’s privacy and security standards. **We do not allow third-party AI providers to use your content for training their models.**
+The App's AI conversation feature is powered by a third-party large language model, **DeepSeek** (operated by DeepSeek, api.deepseek.com). No AI model runs inside the App itself; all AI processing happens server-side.
+
+Requests are sent from the App to a lightweight backend proxy operated by us, which forwards them to DeepSeek over an encrypted connection. The App never communicates with the AI provider directly, and no third-party API key is embedded in the App.
+
+Content transmitted to the AI provider is limited to what is needed to answer your question: the text of your messages and relevant book context (book title, author, and short excerpts of the book you are discussing). The App has no account system, and we do not transmit your name, email address, device identifiers, or other personal information to AI providers.
+
+Content sent to AI services is used solely to generate responses and is handled in accordance with the AI provider's privacy and security standards. **We do not allow third-party AI providers to use your content for training their models.**
+
+Apple's iCloud is used only if you enable sync, for synchronizing your library and data across your own devices.
 
 ## Data Storage and Security
 
@@ -49,7 +57,7 @@ You may at any time:
 
 ## Children’s Privacy
 
-The App is not intended for children under 4. If you become aware that a child under 4 has provided us with personal information, please contact us and we will take steps to delete such information.
+The App is not intended for children under 13. If you become aware that a child under 13 has provided us with personal information, please contact us and we will take steps to delete such information.
 
 ## Changes to This Privacy Policy
 
