@@ -1,4 +1,4 @@
-# Tomeet 设计系统（刻度层 + 组件层 + 门禁）设计
+# Tomeet 设计系统（刻度 + 图标 + 组件 + 门禁）设计
 
 **日期**：2026-09-28
 **状态**：待实现
@@ -18,11 +18,12 @@
 | `spacing:` 数值 | 13 个：0/2/4/6/8/10/12/16/18/20/24/28/48 | 含 18 等非网格值 |
 | `cornerRadius` | 7 个：6/10/12/14/16/20/28 | 无命名、无层级 |
 | 字体 | 12 处 `.system(size:)` 绕过 `.splendid()` | Reader/Listen 界面文字 |
+| 图标尺寸 | 4 种互不相干的写法：`.system(size:)` 8 处、语义字阶 6 处、`.splendid()` 1 处、完全不指定 11 处 | 无统一入口 |
 | 颜色 | `Views/` 内 11 处裸 `Color.black/.white`；`homeCanvas` 为首页开的分叉 | 分叉即漂移起点 |
 | 圆角风格 | 仅 `BookDetailView.swift:20` 用 `.continuous`，其余全默认 `.circular` | 系统形状用 continuous，唯一"对的"反成异类 |
 | 组件 | `Views/Shared/` 只有基础设施，无 button/card | 每页手搓，必然不一致 |
 
-### 三个"铁证"（同一语义、不同实现）
+### 四个"铁证"（同一语义、不同实现）
 
 1. **同一个网格、同一文件、两个行间距**
    `LibraryView.swift:214`（`themedContent`）`LazyVGrid(spacing: 16)` vs
@@ -36,6 +37,11 @@
    `AIAssistantView.swift:64` `Theme.card` + `cornerRadius: 12`
    `NowPlayingBar.swift:56` `Theme.card` + `cornerRadius: 14`（且 `:63` 重复写了第二次）
 
+4. **同一个关闭图标、两个尺寸**
+   `BookDetailView.swift:45` `Image(systemName: "xmark.circle.fill")` + `.font(.title2)`（22pt）
+   `ListenPlayerView.swift:20` 同一符号 + `.font(.splendid(.title2))`（31pt）
+   后者把 Splendid 66 挂在 SF Symbol 上 —— Splendid 66 不含该字形，靠 CoreText 回退才显示，尺寸走的是 Splendid 放大过的字号表。9pt 的差异由此而来。
+
 ### 为什么现在做、以及为什么不全做
 
 视觉方向仍会变（Manta 是两个 commit 前刚落地的）。因此本设计**只建地基，不迁移旧页面** —— 要重画的页面现在迁移是纯浪费。真正抗变化的资产是刻度层、组件层和门禁；会白做的是逐页迁移。
@@ -47,7 +53,8 @@
 **目标**
 
 - 一套 4pt 网格的间距刻度、一套命名圆角层级、一套文字角色
-- 6 个组件封装真实存在的重复（证据见 §4）
+- 一套图标尺寸角色，禁止 SF Symbol 用裸数值或 Splendid 渲染
+- 6 个封装单元（`.tText` `.tIcon` + 5 个构件）封住真实存在的重复（证据见 §5）
 - 一个能失败的测试，阻止新代码再写魔法数字
 - 一个组件画廊，作为活文档 + 视觉方向的试验场
 
@@ -119,15 +126,59 @@ enum TextRole {
 
 ---
 
-## 4. 组件层
+## 4. 图标层
 
-新增 `Tomeet/Views/Shared/Components/`。**只抽有真实重复证据的 6 个**，组件内部同样只从刻度取值，门禁对它们一视同仁。
+### 4.1 现状与结论
 
-### 4.1 `TText`（ViewModifier）
+全项目 26 处图标**全部**是 `Image(systemName:)` / `Label(systemImage:)`，即 SF Symbols。无第三方图标库、无自绘 SVG。（`EmptyStateContinue` / `EmptyStateReading` 是插画，不属图标。）
 
-见 §3.3。收益最大：57 处三行变一行。
+**"只用 SF Symbols"直接固化为规则** —— 这一层现状是对的，不需要改。
 
-### 4.2 `TButton.swift`
+**关于 SF Compact**：SF Symbols 不是"某个字体"，而是模板化符号，**没有默认字体**，尺寸与字重完全由外部 `.font()` 决定。SF Compact 是 Apple Watch 的字体（窄体，为圆角小屏优化），iOS App 的 UI 标准是 **SF Pro**。本项目**不引入 SF Compact**。
+
+**字形风格用系统默认 SF Pro**，不设 `fontDesign`。理由：Splendid 66 是打字机衬线，而 SF Symbols 没有对应的衬线变体 —— 无论如何都匹配不上；不干预反而最符合 iOS 用户预期。
+
+### 4.2 尺寸角色 `.tIcon`
+
+图标尺寸**只走语义 `Font.TextStyle`**，从而自动获得 Dynamic Type 支持。禁止裸数值。
+
+```swift
+.tIcon(.caption)     // 角标（headphones / icloud）
+.tIcon(.body)        // 工具条、按钮内图标（ellipsis.circle / arrow.up）
+.tIcon(.title2)      // 次级操作、关闭键
+.tIcon(.largeTitle)  // 主操作（全屏播放键）
+```
+
+签名：`tIcon(_ style: Font.TextStyle, weight: Font.Weight = .regular)`，内部即 `.font(.system(style, weight: weight))`。
+
+**`.tIcon` 与 `.tText` 定义在 `Theme/` 下**，不属组件层 —— 它们是角色（token 层），不是 UI 构件。组件层的 5 个文件放 `Views/Shared/Components/`。
+
+**推荐四档**（上表）**但不做成 enum 硬限制** —— SF Symbols 本就按文字字阶设计，硬塞一个更小的枚举只会逼出新数字。约束由 §6 的两条禁令提供，而非枚举。
+
+### 4.3 两条硬规则（进 §6 门禁）
+
+1. **禁止 `.system(size:)` 挂在 `Image(systemName:)` 上** —— 与文字层同源，尺寸该走语义字阶。
+2. **禁止 `.splendid()` 挂在 `Image(systemName:)` 上** —— Splendid 66 不含 SF Symbols 字形，此写法无正当用例，只是靠回退"偶然能跑"。这是纯错误，见铁证之四。
+
+### 4.4 符号变体约定
+
+- 需要**实心强调**（主播放键、关闭键、警告）才用 `.fill` 变体
+- 其余用描边默认变体，避免界面糊成一片实心
+- 本轮不指定 `.symbolRenderingMode`，保持默认 monochrome，不做多色符号
+
+现状与这条约定基本吻合（`.fill` 仅出现在主播放键、关闭键、警告三处），固化为约定即可。
+
+---
+
+## 5. 组件层
+
+新增 `Tomeet/Views/Shared/Components/`（下面 5.2–5.6 共 5 个构件），加上 `Theme/` 下的两个角色修饰符（`.tText` §3.3、`.tIcon` §4.2）。**只抽有真实重复证据的东西**，全部只从刻度取值，门禁对它们一视同仁。
+
+### 5.1 `TText` / `TIcon`（ViewModifier，定义在 `Theme/`）
+
+见 §3.3 与 §4.2。两者是**角色层**不是构件层，所以放 `Theme/`。收益最大：`.tText` 让 57 处三行变一行。
+
+### 5.2 `TButton.swift`
 
 ```swift
 TButton("Add New Book", style: .primary)   { showImporter = true }
@@ -141,7 +192,7 @@ TIconButton(systemName: "arrow.up", isEnabled: canSend) { send() }
 
 吸收 `HomeView.swift:103`、`LibraryView.swift:182`、`BookChatView.swift:92`（后者现在用 `.system(size: 15)` 绕过字体系统）。单一尺寸，不做 size 变体。
 
-### 4.3 `TCard`（ViewModifier）
+### 5.3 `TCard`（ViewModifier）
 
 ```swift
 someContent.tCard()          // Theme.card 填充 + Radius.md + .continuous
@@ -150,7 +201,7 @@ someContent.tCard(radius: .xl)
 
 填充 + 圆角 + `clipShape` 三者绑定，消灭 `NowPlayingBar.swift` 里 `cornerRadius: 14` 写两次的问题。吸收 `AIAssistantView.swift:64`、`NowPlayingBar.swift:56`。
 
-### 4.4 `TPageHeader.swift`
+### 5.4 `TPageHeader.swift`
 
 ```swift
 TPageHeader("Library")
@@ -159,7 +210,7 @@ TPageHeader("I'm\nNow\nReading") { avatar }   // 可选 trailing 内容
 
 吸收 `LibraryView.swift:155` 的 `libraryHeader`（被三条代码路径各抄一遍）+ `HomeView.swift:83` 的变体。用 `.tText(.pageTitle)`。
 
-### 4.5 `TBadge.swift`
+### 5.5 `TBadge.swift`
 
 ```swift
 TBadge(text: "NEW")                          // Theme.accent 胶囊
@@ -168,7 +219,7 @@ TBadge(icon: "headphones")                   // 深色半透明圆
 
 吸收 `BookGridCell.swift:8`（内边距 6/2）与 `:19`（内边距 5）—— 两者现在不一致。
 
-### 4.6 `TEmptyState.swift`
+### 5.6 `TEmptyState.swift`
 
 ```swift
 TEmptyState(
@@ -182,7 +233,7 @@ TEmptyState(
 
 吸收 `LibraryView.swift:165`、`HomeView.swift:117`（两者结构相同：插画 + 文案 + 可选按钮；HomeView 版无标题，故 `title` 可选）。
 
-### 4.7 刻意不抽的
+### 5.7 刻意不抽的
 
 | 不抽 | 理由 |
 |---|---|
@@ -192,7 +243,7 @@ TEmptyState(
 
 ---
 
-## 5. 约束层：门禁测试
+## 6. 约束层：门禁测试
 
 新增 `TomeetTests/DesignSystemGuardTests.swift`。**不引入新工具链** —— 复用已有的 test target，跑 `xcodebuild test` 即生效。
 
@@ -205,6 +256,10 @@ TEmptyState(
 | 数字圆角 | `cornerRadius:\s*[0-9]` |
 | 系统字体 | `\.system\(size:` |
 | 裸 hex 颜色 | `Color\(hex:` |
+| SF Symbol 挂裸尺寸 | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.system\(size:` |
+| SF Symbol 挂 Splendid | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.font\(\.splendid` |
+
+**为什么后两条要"及其后 2 行"**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。这两条必须开一个 2 行窗口。
 
 **两种豁免**：
 
@@ -226,11 +281,13 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 
 ---
 
-## 6. 组件画廊
+## 7. 组件画廊
 
 新增 `Tomeet/Views/Shared/Components/ComponentGallery.swift`，仅含 `#Preview`（不进 App 包）。
 
 一屏渲染全部 6 个组件的所有状态：TButton 的 primary/secondary/icon/禁用态、TBadge 的两种形态、TCard、TPageHeader（含/不含 trailing）、TEmptyState（含/不含 title）、TText 的 6 个角色。
+
+**另含图标区**：`.tIcon` 的四档尺寸各渲染一次，配同一个符号（如 `xmark.circle.fill`），好一眼比对 —— 这正是铁证之四里差 9pt 的那个符号。
 
 **它的三个用途**：
 
@@ -240,7 +297,7 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 
 ---
 
-## 7. 演进路径
+## 8. 演进路径
 
 本轮交付后，日常变成：
 
@@ -248,11 +305,11 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 2. 视觉方向要调 → 改 `Metrics.swift` / `Theme.swift`，画廊立刻验证
 3. 重画某个页面 → 重画完，从 `grandfathered` 划掉一行
 
-**组件层是重画界面**：视觉方向变了，重做的是 `Components/` 这 6 个文件，不是 `Views/` 里散落的百余处魔法数字（实测：`padding` 56 处、`spacing` 57 处、`cornerRadius` 17 处）。
+**组件层是重画界面**：视觉方向变了，重做的是 `Components/` 这 5 个文件加 `Theme/` 里的角色与刻度，不是 `Views/` 里散落的百余处魔法数字（实测：`padding` 56 处、`spacing` 57 处、`cornerRadius` 17 处、图标尺寸 4 种写法）。
 
 ---
 
-## 8. 测试策略
+## 9. 测试策略
 
 | 内容 | 方式 |
 |---|---|
@@ -263,7 +320,7 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 
 ---
 
-## 9. 风险
+## 10. 风险
 
 | 风险 | 缓解 |
 |---|---|
@@ -272,4 +329,6 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 | 豁免清单腐化（划不动） | 清单即进度表，只在重画页面时才需要动，不是日常负担 |
 | 门禁正则误报 | 行级 `// design-system-exempt: <理由>` 逃生门 |
 | 正则漏报（写法绕过） | 接受。门禁是兜底，主要杠杆是组件层让调用点根本没机会写数字 |
+| 图标四档不够用 | `.tIcon` 收语义 `TextStyle` 而非小枚举，永远不会"不够"，只是新页面要克制别乱挑 |
+| SF Pro 图标与 Splendid 66 文字气质不搭 | 已知且**无解** —— SF Symbols 没有衬线变体。已选定不干预（§4.1）；若日后视觉方向重做，这是要重新审视的点 |
 | 本轮不迁页面导致"规范没生效"的观感 | 已知取舍。视觉方向未定前，迁移是白做；地基+画廊先让方向可快速迭代 |
