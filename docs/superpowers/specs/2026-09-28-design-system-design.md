@@ -1,4 +1,4 @@
-# Tomeet 设计系统（刻度 + 图标 + 组件 + 门禁）设计
+# Tomeet 设计系统（刻度 + 图标 + 组件 + 约束）设计
 
 **日期**：2026-09-28
 **状态**：待实现
@@ -56,6 +56,7 @@
 - 一套图标尺寸角色，禁止 SF Symbol 用裸数值或 Splendid 渲染
 - 6 个封装单元（`.tText` `.tIcon` + 5 个构件）封住真实存在的重复（证据见 §5）
 - 一个能失败的测试，阻止新代码再写魔法数字
+- 一份 `CLAUDE.md` 常驻规则，让 agent 在**生成的那一刻**就遵守（§6.2）
 - 一个组件画廊，作为活文档 + 视觉方向的试验场
 
 **非目标**
@@ -88,6 +89,12 @@ enum Spacing {
 ```
 
 `hairline` 是显式的、受控的例外，不是漏网之鱼 —— 严格 4pt 网格里没有 2，但 4 处紧贴文字堆叠用它；强行拉到 4 会肉眼可见地松掉。顶部一级命名 `hero` 而非 `xxxl`，因为它是语义（页面级留白）而非量级。
+
+**一条比刻度本身更重要的原则：「内部 ≤ 外部」。**
+
+元素内部的 padding 不得超过它周围的外边距。这是社区引为"**ad-hoc 布局中最常被打破的规则**"的一条 —— 刻度只给了词汇，这条给的是语法。具体说：一个卡片内边距用了 `lg`(16)，那它离屏幕边缘就得 ≥ 16（用 `lg` 或更大）；内衬比外边距还大，视觉上元素会"鼓出去"。
+
+组件层设计时按这条约束，**不要只对着数值表填**。
 
 ### 3.2 圆角 `Radius`
 
@@ -243,7 +250,13 @@ TEmptyState(
 
 ---
 
-## 6. 约束层：门禁测试
+## 6. 约束层
+
+约束分两层：**硬约束**（门禁测试，能 fail 构建）和**软约束**（`CLAUDE.md` 常驻规则，让 agent 从一开始就不写错）。
+
+硬约束是兜底，**软约束才是主要杠杆** —— 因为本项目绝大多数 UI 代码由 AI agent 生成，让它一开始就写对，比事后拦下来有效得多。
+
+### 6.1 硬约束：门禁测试
 
 新增 `TomeetTests/DesignSystemGuardTests.swift`。**不引入新工具链** —— 复用已有的 test target，跑 `xcodebuild test` 即生效。
 
@@ -260,6 +273,14 @@ TEmptyState(
 | SF Symbol 挂 Splendid | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.font\(\.splendid` |
 
 **为什么后两条要"及其后 2 行"**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。这两条必须开一个 2 行窗口。
+
+**报错信息要给建议，不只是拦截。** 命中数值时，failure message 需算出**最近的两个刻度值**并给出提示：
+
+```
+LibraryView.swift:214  spacing: 14 —— 最近的刻度是 12 或 16
+```
+
+社区工具（`stylelint-design-token-guard`）正是这个思路：精确匹配报 error，**接近的报 warning 并建议最近的 token**。门禁该是向导而非纯粹的墙 —— 对本项目尤其重要，因为**主要使用者是 agent**，一条带建议的报错能让它当场改对，一条光说"不许写 14"的报错只会让它试下一个数。
 
 **两种豁免**：
 
@@ -278,6 +299,36 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 2. **行级（正当例外）** —— `// design-system-exempt: <理由>` 行尾注释。冒号后**必须有非空文本**，只写 `// design-system-exempt` 或 `// design-system-exempt:` 不生效 —— 迫使每处例外都留下理由。
 
 **豁免边界**：`Components/` 目录**不在豁免范围内** —— 组件必须只用刻度值。`Theme/` 不在扫描范围内（它本身就是 token 的定义处）。
+
+### 6.2 软约束：`CLAUDE.md` 常驻规则
+
+**这是调研暴露出的最大缺口。**
+
+社区共识（Boldare、Supernova 及多个 agent skill 项目）是：设计系统已从"给设计师的工具"变成"**给任何生成 UI 的人——或模型——用的基础设施**"。
+
+本项目绝大多数 UI 代码由 AI agent 生成，所以**这份 spec 的主要读者不是人，是 agent**。而写在 `docs/superpowers/specs/` 下的文档，**未来的会话不会自动读**。真正的失败模式不是"人写了 `padding(18)`"，而是"**一个从没读过这份 spec 的 agent 写了 `padding(18)`**"。
+
+**做法**：在项目根 `CLAUDE.md` 增加一节 **UI 规范**。CLAUDE.md 每次会话自动加载，是最可靠的常驻通道。**控制在 15 行以内**，只放不可协商的硬规则，细节指向 spec：
+
+```markdown
+## UI 规范
+
+写任何 UI 前先读 `docs/superpowers/specs/2026-09-28-design-system-design.md`。
+
+- 间距/圆角/字号只从 `Theme/Metrics.swift` 取，禁止裸数字
+- 文字用 `.tText(...)`，图标用 `.tIcon(...)`
+- 按钮用 `TButton`，卡片用 `.tCard()`，页面大标题用 `TPageHeader`
+- 只用 SF Symbols；禁止第三方图标库、禁止 `.splendid()` 挂 `Image(systemName:)`
+- 不直接写 `Color.black/.white`，用 `Theme.*`
+- 改完跑 `xcodebuild test`，`DesignSystemGuardTests` 会拦住违规
+```
+
+**为什么不只靠门禁**：门禁只在跑测试时生效，且只拦"已写下的"。CLAUDE.md 规则作用于**生成的那一刻** —— 对 agent 驱动的开发，这才是主要杠杆。
+
+**顺带记录两个现存隐患**（本轮不处理，仅备案）：
+
+1. `.cursor/skills/tomeet-icons/references/style-guide.md` 手抄了 `#F8EEE5` / `#FFF9F3` / `#413036` 等 hex 值，与 `Theme.swift` 目前一致，但属**两处维护** —— 将来改色是漂移源。
+2. 该 skill 位于 `.cursor/skills/` 下，**Claude Code 读不到**（它只读 `.claude/skills/` 和 `CLAUDE.md`）。同一套规范在两个 agent 之间是割裂的。
 
 ---
 
@@ -332,3 +383,6 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 | 图标四档不够用 | `.tIcon` 收语义 `TextStyle` 而非小枚举，永远不会"不够"，只是新页面要克制别乱挑 |
 | SF Pro 图标与 Splendid 66 文字气质不搭 | 已知且**无解** —— SF Symbols 没有衬线变体。已选定不干预（§4.1）；若日后视觉方向重做，这是要重新审视的点 |
 | 本轮不迁页面导致"规范没生效"的观感 | 已知取舍。视觉方向未定前，迁移是白做；地基+画廊先让方向可快速迭代 |
+| `inkSecondary`/`inkTertiary` 是手搓的 `.secondary`/`.tertiary` | 已知取舍。本轮只做浅色，等于放弃系统语义色**免费**的暗色/高对比适配。重做视觉方向时这是首选项 |
+| style-guide.md 与 Theme.swift 两处维护 hex | 本轮不处理，已备案。目前值一致，但将来改色必须同时改两处 |
+| `.cursor/skills/` 的规范 Claude Code 读不到 | 本轮不处理，已备案。§6.2 的 CLAUDE.md 规则是 Claude Code 侧的入口 |
