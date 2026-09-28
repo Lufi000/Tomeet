@@ -35,6 +35,11 @@ enum Theme {
     /// 正值加宽、负值收紧，只改这一处全 App 生效。
     static let letterSpacing: Double = -3.5
 
+    /// 实心填充（主按钮底、用户消息气泡）。比 `ink` 更重，用于需要强对比的实心形状。
+    static let solidInk = Color(hex: 0x000000)
+    /// 压在 `solidInk` 上的文字与图标。
+    static let onSolid = Color(hex: 0xFFFFFF)
+
     // MARK: 备用色（分隔线、封面点缀、空状态等）
 
     static let sand = Color(hex: 0xDAC9B9)
