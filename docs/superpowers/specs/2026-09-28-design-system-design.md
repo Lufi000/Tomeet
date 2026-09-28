@@ -269,10 +269,10 @@ TEmptyState(
 | 数字圆角 | `cornerRadius:\s*[0-9]` |
 | 系统字体 | `\.system\(size:` |
 | 裸 hex 颜色 | `Color\(hex:` |
-| SF Symbol 挂裸尺寸 | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.system\(size:` |
+| 裸 `Color.black`/`.white` | `Color\.(black\|white)\b` （§6.2 的软规则说了不许，硬规则必须跟上） |
 | SF Symbol 挂 Splendid | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.font\(\.splendid` |
 
-**为什么后两条要"及其后 2 行"**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。这两条必须开一个 2 行窗口。
+**只有最后一条需要 2 行窗口**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。之所以只给它开窗口，是因为 `.splendid` 在 `Text` 上**合法**、在 `Image(systemName:)` 上才非法 —— 必须带上下文才能判定。而 `.system(size:` 是全局禁令（见上表「系统字体」行），单行即可判定，也就不必再为它单开一条窗口规则、避免同一处**重复报两次**。
 
 **报错信息要给建议，不只是拦截。** 命中数值时，failure message 需算出**最近的两个刻度值**并给出提示：
 
