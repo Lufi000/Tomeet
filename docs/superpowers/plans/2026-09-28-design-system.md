@@ -18,7 +18,8 @@
 - **不引入任何新工具链依赖**：不加 SwiftLint，不加 SPM 包，不加构建脚本。门禁就是普通测试。
 - **扫描范围**：门禁扫 `Tomeet/Tomeet/Views/`。`Theme/` **不在**扫描范围（它是 token 定义处）。`Views/Shared/Components/` **在**扫描范围内，组件必须只用刻度值。
 - **4pt 网格**：除 `Spacing.hairline = 2` 外，所有间距/圆角必须是 4 的倍数。
-- **组件内只用命名刻度值，不做算术**。需要 6 的时候，答案不是 `Spacing.xs + Spacing.hairline`，而是"在 4 和 8 里选一个"。用算术夹带非网格值，是门禁抓不到、但设计系统最不该有的那种绕过。
+- **间距值只用命名刻度，不做算术**。需要 6 的时候，答案不是 `Spacing.xs + Spacing.hairline`，而是"在 4 和 8 里选一个"。用算术夹带非网格间距，是门禁抓不到、但设计系统最不该有的那种绕过。
+  （**例外**：组件自身的**尺寸**可以写成"刻度 × N"的**具名常量**，如 `TEmptyState.illustrationHeight = Spacing.hero * 3`。那是让组件尺寸跟随刻度缩放，不是夹带间距值 —— 但必须具名，不许写在调用处。）
 - **「内部 ≤ 外部」**：元素内部的 padding 不得超过它周围的外边距。刻度只给词汇，这条给语法 —— 一个卡片内边距用 `lg`(16)，它离屏幕边缘就必须 ≥ 16，否则视觉上会"鼓出去"。写组件时按这条约束，不要只对着数值表填。
 - **只用 SF Symbols**：禁止第三方图标库；禁止 `.splendid()` 或 `.system(size:)` 挂在 `Image(systemName:)` 上。
 - **符号变体**：只有需要实心强调（主播放键、关闭键、警告）才用 `.fill`；其余用描边默认变体，避免界面糊成一片实心。不指定 `.symbolRenderingMode`，本轮不做多色符号。
@@ -1211,8 +1212,7 @@ struct ComponentGallery: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text(title)
-                .font(.caption)
-                .foregroundStyle(Theme.inkTertiary)
+                .tText(.hint)
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
