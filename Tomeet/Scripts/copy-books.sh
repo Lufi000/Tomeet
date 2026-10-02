@@ -10,7 +10,9 @@ mkdir -p "$DEST"
 
 # 递归查找所有 .epub，按文件名（去扩展名）解压到 Books/<name>/。
 # 无效/损坏的 EPUB 会被跳过并打印警告，避免构建失败。
-find "$SRC" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do
+# -L：跟随符号链接。epub 被 .gitignore 排除，在 git worktree 里只能用软链接进来，
+#     而 find 默认不把软链算作 -type f，会静默漏掉全部书。
+find -L "$SRC" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do
 	name="$(basename "${epub%.epub}")"
 	book_dir="$DEST/$name"
 	if ! ditto -x -k "$epub" "$book_dir"; then
@@ -21,7 +23,7 @@ find "$SRC" -type f -name '*.epub' -print0 | while IFS= read -r -d '' epub; do
 done
 
 # 讲书音频：<book-id>.jiangshu.mp3 → Books/<book-id>/jiangshu.mp3
-find "$SRC" -type f -name '*.jiangshu.mp3' -print0 | while IFS= read -r -d '' audio; do
+find -L "$SRC" -type f -name '*.jiangshu.mp3' -print0 | while IFS= read -r -d '' audio; do
 	base="$(basename "$audio")"
 	name="${base%.jiangshu.mp3}"
 	mkdir -p "$DEST/$name"

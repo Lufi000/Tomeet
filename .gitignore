@@ -13,3 +13,4 @@ Secrets.swift
 
 # BFF env (secrets, template in bff/.env.example)
 bff/.env
+.deriveddata/
