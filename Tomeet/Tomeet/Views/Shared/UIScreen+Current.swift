@@ -9,3 +9,13 @@ extension UIScreen {
             ?? scenes.first?.screen
     }
 }
+
+extension UIWindowScene {
+    /// 前台窗口的安全区。首次分页发生在 GeometryReader 布局之前，
+    /// 拿不到 `proxy.safeAreaInsets`，只能从这里取，否则首屏会用零内衬排版再重排一次。
+    static var currentSafeAreaInsets: UIEdgeInsets {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
+        return scene?.keyWindow?.safeAreaInsets ?? .zero
+    }
+}

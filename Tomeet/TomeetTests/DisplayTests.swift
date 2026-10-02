@@ -50,8 +50,10 @@ struct DisplayTests {
         #expect(Book.sortAuthor(Book(title: "X", author: "Alpha", format: .epub, addedDate: .distantPast), Book(title: "Y", author: "Beta", format: .epub, addedDate: .distantPast)))
         #expect(Book.sortAuthor(b, a) == false)
 
+        // Manual 以加入时间**倒序**兜底：最后添加的排最前（bug.md 明确要求）。
         let earlier = book(addedDate: Date(timeIntervalSince1970: 10))
         let later = book(addedDate: Date(timeIntervalSince1970: 20))
-        #expect(Book.sortManual(earlier, later))
+        #expect(Book.sortManual(later, earlier))
+        #expect(Book.sortManual(earlier, later) == false)
     }
 }

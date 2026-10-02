@@ -26,6 +26,10 @@ enum BookDeletionService {
             }
         }
 
+        // 书签/高亮用 bookID 关联而非 SwiftData 关系，删书不会级联 —— 必须显式对账，
+        // 否则会留下永远查不到的孤儿行，越积越多。
+        try? AnnotationStore.deleteAll(for: book.id, in: modelContext)
+
         modelContext.delete(book)
         do {
             try modelContext.save()
