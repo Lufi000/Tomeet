@@ -35,3 +35,14 @@
 
 - 先搭出 Home / Library 底部 Tab 骨架 + 书架网格，用假数据/占位看结构
 - 翻书阅读器、AI 对话都在骨架稳定之后再接入
+
+## UI 规范
+
+写任何 UI 前先读 `docs/superpowers/specs/2026-09-28-design-system-design.md`。
+
+- 间距/圆角/字号只从 `Theme/Metrics.swift` 取，**禁止裸数字**（除了放行的 `0`）
+- 文字用 `.tText(...)`，图标用 `.tIcon(...)`
+- 按钮用 `TButton`，卡片用 `.tCard()`，页面大标题用 `TPageHeader`
+- 只用 SF Symbols；禁止第三方图标库、禁止 `.splendid()` 或 `.system(size:)` 挂在 `Image(systemName:)` 上
+- 不直接写 `Color.black` / `Color.white`，用 `Theme.solidInk` / `Theme.onSolid` / `Theme.*`
+- 改完跑 `xcodebuild test`，`DesignSystemGuardTests` 会拦住违规并给出建议
