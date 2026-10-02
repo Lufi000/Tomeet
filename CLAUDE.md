@@ -40,9 +40,11 @@
 
 写任何 UI 前先读 `docs/superpowers/specs/2026-09-28-design-system-design.md`。
 
-- 间距/圆角/字号只从 `Theme/Metrics.swift` 取，**禁止裸数字**（除了放行的 `0`）
+- 间距/圆角只从 `Theme/Metrics.swift` 取（`Spacing` / `Radius`）；字号只从 `Theme/TextRole.swift`（`TextRole`）和 `Theme/IconRole.swift`（`IconRole`）取
+- **禁止裸数字**：`0` 只在 padding / spacing 放行（它是复位、不是刻度）；`cornerRadius:` / `radius:` 和字号没有 `0` 这一档
 - 文字用 `.tText(...)`，图标用 `.tIcon(...)`
+- `Label` 的图标写在 `icon:` 闭包里用 `.tIcon` —— `.font()` 挂在 `Label` 上会同时改到文字和图标
 - 按钮用 `TButton`，卡片用 `.tCard()`，页面大标题用 `TPageHeader`
-- 只用 SF Symbols；禁止第三方图标库、禁止 `.splendid()` 或 `.system(size:)` 挂在 `Image(systemName:)` 上
+- 只用 SF Symbols；禁止第三方图标库；禁止在图标上用 `.splendid()`；禁止 `.system(size:)`（**全 App 生效**，不只 `Image(systemName:)`，`Label` / `Button` 同罪）
 - 不直接写 `Color.black` / `Color.white`，用 `Theme.solidInk` / `Theme.onSolid` / `Theme.*`
 - 改完跑 `xcodebuild test`，`DesignSystemGuardTests` 会拦住违规并给出建议

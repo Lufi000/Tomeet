@@ -49,6 +49,70 @@ struct DesignSystemGuardTests {
         let files = try DesignSystemScanner.swiftFilesForTesting(under: DesignSystemScanner.defaultRoot)
         #expect(files.count > 10, "只扫到 \(files.count) 个文件，路径推导可能错了")
     }
+
+    // MARK: - 门禁自身的测试
+
+    /// 豁免清单是重画进度表，只能变短。
+    @Test func exemptionListOnlyShrinks() {
+        #expect(DesignSystemGuardTests.grandfathered.count <= 15,
+                "豁免清单只应缩短：每重画完一个页面就划掉一行，不得新增")
+    }
+
+    /// 防呆：`viewsContainNoDesignSystemViolations()` 只断言"**没有**违规"。
+    /// 规则的正则一旦被改坏（比如 `.padding(` 敲成 `.paddinX(`），
+    /// 扫描器会静默变瞎，测试照样全绿。这里拿合成源码反向证明每条规则真的会开火。
+    ///
+    /// 临时目录在仓库外，`relativePath(of:from:)` 会退化成完整路径 ——
+    /// 所以断言只看规则名/条数/hint，不比对路径文本。
+    @Test func scannerRulesActuallyFire() throws {
+        // 1. 数字 padding 要报，而且带"最近的刻度"建议。
+        let padding = try Self.scanSnippet("card.padding(.horizontal, 18)\n")
+        let paddingHits = padding.filter { $0.rule == "数字 padding" }
+        #expect(paddingHits.count == 1, "`.padding(.horizontal, 18)` 应报 1 条，实际 \(paddingHits.count) 条")
+        #expect(paddingHits.first?.hint != nil, "数值违规必须带建议，光说「不许写 18」只会让 agent 试下一个数")
+
+        // 2. `0` 是复位不是魔法数字 —— padding 放行。
+        let zero = try Self.scanSnippet("card.padding(.horizontal, 0)\n")
+        #expect(zero.filter { $0.rule == "数字 padding" }.isEmpty, "`0` 应放行")
+
+        // 3. 带非空理由的豁免生效。
+        let exempt = try Self.scanSnippet(
+            "card.padding(.horizontal, 18) // design-system-exempt: 因为某某原因\n"
+        )
+        #expect(exempt.filter { $0.rule == "数字 padding" }.isEmpty, "带非空理由的豁免应生效")
+
+        // 4. 光写 `design-system-exempt` 没理由，不豁免（§6.1：冒号后必须有非空文本）。
+        let bareExempt = try Self.scanSnippet(
+            "card.padding(.horizontal, 18) // design-system-exempt\n"
+        )
+        #expect(bareExempt.filter { $0.rule == "数字 padding" }.count == 1, "无理由的豁免不该生效")
+
+        // 5. `.tCard(radius: 14)` 不能绕开门禁；令牌写法放行。
+        let radius = try Self.scanSnippet("card.tCard(radius: 14)\ncard.tCard(radius: Radius.md)\n")
+        let radiusHits = radius.filter { $0.rule == "数字 radius" }
+        #expect(radiusHits.count == 1, "`radius: 14` 应报 1 条、`radius: Radius.md` 应放行，实际 \(radiusHits.count) 条")
+        #expect(radiusHits.first?.hint != nil, "radius 违规应建议最近的圆角刻度")
+
+        // 6. `Label(_:systemImage:)` 也要进 2 行窗口 —— 否则
+        //    `Label("听书", systemImage: "headphones").tText(.body)` 会带着绿门禁复现 22pt/31pt 的老问题。
+        let label = try Self.scanSnippet("""
+        Label("听书", systemImage: "headphones")
+            .font(.splendid(.body))
+        """)
+        #expect(label.contains { $0.rule == "SF Symbol 挂 Splendid" },
+                "`Label(_:systemImage:)` 挂 `.font(.splendid` 应被窗口规则抓到")
+    }
+
+    /// 把一段源码写进临时目录并过一次扫描器，返回违规。
+    private static func scanSnippet(_ source: String) throws -> [DesignSystemScanner.Violation] {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tomeet-guard-fixture-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("Fixture.swift")
+        try source.write(to: file, atomically: true, encoding: .utf8)
+        return try DesignSystemScanner.scan(root: dir, exemptFiles: [])
+    }
 }
 
 // MARK: - 扫描器
@@ -116,6 +180,11 @@ enum DesignSystemScanner {
                     scale: Spacing.all, fixedHint: nil, allowsZero: true),
         NumericRule(name: "数字圆角",
                     regex: regex(#"cornerRadius:\s*([0-9]*\.?[0-9]+)"#),
+                    scale: Radius.all, fixedHint: nil, allowsZero: false),
+        // `.tCard(radius:)` 收 `CGFloat`，只认 `cornerRadius:` 会漏掉这个口子 ——
+        // `.tCard(radius: 14)` 正好落在刻度缝里，却是全绿的。
+        NumericRule(name: "数字 radius",
+                    regex: regex(#"\bradius:\s*([0-9]*\.?[0-9]+)"#),
                     scale: Radius.all, fixedHint: nil, allowsZero: false),
         // 字号是全局禁令（文字和图标都不许写裸数值），所以不需要 2 行窗口 ——
         // 窗口只是为 `.splendid` 准备的，因为 `.splendid` 在 Text 上合法、在 Symbol 上非法。
@@ -193,7 +262,13 @@ enum DesignSystemScanner {
 
     // MARK: SF Symbol 规则
 
-    private static let systemNameRegex = regex(#"Image\(systemName:"#)
+    /// 图标的三个入口都算：`Image(systemName:)` 之外还有 `Label(_:systemImage:)`
+    /// 和 `Button(_:systemImage:)` —— 它们同样自带 SF Symbol。
+    /// 只看 `Image` 会漏掉 `Label("听书", systemImage: "headphones").tText(.body)`：
+    /// `.font()` 挂在 Label 上会同时改到文字和图标，22pt/31pt 的老问题会带着绿门禁回来。
+    private static let systemNameRegex = regex(
+        #"Image\(systemName:|Label\(.*systemImage:|Button\(.*systemImage:"#
+    )
 
     /// 只有 `.splendid` 需要"挂在 Symbol 上"这条专门规则 ——
     /// 它在 `Text` 上完全合法，在 `Image(systemName:)` 上则是纯错误
