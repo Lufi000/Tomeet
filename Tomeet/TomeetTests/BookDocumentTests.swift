@@ -17,23 +17,25 @@ struct BookDocumentTests {
         return BookDocument(title: "Sample", author: nil, language: "en", chapters: chapters)
     }
 
-    @Test func textLengthCountsBlocks() {
+    /// `textLength` 是**渲染后**的长度，含块间的 "\n" —— 与分页结果（NSRange）同一坐标系。
+    /// 见 [CharacterSpaceTests] 里的不变量断言。
+    @Test func textLengthCountsBlocksAndSeparators() {
         let chapter = Chapter(id: "x", title: "X", blocks: [.paragraph("abc"), .paragraph("def")])
-        #expect(chapter.textLength == 6)
+        #expect(chapter.textLength == 7)   // "abc\ndef"
     }
 
     @Test func chapterStartsArePrefixSums() {
         let document = sampleDocument()
-        // ch1 = "Title"(5) + "Hello world"(11) → 16；ch2 = "Second chapter text"(19) + "A quoted line"(13) → 32
-        #expect(document.chapterStarts == [0, 16, 48])
-        #expect(document.totalCharacters == 48)
+        // ch1 = "Title\nHello world" = 5+1+11 = 17；ch2 = "Second chapter text\nA quoted line" = 19+1+13 = 33
+        #expect(document.chapterStarts == [0, 17, 50])
+        #expect(document.totalCharacters == 50)
     }
 
     @Test func progressAtLocation() {
         let document = sampleDocument()
         #expect(document.progress(at: ReaderLocation(chapterIndex: 0, charOffset: 0)) == 0)
-        // 第 1 章末尾 = 16/48
-        #expect(abs(document.progress(at: ReaderLocation(chapterIndex: 0, charOffset: 16)) - 16.0 / 48.0) < 0.0001)
+        // 第 1 章末尾 = 17/50
+        #expect(abs(document.progress(at: ReaderLocation(chapterIndex: 0, charOffset: 16)) - 16.0 / 50.0) < 0.0001)
         // 越界回落
         #expect(abs(document.progress(at: ReaderLocation(chapterIndex: 9, charOffset: 999)) - 1.0) < 0.0001)
     }
@@ -42,9 +44,9 @@ struct BookDocumentTests {
         let document = sampleDocument()
         #expect(document.location(atProgress: 0.5) == ReaderLocation(chapterIndex: 1, charOffset: 8))
         #expect(document.location(atProgress: 0) == ReaderLocation(chapterIndex: 0, charOffset: 0))
-        #expect(document.location(atProgress: 1) == ReaderLocation(chapterIndex: 1, charOffset: 32))
+        #expect(document.location(atProgress: 1) == ReaderLocation(chapterIndex: 1, charOffset: 33))
         #expect(document.location(atProgress: -1) == ReaderLocation(chapterIndex: 0, charOffset: 0))
-        #expect(document.location(atProgress: 5) == ReaderLocation(chapterIndex: 1, charOffset: 32))
+        #expect(document.location(atProgress: 5) == ReaderLocation(chapterIndex: 1, charOffset: 33))
     }
 
     @Test func emptyBookReportsZero() {

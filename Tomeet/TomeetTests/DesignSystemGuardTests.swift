@@ -26,10 +26,7 @@ struct DesignSystemGuardTests {
         "Views/Library/LibraryView.swift",
         "Views/Listen/ListenPlayerView.swift",
         "Views/Listen/NowPlayingBar.swift",
-        "Views/Reader/ContentsSheet.swift",
         "Views/Reader/MobiReaderView.swift",
-        "Views/Reader/ReaderView.swift",
-        "Views/Reader/ThemesSettingsSheet.swift",
         "Views/Shared/BookCoverView.swift",
         "Views/Shared/ImportBookModifier.swift",
     ]

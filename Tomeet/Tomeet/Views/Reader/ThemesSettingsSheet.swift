@@ -1,33 +1,28 @@
 import SwiftData
 import SwiftUI
 
-/// 主题与设置 Sheet：字号、亮度、主题网格、Customize。
+/// 主题与设置面板。布局对齐 Apple Books：
+/// 字号胶囊 → 行距预设 + 自动夜间 → 亮度 → 主题网格 → Customize。
 struct ThemesSettingsSheet: View {
     let settings: ReaderSettings
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @State private var showAdvanced = false
 
     private let fontStep: Double = 1
     private let minFontOffset: Double = -4
     private let maxFontOffset: Double = 6
 
+    private var isDarkAppearance: Bool { colorScheme == .dark }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // 系统内联标题字体无法定制，标题与 Done 自己画
-                HStack {
-                    Text("Themes & Settings")
-                        .font(.splendid(.headline)).tracking(Theme.letterSpacing)
-                    Spacer()
-                    Button("Done") { dismiss() }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-
+                titleBar
                 ScrollView {
-                    VStack(spacing: 24) {
-                        fontSizeSection
+                    VStack(spacing: Spacing.xl) {
+                        controlPill
                         brightnessSection
                         themeGrid
                         customizeButton
@@ -36,10 +31,10 @@ struct ThemesSettingsSheet: View {
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
-                    .padding()
+                    .padding(Spacing.lg)
                 }
             }
-            .background(Color(white: 0.15).ignoresSafeArea())
+            .background(Theme.panelSurface.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
         }
         .onDisappear {
@@ -47,40 +42,47 @@ struct ThemesSettingsSheet: View {
         }
     }
 
-    // MARK: - 字号
+    // MARK: - 标题栏
 
-    private var fontSizeSection: some View {
-        HStack(spacing: 16) {
-            fontSizeButton(isIncrease: false)
-
-            Rectangle()
-                .fill(Color.white.opacity(0.2))
-                .frame(width: 1, height: 28)
-
-            fontSizeButton(isIncrease: true)
-
+    /// 系统内联标题字体无法定制，标题与 Done 自己画。
+    private var titleBar: some View {
+        HStack {
+            Text("Themes & Settings")
+                .tText(.button, color: Theme.panelInk)
             Spacer()
-
-            HStack(spacing: 8) {
-                Image(systemName: "doc.text")
-                    .font(.system(size: 16))
-                Image(systemName: "circle.righthalf.filled")
-                    .font(.system(size: 16))
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                Capsule()
-                    .fill(.ultraThinMaterial)
-            )
+            Button("Done") { dismiss() }
+                .tText(.button, color: Theme.panelInk)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-        )
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
+    }
+
+    // MARK: - 字号 + 行距 + 自动夜间
+
+    private var controlPill: some View {
+        HStack(spacing: Spacing.md) {
+            HStack(spacing: Spacing.lg) {
+                fontSizeButton(isIncrease: false)
+                Rectangle()
+                    .fill(Theme.panelHairline)
+                    .frame(width: 1, height: Spacing.xl)
+                fontSizeButton(isIncrease: true)
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(Capsule().fill(.ultraThinMaterial))
+
+            HStack(spacing: Spacing.lg) {
+                spacingMenu
+                Rectangle()
+                    .fill(Theme.panelHairline)
+                    .frame(width: 1, height: Spacing.xl)
+                autoNightToggle
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(Capsule().fill(.ultraThinMaterial))
+        }
     }
 
     private func fontSizeButton(isIncrease: Bool) -> some View {
@@ -89,23 +91,63 @@ struct ThemesSettingsSheet: View {
             let newValue = settings.fontSizeOffset + delta
             guard newValue >= minFontOffset && newValue <= maxFontOffset else { return }
             settings.fontSizeOffset = newValue
-            try? modelContext.save()
+            save()
         } label: {
-            Text(isIncrease ? "A" : "A")
-                .font(.splendid(isIncrease ? .title2 : .callout, weight: .semibold)).tracking(Theme.letterSpacing)
-                .foregroundStyle(.primary)
-                .frame(width: 44, height: 44)
+            Text("A")
+                .tText(isIncrease ? .sectionTitle : .secondary, color: Theme.panelInk)
+                .frame(width: Spacing.xxl, height: Spacing.xxl)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(isIncrease ? "Increase text size" : "Decrease text size")
+    }
+
+    /// 行距/段距三档预设。裸滑块对读者没有意义，档位才能一眼做决定。
+    private var spacingMenu: some View {
+        Menu {
+            Picker("Spacing", selection: spacingBinding) {
+                ForEach(SpacingPreset.allCases) { preset in
+                    Text(preset.displayName).tag(preset)
+                }
+            }
+        } label: {
+            Image(systemName: "text.line.spacing")
+                .tIcon(IconRole.control, weight: .semibold)
+                .foregroundStyle(Theme.panelInk)
+                .frame(width: Spacing.xxl, height: Spacing.xxl)
+        }
+        .accessibilityLabel("Line spacing")
+    }
+
+    private var spacingBinding: Binding<SpacingPreset> {
+        Binding(
+            get: { settings.spacingPreset },
+            set: { settings.apply($0); save() }
+        )
+    }
+
+    /// 自动夜间：跟随系统外观在浅色/深色主题间切换。
+    private var autoNightToggle: some View {
+        Button {
+            settings.autoNightTheme.toggle()
+            save()
+        } label: {
+            Image(systemName: "circle.righthalf.filled")
+                .tIcon(IconRole.control, weight: .semibold)
+                .foregroundStyle(settings.autoNightTheme ? Theme.accent : Theme.panelInkSecondary)
+                .frame(width: Spacing.xxl, height: Spacing.xxl)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Auto night theme")
+        .accessibilityValue(settings.autoNightTheme ? "On" : "Off")
     }
 
     // MARK: - 亮度
 
     private var brightnessSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Spacing.md) {
             Image(systemName: "sun.min")
-                .font(.system(size: 16))
-                .foregroundStyle(.secondary)
+                .tIcon(IconRole.badge)
+                .foregroundStyle(Theme.panelInkSecondary)
 
             Slider(
                 value: Binding(
@@ -114,21 +156,21 @@ struct ThemesSettingsSheet: View {
                         settings.brightness = newValue
                         settings.hasCustomBrightness = true
                         UIScreen.current?.brightness = CGFloat(newValue)
-                        try? modelContext.save()
+                        save()
                     }
                 ),
                 in: 0...1
             )
-            .tint(.white)
+            .tint(Theme.panelInk)
 
             Image(systemName: "sun.max")
-                .font(.system(size: 16))
-                .foregroundStyle(.secondary)
+                .tIcon(IconRole.control)
+                .foregroundStyle(Theme.panelInkSecondary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
     }
@@ -137,12 +179,8 @@ struct ThemesSettingsSheet: View {
 
     private var themeGrid: some View {
         LazyVGrid(
-            columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ],
-            spacing: 12
+            columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+            spacing: Spacing.md
         ) {
             ForEach(ReaderTheme.allCases) { theme in
                 themeCard(theme)
@@ -151,29 +189,37 @@ struct ThemesSettingsSheet: View {
     }
 
     private func themeCard(_ theme: ReaderTheme) -> some View {
-        Button {
-            settings.theme = theme
-            try? modelContext.save()
+        let isSelected = settings.selectedTheme(isDarkAppearance: isDarkAppearance) == theme
+        return Button {
+            settings.setTheme(theme, isDarkAppearance: isDarkAppearance)
+            save()
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: Spacing.sm) {
                 Text("大小")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundStyle(theme.textColor)
                 Text(theme.displayName)
-                    .font(.splendid(.caption, weight: .medium)).tracking(Theme.letterSpacing)
-                    .foregroundStyle(theme.textColor.opacity(0.8))
+                    .tText(.hint, color: theme.textColor.opacity(0.8))
             }
             .frame(maxWidth: .infinity, minHeight: 88)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                     .fill(theme.backgroundColor)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(themeBorderColor(theme), lineWidth: themeBorderWidth(theme))
+                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
+                    .stroke(
+                        isSelected ? Theme.panelInk : themeBorderColor(theme),
+                        lineWidth: isSelected ? 3 : 0.5
+                    )
             )
         }
         .buttonStyle(.plain)
+    }
+
+    /// 未选中时的描边：Paper 是浅色，压在白面板上要用深色描边才看得见。
+    private func themeBorderColor(_ theme: ReaderTheme) -> Color {
+        theme.previewUsesDarkAccents ? Theme.solidInk.opacity(0.15) : Theme.panelHairline
     }
 
     // MARK: - Customize
@@ -184,50 +230,31 @@ struct ThemesSettingsSheet: View {
                 showAdvanced.toggle()
             }
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Spacing.sm) {
                 Image(systemName: showAdvanced ? "chevron.up" : "gearshape")
+                    .tIcon(IconRole.control)
                 Text(showAdvanced ? "Hide Details" : "Customize")
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .tText(.button, color: Theme.panelInk)
             }
-            .foregroundStyle(.primary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, Spacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                     .fill(.ultraThinMaterial)
             )
         }
         .buttonStyle(.plain)
     }
 
+    /// 只留"每本书都可能想调"的边距与缩进；行距段距已由上面的预设覆盖。
     private var advancedSection: some View {
-        VStack(spacing: 20) {
-            sliderRow(
-                title: "Line Height",
-                icon: "arrow.up.and.down.text.horizontal",
-                value: Binding(
-                    get: { settings.lineHeightMultiple },
-                    set: { settings.lineHeightMultiple = $0; try? modelContext.save() }
-                ),
-                range: 1.0...2.0,
-                step: 0.05
-            )
-            sliderRow(
-                title: "Paragraph Spacing",
-                icon: "text.line.last.and.arrowtriangle.forward",
-                value: Binding(
-                    get: { settings.paragraphSpacing },
-                    set: { settings.paragraphSpacing = $0; try? modelContext.save() }
-                ),
-                range: 0...32,
-                step: 2
-            )
+        VStack(spacing: Spacing.lg) {
             stepperRow(
                 title: "First-Line Indent",
                 icon: "text.alignleft",
                 value: Binding(
                     get: { settings.firstLineIndent },
-                    set: { settings.firstLineIndent = $0; try? modelContext.save() }
+                    set: { settings.firstLineIndent = $0; save() }
                 ),
                 step: 0.5,
                 range: 0...4
@@ -237,7 +264,7 @@ struct ThemesSettingsSheet: View {
                 icon: "arrow.left.and.right.square",
                 value: Binding(
                     get: { settings.horizontalMargin },
-                    set: { settings.horizontalMargin = $0; try? modelContext.save() }
+                    set: { settings.horizontalMargin = $0; save() }
                 ),
                 range: 12...64,
                 step: 2
@@ -247,69 +274,76 @@ struct ThemesSettingsSheet: View {
                 icon: "arrow.up.and.down.square",
                 value: Binding(
                     get: { settings.verticalMargin },
-                    set: { settings.verticalMargin = $0; try? modelContext.save() }
+                    set: { settings.verticalMargin = $0; save() }
                 ),
                 range: 12...80,
                 step: 2
             )
         }
-        .padding()
+        .padding(Spacing.lg)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
     }
 
-    private func sliderRow(title: String, icon: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+    private func sliderRow(
+        title: String,
+        icon: String,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        step: Double
+    ) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack(spacing: Spacing.sm) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                    .tIcon(IconRole.badge)
+                    .foregroundStyle(Theme.panelInkSecondary)
                 Text(title)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .tText(.secondary, color: Theme.panelInk)
                 Spacer()
-                Text(String(format: "%.2f", value.wrappedValue))
-                    .font(.splendid(.caption).monospacedDigit())
-                    .foregroundStyle(.secondary)
+                Text(String(format: "%.0f", value.wrappedValue))
+                    .tText(.meta, color: Theme.panelInkSecondary)
+                    .monospacedDigit()
             }
             Slider(value: value, in: range, step: step)
-                .tint(.white)
+                .tint(Theme.panelInk)
         }
     }
 
-    private func stepperRow(title: String, icon: String, value: Binding<Double>, step: Double, range: ClosedRange<Double>) -> some View {
-        HStack(spacing: 8) {
+    private func stepperRow(
+        title: String,
+        icon: String,
+        value: Binding<Double>,
+        step: Double,
+        range: ClosedRange<Double>
+    ) -> some View {
+        HStack(spacing: Spacing.sm) {
             Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .tIcon(IconRole.badge)
+                .foregroundStyle(Theme.panelInkSecondary)
             Text(title)
-                .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                .tText(.secondary, color: Theme.panelInk)
             Spacer()
             Stepper(
                 value: Binding(
                     get: { value.wrappedValue },
                     set: { newValue in
                         value.wrappedValue = min(max(newValue, range.lowerBound), range.upperBound)
-                        try? modelContext.save()
+                        save()
                     }
                 ),
                 in: range,
                 step: step
             ) {
                 Text(String(format: "%.1f em", value.wrappedValue))
-                    .font(.splendid(.caption).monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .tText(.meta, color: Theme.panelInkSecondary)
+                    .monospacedDigit()
             }
         }
     }
 
-    private func themeBorderColor(_ theme: ReaderTheme) -> Color {
-        if settings.theme == theme { return .white }
-        return theme.previewUsesDarkAccents ? Color.black.opacity(0.15) : Color.white.opacity(0.15)
-    }
-
-    private func themeBorderWidth(_ theme: ReaderTheme) -> CGFloat {
-        settings.theme == theme ? 3 : 0.5
+    private func save() {
+        try? modelContext.save()
     }
 }

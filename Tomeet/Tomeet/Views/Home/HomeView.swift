@@ -50,6 +50,20 @@ struct HomeView: View {
                 )
             }
         }
+        .onAppear { openReaderForSnapshotIfRequested() }
+    }
+
+    /// 仅供截图验证：`xcrun simctl launch <udid> com.ivy.Tomeet --ui-snapshot-reader`
+    /// 会直接打开轮播第一本书的阅读器。
+    ///
+    /// 模拟器没有可编程的点击接口，没有这个口子就没法给阅读器截图 ——
+    /// 而卷页是否顶到屏幕边缘这种事，纯逻辑测试证明不了，必须用眼睛看。
+    private func openReaderForSnapshotIfRequested() {
+        #if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-reader"),
+              let first = carouselBooks.first else { return }
+        presentedReader = first
+        #endif
     }
 
     private func dismissPanel() {

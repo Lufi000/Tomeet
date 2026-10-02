@@ -46,6 +46,18 @@ enum Theme {
     static let sandDeep = Color(hex: 0xDDC7B2)
     static let shell = Color(hex: 0xECDFD3)
     static let cream = Color(hex: 0xFEEFE1)
+
+    // MARK: 阅读器浮层
+
+    /// 阅读设置面板底色。始终是深色 —— 面板压在任意阅读主题之上，
+    /// 深色是唯一在 7 套主题下都稳定的选择（Apple Books 同款处理）。
+    static let panelSurface = Color(hex: 0x262626)
+    /// 浮层上的分隔线与描边。
+    static let panelHairline = Color(hex: 0xFFFFFF, opacity: 0.15)
+    /// 浮层上的主文字与图标。
+    static let panelInk = Color(hex: 0xFFFFFF)
+    /// 浮层上的次要文字。
+    static let panelInkSecondary = Color(hex: 0xFFFFFF, opacity: 0.6)
 }
 
 extension Color {

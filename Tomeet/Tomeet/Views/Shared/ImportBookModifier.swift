@@ -45,7 +45,7 @@ struct ImportBookModifier: ViewModifier {
                         }
                 }
             }
-            .alert("Import Failed", isPresented: Binding(
+            .alert(alertTitle, isPresented: Binding(
                 get: { importError != nil },
                 set: { if !$0 { importError = nil } }
             )) {
@@ -59,5 +59,15 @@ struct ImportBookModifier: ViewModifier {
 extension View {
     func bookImportPresentation(isPresented: Binding<Bool>) -> some View {
         modifier(ImportBookModifier(isPresented: isPresented))
+    }
+}
+
+private extension ImportBookModifier {
+    /// 重复导入不是失败，别用 "Import Failed" 吓用户。
+    var alertTitle: String {
+        if case .duplicate = importError as? BookImporter.ImportError {
+            return "Already in Library"
+        }
+        return "Import Failed"
     }
 }

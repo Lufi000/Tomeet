@@ -7,6 +7,8 @@ enum ModelContainerFactory {
             Book.self,
             ReaderSettings.self,
             DailyReading.self,
+            Bookmark.self,
+            Highlight.self,
         ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isStoredInMemoryOnly)
         return try ModelContainer(for: schema, configurations: [configuration])

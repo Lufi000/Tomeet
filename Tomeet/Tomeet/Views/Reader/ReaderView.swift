@@ -8,6 +8,7 @@ struct ReaderView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(ReadingTimeTracker.self) private var readingTracker
     @State private var viewModel: ReaderViewModel
     @State private var showMenu = false
@@ -30,9 +31,11 @@ struct ReaderView: View {
         .foregroundStyle(themeForeground)
         .onAppear {
             let settings = ReaderSettings.fetchOrCreate(in: modelContext)
+            viewModel.modelContext = modelContext
+            viewModel.reloadAnnotations()
             viewModel.apply(settings: settings)
             applyBrightness(from: settings)
-            viewModel.loadBook(pageSize: currentSize)
+            viewModel.loadBook(pageSize: currentSize, safeAreaInsets: currentSafeAreaInsets)
             readingTracker.begin(.reading)
         }
         .onDisappear {
@@ -40,6 +43,10 @@ struct ReaderView: View {
             flushReadingTime()
         }
         .onReceive(readingFlushTimer) { _ in flushReadingTime() }
+        .onChange(of: colorScheme) { _, newScheme in
+            // 自动夜间开启时系统换外观要跟着换主题
+            viewModel.updateAppearance(isDark: newScheme == .dark)
+        }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 viewModel.saveCurrentPosition()
@@ -67,12 +74,13 @@ struct ReaderView: View {
 
     // MARK: - 主题颜色
 
+    /// 用**解析后**的主题：自动夜间开启时会随系统外观切换。
     private var themeBackground: Color {
-        viewModel.settings?.theme.backgroundColor ?? .black
+        viewModel.resolvedTheme.backgroundColor
     }
 
     private var themeForeground: Color {
-        viewModel.settings?.theme.textColor ?? .white
+        viewModel.resolvedTheme.textColor
     }
 
     private var chromeColor: Color {
@@ -87,26 +95,31 @@ struct ReaderView: View {
         case .loading:
             ProgressView().tint(themeForeground)
         case .failed(let message):
-            VStack(spacing: 16) {
+            VStack(spacing: Spacing.lg) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.largeTitle)
+                    .tIcon(IconRole.display)
                     .foregroundStyle(themeForeground.opacity(0.6))
                 Text(message)
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
-                    .foregroundStyle(themeForeground.opacity(0.8))
+                    .tText(.secondary, color: themeForeground.opacity(0.8))
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, Spacing.xxl)
                 Button("Retry") {
-                    viewModel.loadBook(pageSize: currentSize)
+                    viewModel.loadBook(pageSize: currentSize, safeAreaInsets: currentSafeAreaInsets)
                 }
                 .buttonStyle(.borderedProminent)
             }
         case .ready:
+            // 卷页要顶到屏幕四边（Apple Books 效果），但正文不能压到灵动岛/Home 指示条。
+            // 所以：分页用整屏尺寸，安全区作为额外内衬叠在用户边距之上。
             GeometryReader { proxy in
-                let size = proxy.size
+                let insets = proxy.safeAreaInsets
+                let fullSize = CGSize(
+                    width: proxy.size.width + insets.leading + insets.trailing,
+                    height: proxy.size.height + insets.top + insets.bottom
+                )
                 ZStack {
                     ReaderHostView(viewModel: viewModel, onToggleChrome: { toggleChrome() })
-                        .frame(width: size.width, height: size.height)
+                        .ignoresSafeArea()
 
                     if showChrome {
                         topBar
@@ -119,14 +132,22 @@ struct ReaderView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                             .transition(.scale(scale: 0.9).combined(with: .opacity))
                     }
+
+                    // 用完脚注得能回来。这个按钮**不参与 chrome 自动隐藏** ——
+                    // 藏起来用户就找不到回路了（参考 Apple Books 的「↩ 191」）。
+                    if viewModel.canReturnFromFootnote {
+                        footnoteReturnButton
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                            .transition(.opacity)
+                    }
                 }
                 .animation(.easeInOut(duration: 0.2), value: showChrome)
                 .onAppear {
-                    viewModel.relayout(pageSize: size)
+                    viewModel.relayout(pageSize: fullSize, safeAreaInsets: Self.contentInsets(from: insets))
                     scheduleChromeHide()
                 }
-                .onChange(of: size) { _, newSize in
-                    viewModel.relayout(pageSize: newSize)
+                .onChange(of: fullSize) { _, newSize in
+                    viewModel.relayout(pageSize: newSize, safeAreaInsets: Self.contentInsets(from: insets))
                 }
             }
         }
@@ -134,13 +155,12 @@ struct ReaderView: View {
 
     private var topBar: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.hairline) {
                 Text(sectionLabel)
-                    .font(.splendid(.caption2, weight: .medium)).tracking(Theme.letterSpacing)
-                    .foregroundStyle(chromeColor.opacity(0.7))
+                    .tText(.hint, color: chromeColor.opacity(0.7))
                     .lineLimit(1)
                 Text(currentChapterTitle)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .tText(.secondary, color: themeForeground)
                     .lineLimit(1)
             }
             Spacer()
@@ -151,11 +171,36 @@ struct ReaderView: View {
         .padding()
     }
 
+    /// 脚注返回：`↩ 191`（原页码），对齐 Apple Books 的置顶返回条。
+    private var footnoteReturnButton: some View {
+        Button {
+            viewModel.returnFromFootnote()
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "arrow.uturn.backward")
+                    .tIcon(IconRole.control, weight: .semibold)
+                Text("\(returnPageNumber)")
+                    .tText(.meta, color: themeForeground)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(Capsule().fill(.ultraThinMaterial))
+        }
+        .buttonStyle(.plain)
+        .padding(Spacing.lg)
+    }
+
+    /// 跳转前的页码（1-based，与底部页码一致）。
+    private var returnPageNumber: Int {
+        (viewModel.footnoteReturnIndex ?? 0) + 1
+    }
+
     /// Apple Books 风格的原生圆形按钮：半透明圆形底 + SF Symbol。
     private func circleButton(icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .semibold))
+                .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(themeForeground.opacity(0.9))
                 .frame(width: 44, height: 44)
                 .background(
@@ -193,17 +238,27 @@ struct ReaderView: View {
     private var bottomBar: some View {
         HStack {
             Spacer()
-            Text("\(viewModel.currentGlobalIndex + 1) / \(viewModel.totalPages)")
-                .font(.splendid(.caption)).tracking(Theme.letterSpacing)
-                .foregroundStyle(themeForeground.opacity(0.5))
+            Text("\(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
+                .tText(.meta, color: themeForeground.opacity(0.5))
                 .monospacedDigit()
-                .padding(.trailing, 8)
+                .padding(.trailing, Spacing.sm)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
     }
 
     private var currentSize: CGSize {
         UIScreen.current?.bounds.size ?? .zero
+    }
+
+    /// 首屏分页发生在 GeometryReader 布局之前，从 window scene 取安全区。
+    private var currentSafeAreaInsets: ContentInsets {
+        ContentInsets(UIWindowScene.currentSafeAreaInsets)
+    }
+
+    /// SwiftUI.EdgeInsets → ContentInsets。放在 View 层转换，
+    /// 让 ContentInsets 保持不依赖 SwiftUI（它要在后台分页线程上用）。
+    private static func contentInsets(from insets: EdgeInsets) -> ContentInsets {
+        ContentInsets(top: insets.top, leading: insets.leading, bottom: insets.bottom, trailing: insets.trailing)
     }
 
     // MARK: - 阅读时长统计
@@ -230,7 +285,7 @@ struct ReaderView: View {
     // MARK: - 悬浮菜单
 
     private var readerMenu: some View {
-        VStack(alignment: .trailing, spacing: 8) {
+        VStack(alignment: .trailing, spacing: Spacing.sm) {
             pillButton(
                 title: "Contents · \(Int((book.readingProgress * 100).rounded()))%",
                 icon: "list.bullet"
@@ -248,15 +303,15 @@ struct ReaderView: View {
 
     private func pillButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 10) {
+            HStack(spacing: Spacing.sm) {
                 Text(title)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .tText(.button, color: themeForeground)
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .tIcon(IconRole.control, weight: .semibold)
             }
             .foregroundStyle(themeForeground)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Spacing.lg)
+            .padding(.vertical, Spacing.md)
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
@@ -267,7 +322,7 @@ struct ReaderView: View {
     }
 
     private var overlayButtons: some View {
-        VStack(alignment: .trailing, spacing: 12) {
+        VStack(alignment: .trailing, spacing: Spacing.md) {
             Spacer()
             if showMenu {
                 readerMenu
@@ -279,6 +334,11 @@ struct ReaderView: View {
                     scheduleChromeHide()
                 }
             }
+            // 书签：已加则实心。点一下切换，不弹面板（对齐 Apple Books）。
+            circleButton(icon: viewModel.isCurrentPageBookmarked ? "bookmark.fill" : "bookmark") {
+                viewModel.toggleBookmark()
+                scheduleChromeHide()
+            }
             circleButton(icon: "list.bullet") {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     showMenu.toggle()
@@ -286,7 +346,7 @@ struct ReaderView: View {
                 scheduleChromeHide()
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
     }
 
     // MARK: - Chrome visibility

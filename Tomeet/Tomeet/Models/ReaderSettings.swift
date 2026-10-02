@@ -1,6 +1,50 @@
 import Foundation
 import SwiftData
 
+/// 行距/段距三档预设。
+///
+/// 替代原来的裸滑块：对普通读者来说「行距 8 还是 9」没有意义，
+/// 「紧 / 标准 / 松」才是能一眼做决定的选项（Apple Books 也是三档）。
+enum SpacingPreset: String, CaseIterable, Identifiable, Sendable {
+    case tight
+    case normal
+    case loose
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .tight: "Tight"
+        case .normal: "Normal"
+        case .loose: "Loose"
+        }
+    }
+
+    var lineSpacing: Double {
+        switch self {
+        case .tight: 4
+        case .normal: 8
+        case .loose: 12
+        }
+    }
+
+    var paragraphSpacing: Double {
+        switch self {
+        case .tight: 6
+        case .normal: 12
+        case .loose: 20
+        }
+    }
+
+    var lineHeightMultiple: Double {
+        switch self {
+        case .tight: 1.35
+        case .normal: 1.55
+        case .loose: 1.75
+        }
+    }
+}
+
 /// 全局阅读设置。以 SwiftData 单例形式持久化，供所有书籍共用。
 @Model
 final class ReaderSettings {
@@ -34,6 +78,15 @@ final class ReaderSettings {
     /// 用户是否主动调整过亮度。false 时进入阅读器不覆盖系统亮度。
     var hasCustomBrightness: Bool
 
+    /// 自动夜间主题：跟随系统外观在浅色/深色主题间切换（Apple Books 的那个半圆图标）。
+    var autoNightTheme: Bool = false
+
+    /// 自动夜间开启时，浅色外观用哪套主题。
+    var lightThemeRawValue: String = ReaderTheme.paper.rawValue
+
+    /// 自动夜间开启时，深色外观用哪套主题。
+    var darkThemeRawValue: String = ReaderTheme.ink.rawValue
+
     init(
         theme: ReaderTheme = .paper,
         fontSizeOffset: Double = 0,
@@ -44,7 +97,10 @@ final class ReaderSettings {
         horizontalMargin: Double = 28,
         verticalMargin: Double = 36,
         brightness: Double = 0.5,
-        hasCustomBrightness: Bool = false
+        hasCustomBrightness: Bool = false,
+        autoNightTheme: Bool = false,
+        lightTheme: ReaderTheme = .paper,
+        darkTheme: ReaderTheme = .ink
     ) {
         self.themeRawValue = theme.rawValue
         self.fontSizeOffset = fontSizeOffset
@@ -56,6 +112,72 @@ final class ReaderSettings {
         self.verticalMargin = verticalMargin
         self.brightness = brightness
         self.hasCustomBrightness = hasCustomBrightness
+        self.autoNightTheme = autoNightTheme
+        self.lightThemeRawValue = lightTheme.rawValue
+        self.darkThemeRawValue = darkTheme.rawValue
+    }
+
+    // MARK: - 主题
+
+    /// 自动夜间开启时用的浅色主题。
+    var lightTheme: ReaderTheme {
+        get { ReaderTheme(rawValue: lightThemeRawValue) ?? .paper }
+        set { lightThemeRawValue = newValue.rawValue }
+    }
+
+    /// 自动夜间开启时用的深色主题。
+    var darkTheme: ReaderTheme {
+        get { ReaderTheme(rawValue: darkThemeRawValue) ?? .ink }
+        set { darkThemeRawValue = newValue.rawValue }
+    }
+
+    /// 按当前外观解析出真正生效的主题。
+    /// 自动夜间关闭时就是用户直接选的那套；开启时按系统深浅色取对应的一套。
+    func resolvedTheme(isDarkAppearance: Bool) -> ReaderTheme {
+        guard autoNightTheme else { return theme }
+        return isDarkAppearance ? darkTheme : lightTheme
+    }
+
+    /// 用户此刻在主题网格里点某套主题时，应该写进哪个字段。
+    /// 自动夜间开启时写的是"当前外观对应的一套"，所以白天点选不会把夜间主题也改掉。
+    func setTheme(_ newTheme: ReaderTheme, isDarkAppearance: Bool) {
+        if autoNightTheme, isDarkAppearance {
+            darkTheme = newTheme
+        } else if autoNightTheme {
+            lightTheme = newTheme
+        } else {
+            theme = newTheme
+        }
+    }
+
+    /// 当前外观下网格里高亮显示的那一套。
+    func selectedTheme(isDarkAppearance: Bool) -> ReaderTheme {
+        autoNightTheme ? (isDarkAppearance ? darkTheme : lightTheme) : theme
+    }
+
+    // MARK: - 行距/段距
+
+    /// 当前值最接近哪一档。用于在分段控件里高亮。
+    var spacingPreset: SpacingPreset {
+        let current = (lineSpacing, paragraphSpacing, lineHeightMultiple)
+        return SpacingPreset.allCases.min { lhs, rhs in
+            Self.distance(from: current, to: lhs) < Self.distance(from: current, to: rhs)
+        } ?? .normal
+    }
+
+    func apply(_ preset: SpacingPreset) {
+        lineSpacing = preset.lineSpacing
+        paragraphSpacing = preset.paragraphSpacing
+        lineHeightMultiple = preset.lineHeightMultiple
+    }
+
+    private static func distance(
+        from current: (Double, Double, Double),
+        to preset: SpacingPreset
+    ) -> Double {
+        abs(current.0 - preset.lineSpacing)
+            + abs(current.1 - preset.paragraphSpacing)
+            + abs(current.2 - preset.lineHeightMultiple) * 10
     }
 
     /// 当前主题。若持久化值异常则回退到 `.paper`（全 App 米色主题）。

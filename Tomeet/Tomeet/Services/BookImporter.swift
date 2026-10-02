@@ -17,6 +17,8 @@ enum BookImporter {
         case fileCopyFailed(Error)
         case extractionFailed(String)
         case metadataFailed(Error)
+        /// 书库里已有同一本书。不是错误，是给用户的提示（UI 应换个语气展示）。
+        case duplicate(title: String)
 
         var errorDescription: String? {
             switch self {
@@ -32,6 +34,8 @@ enum BookImporter {
                 return "Could not extract EPUB: \(message)"
             case .metadataFailed(let error):
                 return "Could not read metadata: \(error.localizedDescription)"
+            case .duplicate(let title):
+                return "“\(title)” is already in your library."
             }
         }
     }
@@ -69,6 +73,12 @@ enum BookImporter {
             fallbackTitle: fallbackTitle
         )
 
+        // 已存在同一本书就别再插一条：先撤掉刚拷贝/解压出来的目录，再抛给 UI 提示。
+        if let existing = duplicateTitle(for: metadata, in: modelContext) {
+            try? FileManager.default.removeItem(at: bookDir)
+            throw ImportError.duplicate(title: existing)
+        }
+
         let book = Book(
             id: bookID,
             title: metadata.title,
@@ -82,6 +92,37 @@ enum BookImporter {
         modelContext.insert(book)
         try modelContext.save()
         return book
+    }
+
+    // MARK: - 去重
+
+    /// 返回书库里与 `metadata` 重复的那本书的标题；不重复返回 nil。
+    ///
+    /// 判据：标题与作者都归一化后相同。
+    /// 作者任一为空时只要标题相同就算重复 —— 大量 EPUB 没填 `dc:creator`，
+    /// 否则同一本书第一次导入有作者、第二次没有就会被当成两本。
+    static func duplicateTitle(for metadata: Metadata, in modelContext: ModelContext) -> String? {
+        let existing = (try? modelContext.fetch(FetchDescriptor<Book>())) ?? []
+        let title = normalize(metadata.title)
+        let author = normalize(metadata.author)
+        guard !title.isEmpty else { return nil }
+        for book in existing where normalize(book.title) == title {
+            let bookAuthor = normalize(book.author)
+            if author.isEmpty || bookAuthor.isEmpty || author == bookAuthor {
+                return book.title
+            }
+        }
+        return nil
+    }
+
+    /// 折叠大小写与空白差异（全角空格、换行、连续空格）。
+    static func normalize(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "\u{3000}", with: " ")
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
     }
 
     // MARK: - Private
