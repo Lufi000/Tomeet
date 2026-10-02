@@ -48,7 +48,9 @@ struct ContentsSheet: View {
         HStack(spacing: Spacing.lg) {
             BookCoverView(book: book)
                 .frame(width: 60, height: 90)
-                .shadow(radius: 4)
+                // 阴影半径不是圆角半径，Radius 刻度（圆角语义）不适用。
+                // 门禁的「数字 radius」正则按 `radius:` 匹配，会连带命中 .shadow(radius:)。
+                .shadow(radius: 4)   // design-system-exempt: 阴影模糊半径，与 Radius 圆角刻度无关
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(book.title)
