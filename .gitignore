@@ -7,6 +7,8 @@ DerivedData/
 # 图书文件：版权书（books/Copyrighte_books/）与讲书音频一律不进仓库
 *.epub
 *.mp3
+*.mp4
+*.MP4
 
 # 例外：Gutenberg 公版书随仓库分发，让新 clone 直接拿到书籍 fixture，
 # 否则 bundle 的 Books/ 会是空的，阅读器报 "Book source not found"。
@@ -19,5 +21,10 @@ Secrets.swift
 bff/.env
 .deriveddata/
 
-# Claude Code local settings
+# Claude Code / MCP 本地配置
 .claude/settings.local.json
+.mcp.json
+
+# Obsidian 仓库笔记：个人写作状态与待办草稿，不进仓库（docs/ 里的正式文档照常跟踪）
+.obsidian/
+docs/todo/
