@@ -4,9 +4,13 @@ build/
 DerivedData/
 *.xcuserstate
 
-# 图书文件
+# 图书文件：版权书（books/Copyrighte_books/）与讲书音频一律不进仓库
 *.epub
 *.mp3
+
+# 例外：Gutenberg 公版书随仓库分发，让新 clone 直接拿到书籍 fixture，
+# 否则 bundle 的 Books/ 会是空的，阅读器报 "Book source not found"。
+!books/public_domain_books/**/*.epub
 
 # API 密钥（本地私有，模板见 Secrets.swift.template）
 Secrets.swift
