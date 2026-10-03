@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// 主题与设置面板。布局对齐 Apple Books：
-/// 字号胶囊 → 行距预设 + 自动夜间 → 亮度 → 主题网格 → Customize。
+/// 字号胶囊 → 行距预设 + 自动夜间 → 主题网格 → Customize。
+/// 不含亮度：亮度归系统管（控制中心 / 自动亮度），见 `ScreenBrightnessGuardTests`。
 struct ThemesSettingsSheet: View {
     let settings: ReaderSettings
     @Environment(\.dismiss) private var dismiss
@@ -23,7 +24,6 @@ struct ThemesSettingsSheet: View {
                 ScrollView {
                     VStack(spacing: Spacing.xl) {
                         controlPill
-                        brightnessSection
                         themeGrid
                         customizeButton
                         if showAdvanced {
@@ -139,40 +139,6 @@ struct ThemesSettingsSheet: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Auto night theme")
         .accessibilityValue(settings.autoNightTheme ? "On" : "Off")
-    }
-
-    // MARK: - 亮度
-
-    private var brightnessSection: some View {
-        HStack(spacing: Spacing.md) {
-            Image(systemName: "sun.min")
-                .tIcon(IconRole.badge)
-                .foregroundStyle(Theme.panelInkSecondary)
-
-            Slider(
-                value: Binding(
-                    get: { settings.brightness },
-                    set: { newValue in
-                        settings.brightness = newValue
-                        settings.hasCustomBrightness = true
-                        UIScreen.current?.brightness = CGFloat(newValue)
-                        save()
-                    }
-                ),
-                in: 0...1
-            )
-            .tint(Theme.panelInk)
-
-            Image(systemName: "sun.max")
-                .tIcon(IconRole.control)
-                .foregroundStyle(Theme.panelInkSecondary)
-        }
-        .padding(.horizontal, Spacing.lg)
-        .padding(.vertical, Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
     }
 
     // MARK: - 主题网格

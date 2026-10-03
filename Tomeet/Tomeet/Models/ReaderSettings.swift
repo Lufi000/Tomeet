@@ -72,12 +72,6 @@ final class ReaderSettings {
     /// 垂直边距，默认 36。
     var verticalMargin: Double = 36
 
-    /// 亮度 0...1；0.5 为默认值。
-    var brightness: Double
-
-    /// 用户是否主动调整过亮度。false 时进入阅读器不覆盖系统亮度。
-    var hasCustomBrightness: Bool
-
     /// 自动夜间主题：跟随系统外观在浅色/深色主题间切换（Apple Books 的那个半圆图标）。
     var autoNightTheme: Bool = false
 
@@ -96,8 +90,6 @@ final class ReaderSettings {
         lineHeightMultiple: Double = 1.55,
         horizontalMargin: Double = 28,
         verticalMargin: Double = 36,
-        brightness: Double = 0.5,
-        hasCustomBrightness: Bool = false,
         autoNightTheme: Bool = false,
         lightTheme: ReaderTheme = .paper,
         darkTheme: ReaderTheme = .ink
@@ -110,8 +102,6 @@ final class ReaderSettings {
         self.lineHeightMultiple = lineHeightMultiple
         self.horizontalMargin = horizontalMargin
         self.verticalMargin = verticalMargin
-        self.brightness = brightness
-        self.hasCustomBrightness = hasCustomBrightness
         self.autoNightTheme = autoNightTheme
         self.lightThemeRawValue = lightTheme.rawValue
         self.darkThemeRawValue = darkTheme.rawValue

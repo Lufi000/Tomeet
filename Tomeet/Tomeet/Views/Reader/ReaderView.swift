@@ -34,7 +34,6 @@ struct ReaderView: View {
             viewModel.modelContext = modelContext
             viewModel.reloadAnnotations()
             viewModel.apply(settings: settings)
-            applyBrightness(from: settings)
             viewModel.loadBook(pageSize: currentSize, safeAreaInsets: currentSafeAreaInsets)
             readingTracker.begin(.reading)
         }
@@ -371,13 +370,6 @@ struct ReaderView: View {
                 showChrome = false
             }
         }
-    }
-
-    // MARK: - 亮度
-
-    private func applyBrightness(from settings: ReaderSettings) {
-        guard settings.hasCustomBrightness else { return }
-        UIScreen.current?.brightness = CGFloat(settings.brightness)
     }
 }
 

@@ -99,8 +99,7 @@ struct ReaderViewModelTests {
 
         let newSettings = ReaderSettings(
             horizontalMargin: 120,
-            verticalMargin: 160,
-            hasCustomBrightness: false
+            verticalMargin: 160
         )
         viewModel.apply(settings: newSettings)
         #expect(viewModel.phase == .loading, "边距变化应立即触发重新分页")
