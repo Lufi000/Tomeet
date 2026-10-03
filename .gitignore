@@ -10,8 +10,7 @@ DerivedData/
 *.mp4
 *.MP4
 
-# 例外：Gutenberg 公版书随仓库分发，让新 clone 直接拿到书籍 fixture，
-# 否则 bundle 的 Books/ 会是空的，阅读器报 "Book source not found"。
+# 例外：Gutenberg 公版书随仓库分发
 !books/public_domain_books/**/*.epub
 
 # API 密钥（本地私有，模板见 Secrets.swift.template）

@@ -22,8 +22,9 @@ extension View {
     /// 图标尺寸角色。用法：`.tIcon(.control)`
     ///
     /// 走语义 `TextStyle`（而非 `CGFloat`）以自动获得 Dynamic Type 支持。
-    /// 字形风格用系统默认 SF Pro —— Splendid 66 是打字机衬线，
-    /// 而 SF Symbols 没有衬线变体，气质匹配做不到，不干预最符合 iOS 预期。
+    /// 字形风格固定为系统默认 SF Pro —— 文字是 `Font.book()` 的衬线（New York），
+    /// 而 SF Symbols 没有衬线变体。给图标挂 `.font(.book(...))` 只会落到回退字形，
+    /// 所以这里刻意不跟随文字字体；`DesignSystemGuardTests` 会拦住这种写法。
     func tIcon(_ style: Font.TextStyle, weight: Font.Weight = .regular) -> some View {
         self.font(.system(style, weight: weight))
     }

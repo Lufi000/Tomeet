@@ -19,11 +19,11 @@ struct NowPlayingBar: View {
                     .frame(width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(book.title)
-                        .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .font(.book(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
                     Text("讲书 · \(book.author)")
-                        .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                        .font(.book(.caption2)).tracking(Theme.letterSpacing)
                         .foregroundStyle(Theme.inkTertiary)
                         .lineLimit(1)
                 }
@@ -33,7 +33,7 @@ struct NowPlayingBar: View {
                     .tint(Theme.accent)
                     .controlSize(.small)
                 Text("加载中…")
-                    .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.book(.subheadline)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.inkSecondary)
             }
 
@@ -43,7 +43,7 @@ struct NowPlayingBar: View {
                 player.togglePlayPause()
             } label: {
                 Image(systemName: player.state == .playing ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 30))
+                    .tIcon(.title)
                     .foregroundStyle(Theme.accent)
             }
             .buttonStyle(.plain)

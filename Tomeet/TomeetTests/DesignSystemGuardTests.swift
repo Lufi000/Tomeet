@@ -94,10 +94,10 @@ struct DesignSystemGuardTests {
         //    `Label("听书", systemImage: "headphones").tText(.body)` 会带着绿门禁复现 22pt/31pt 的老问题。
         let label = try Self.scanSnippet("""
         Label("听书", systemImage: "headphones")
-            .font(.splendid(.body))
+            .font(.book(.body))
         """)
-        #expect(label.contains { $0.rule == "SF Symbol 挂 Splendid" },
-                "`Label(_:systemImage:)` 挂 `.font(.splendid` 应被窗口规则抓到")
+        #expect(label.contains { $0.rule == "SF Symbol 挂文字字体" },
+                "`Label(_:systemImage:)` 挂 `.font(.book` 应被窗口规则抓到")
     }
 
     /// 把一段源码写进临时目录并过一次扫描器，返回违规。
@@ -184,7 +184,7 @@ enum DesignSystemScanner {
                     regex: regex(#"\bradius:\s*([0-9]*\.?[0-9]+)"#),
                     scale: Radius.all, fixedHint: nil, allowsZero: false),
         // 字号是全局禁令（文字和图标都不许写裸数值），所以不需要 2 行窗口 ——
-        // 窗口只是为 `.splendid` 准备的，因为 `.splendid` 在 Text 上合法、在 Symbol 上非法。
+        // 窗口只是为 `.book` 准备的，因为 `.book` 在 Text 上合法、在 Symbol 上非法。
         NumericRule(name: "裸字号",
                     regex: regex(#"\.system\(size:\s*([0-9]*\.?[0-9]+)"#),
                     scale: nil,
@@ -267,15 +267,15 @@ enum DesignSystemScanner {
         #"Image\(systemName:|Label\(.*systemImage:|Button\(.*systemImage:"#
     )
 
-    /// 只有 `.splendid` 需要"挂在 Symbol 上"这条专门规则 ——
+    /// 只有 `.book` 需要"挂在 Symbol 上"这条专门规则 ——
     /// 它在 `Text` 上完全合法，在 `Image(systemName:)` 上则是纯错误
-    /// （Splendid 66 不含 SF Symbols 字形，靠 CoreText 回退才偶然能显示）。
+    /// （New York 是文字衬线，SF Symbols 没有衬线变体，挂上去只会落到回退字形）。
     /// 裸字号 `.system(size:` 已由上面的全局规则覆盖，不在这里重复报。
-    private static let splendidOnSymbol = regex(#"\.font\(\.splendid"#)
+    private static let textFontOnSymbol = regex(#"\.font\(\.book"#)
 
     /// SwiftUI 的修饰符常另起一行，所以要看当前行 **及其后 2 行**。
     /// 例：`ListenPlayerView.swift:20-21` —— `Image(systemName:)` 在 20 行，
-    /// `.font(.splendid(...))` 在 21 行，单行扫描抓不到。
+    /// `.font(.book(...))` 在 21 行，单行扫描抓不到。
     private static func symbolFontViolations(lines: [String], file: String) -> [Violation] {
         var out: [Violation] = []
         for (index, line) in lines.enumerated() {
@@ -291,13 +291,13 @@ enum DesignSystemScanner {
                 let windowLine = lines[index + offset]
                 if isExempt(windowLine) { continue }
                 let nsWindow = windowLine as NSString
-                guard splendidOnSymbol.firstMatch(
+                guard textFontOnSymbol.firstMatch(
                     in: windowLine, range: NSRange(location: 0, length: nsWindow.length)
                 ) != nil else { continue }
                 out.append(Violation(
                     file: file,
                     line: index + 1 + offset,
-                    rule: "SF Symbol 挂 Splendid",
+                    rule: "SF Symbol 挂文字字体",
                     snippet: windowLine.trimmingCharacters(in: .whitespaces),
                     hint: "SF Symbol 不接受字体覆盖，改用 .tIcon(...)"
                 ))

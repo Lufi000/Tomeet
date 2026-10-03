@@ -28,6 +28,10 @@
   当前实现位于 `Tomeet/RootView.swift`；顶部不再使用分段选择器/分区导航。
 - **AI 定位**：阅读器核心体验是与书的 AI 对话，不只是翻页阅读。AI 对话功能是产品重心。
 - **AI 后端**：DeepSeek 经自家 BFF 代理（`https://tomeet-api.smallbeebee.com`，Go 源码在 `bff/`，部署在阿里云 ECS :8088，systemd `tomeet-bff`）。App 持 `X-App-Token`（`Secrets.swift`，gitignored）；DeepSeek key 只存服务器 `/opt/tomeet-bff/.env`。
+- **字体**：全 App 文字与阅读器正文页同一套 —— 系统衬线 New York（`Font.book()`），
+  CJK 回退 PingFang SC，字号走 iOS 标准档，字距 0。**不再有自定义字体**
+  （Splendid 66 打字机字体连同 ttf 与 `UIAppFonts` 注册已于 2026-10-03 删除）。
+  图标固定 SF Pro（SF Symbols 无衬线变体）；TabBar / navigationTitle / alert 归 UIKit，保持系统字体。
 
 ## 第一个里程碑
 
@@ -45,6 +49,6 @@
 - 文字用 `.tText(...)`，图标用 `.tIcon(...)`
 - `Label` 的图标写在 `icon:` 闭包里用 `.tIcon` —— `.font()` 挂在 `Label` 上会同时改到文字和图标
 - 按钮用 `TButton`，卡片用 `.tCard()`，页面大标题用 `TPageHeader`
-- 只用 SF Symbols；禁止第三方图标库；禁止在图标上用 `.splendid()`；禁止 `.system(size:)`（**全 App 生效**，不只 `Image(systemName:)`，`Label` / `Button` 同罪）
+- 只用 SF Symbols；禁止第三方图标库；禁止在图标上用 `.book()`；禁止 `.system(size:)`（**全 App 生效**，不只 `Image(systemName:)`，`Label` / `Button` 同罪）
 - 不直接写 `Color.black` / `Color.white`，用 `Theme.solidInk` / `Theme.onSolid` / `Theme.*`
 - 改完跑 `xcodebuild test`，`DesignSystemGuardTests` 会拦住违规并给出建议

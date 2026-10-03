@@ -61,7 +61,7 @@ struct BookChatView: View {
                     Task { await viewModel.send(prompt) }
                 } label: {
                     Text(prompt)
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                        .font(.book(.subheadline)).tracking(Theme.letterSpacing)
                         .foregroundStyle(Theme.inkSecondary)
                 }
                 .buttonStyle(.plain)
@@ -76,7 +76,7 @@ struct BookChatView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField("Ask about this book...", text: $input, axis: .vertical)
-                .font(.splendid(.body))
+                .font(.book(.body))
                 .tracking(Theme.letterSpacing)
                 .lineLimit(1...4)
                 .focused($inputFocused)
@@ -91,7 +91,7 @@ struct BookChatView: View {
 
             Button(action: send) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 15, weight: .bold))
+                    .tIcon(.subheadline, weight: .bold)
                     .foregroundStyle(canSend ? Color.white : Theme.inkTertiary)
                     .frame(width: 34, height: 34)
                     .background(
@@ -128,11 +128,11 @@ private struct MessageBubble: View {
             if isThinking {
                 // Manta:状态行不套气泡,灰字左对齐
                 Text("Thinking")
-                    .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                    .font(.book(.caption)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.inkTertiary)
             } else if message.role == .user {
                 Text(message.text)
-                    .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                    .font(.book(.body)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Color.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -143,7 +143,7 @@ private struct MessageBubble: View {
             } else {
                 // Manta:AI 回复纯文本,无气泡
                 content
-                    .font(.splendid(.body)).tracking(Theme.letterSpacing)
+                    .font(.book(.body)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

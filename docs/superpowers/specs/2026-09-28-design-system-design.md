@@ -53,7 +53,7 @@
 **目标**
 
 - 一套 4pt 网格的间距刻度、一套命名圆角层级、一套文字角色
-- 一套图标尺寸角色，禁止 SF Symbol 用裸数值或 Splendid 渲染
+- 一套图标尺寸角色，禁止 SF Symbol 用裸数值或 `.book()` 渲染
 - 6 个封装单元（`.tText` `.tIcon` + 5 个构件）封住真实存在的重复（证据见 §5）
 - 一个能失败的测试，阻止新代码再写魔法数字
 - 一份 `CLAUDE.md` 常驻规则，让 agent 在**生成的那一刻**就遵守（§6.2）
@@ -111,7 +111,17 @@ enum Radius {
 
 ### 3.3 文字角色
 
-真正该抽的不是字号，而是 **`font + tracking` 这个组合** —— `.tracking(Theme.letterSpacing)` 在 57 处 `.splendid(` 里几乎逐一手写重复，且永远会被漏写。
+> **2026-10-03 修订：全 App 字体已统一为 `Font.book()`。**
+>
+> 文字改用系统衬线 **New York**（`.system(style, design: .serif)`）—— 即阅读器正文页对西文使用的同一套字体；CJK 由 CoreText 回退 **PingFang SC**，与 `ChapterPager.fontDescriptor(for:)` 对正文的处理一致。所以中文界面和中文书正文现在是同一字体。
+>
+> 字号随之回到 **iOS 标准档**（body 17 / largeTitle 34 …），`Theme.letterSpacing` 从 `-3.5` 改为 **`0`** —— New York 的字距本就按 UI 尺寸设计，收紧会立刻糊成一团。
+>
+> 打字机字体 `Splendid 66` 连同 `Fonts/Splendid*.ttf` 与 Info.plist 的 `UIAppFonts` 注册已一并删除。
+>
+> **§1 的四个「铁证」小节是修订前的快照，保留原样存档** —— 其中的 `.splendid()` 今天已不存在。
+
+真正该抽的不是字号，而是 **`font + tracking` 这个组合** —— `.tracking(Theme.letterSpacing)` 在各处 `.book(` 里几乎逐一手写重复，且永远会被漏写。
 
 ```swift
 enum TextRole {
@@ -125,7 +135,7 @@ enum TextRole {
 ```
 
 用法：`.tText(.pageTitle)`，等价于现在手写的
-`.font(.splendid(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink)`
+`.font(.book(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink)`
 
 **逃生门**：`.tText(.body, color: .accent)` 允许覆盖颜色（角色默认色不适用时）。字号与字距不可覆盖 —— 那正是角色存在的意义。
 
@@ -143,7 +153,7 @@ enum TextRole {
 
 **关于 SF Compact**：SF Symbols 不是"某个字体"，而是模板化符号，**没有默认字体**，尺寸与字重完全由外部 `.font()` 决定。SF Compact 是 Apple Watch 的字体（窄体，为圆角小屏优化），iOS App 的 UI 标准是 **SF Pro**。本项目**不引入 SF Compact**。
 
-**字形风格用系统默认 SF Pro**，不设 `fontDesign`。理由：Splendid 66 是打字机衬线，而 SF Symbols 没有对应的衬线变体 —— 无论如何都匹配不上；不干预反而最符合 iOS 用户预期。
+**字形风格用系统默认 SF Pro**，不设 `fontDesign`。理由：文字层是 `Font.book()` 的衬线（New York），而 SF Symbols 没有对应的衬线变体 —— 无论如何都匹配不上；不干预反而最符合 iOS 用户预期。
 
 ### 4.2 尺寸角色 `.tIcon`
 
@@ -165,7 +175,7 @@ enum TextRole {
 ### 4.3 两条硬规则（进 §6 门禁）
 
 1. **禁止 `.system(size:)` 挂在 `Image(systemName:)` 上** —— 与文字层同源，尺寸该走语义字阶。
-2. **禁止 `.splendid()` 挂在 `Image(systemName:)` 上** —— Splendid 66 不含 SF Symbols 字形，此写法无正当用例，只是靠回退"偶然能跑"。这是纯错误，见铁证之四。
+2. **禁止 `.book()` 挂在 `Image(systemName:)` 上** —— 衬线文字字体不含 SF Symbols 字形，此写法无正当用例，只是靠回退"偶然能跑"。这是纯错误，见铁证之四。（`ListenPlayerView` 关闭键那处已于 2026-10-03 修掉，改用 `.tIcon`。）
 
 ### 4.4 符号变体约定
 
@@ -270,9 +280,9 @@ TEmptyState(
 | 系统字体 | `\.system\(size:` |
 | 裸 hex 颜色 | `Color\(hex:` |
 | 裸 `Color.black`/`.white` | `Color\.(black\|white)\b` （§6.2 的软规则说了不许，硬规则必须跟上） |
-| SF Symbol 挂 Splendid | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.font\(\.splendid` |
+| SF Symbol 挂文字字体 | 在 `Image(systemName:` 行**及其后 2 行**内出现 `\.font\(\.book` |
 
-**只有最后一条需要 2 行窗口**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。之所以只给它开窗口，是因为 `.splendid` 在 `Text` 上**合法**、在 `Image(systemName:)` 上才非法 —— 必须带上下文才能判定。而 `.system(size:` 是全局禁令（见上表「系统字体」行），单行即可判定，也就不必再为它单开一条窗口规则、避免同一处**重复报两次**。
+**只有最后一条需要 2 行窗口**：SwiftUI 修饰符常另起一行（如 `ListenPlayerView.swift:20-21`），只看当前行的扫描器抓不到。之所以只给它开窗口，是因为 `.book` 在 `Text` 上**合法**、在 `Image(systemName:)` 上才非法 —— 必须带上下文才能判定。而 `.system(size:` 是全局禁令（见上表「系统字体」行），单行即可判定，也就不必再为它单开一条窗口规则、避免同一处**重复报两次**。
 
 **报错信息要给建议，不只是拦截。** 命中数值时，failure message 需算出**最近的两个刻度值**并给出提示：
 
@@ -318,7 +328,7 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 - 间距/圆角/字号只从 `Theme/Metrics.swift` 取，禁止裸数字
 - 文字用 `.tText(...)`，图标用 `.tIcon(...)`
 - 按钮用 `TButton`，卡片用 `.tCard()`，页面大标题用 `TPageHeader`
-- 只用 SF Symbols；禁止第三方图标库、禁止 `.splendid()` 挂 `Image(systemName:)`
+- 只用 SF Symbols；禁止第三方图标库、禁止 `.book()` 挂 `Image(systemName:)`
 - 不直接写 `Color.black/.white`，用 `Theme.*`
 - 改完跑 `xcodebuild test`，`DesignSystemGuardTests` 会拦住违规
 ```
@@ -381,7 +391,7 @@ let grandfathered: Set<String> = [ /* 见下 */ ]
 | 门禁正则误报 | 行级 `// design-system-exempt: <理由>` 逃生门 |
 | 正则漏报（写法绕过） | 接受。门禁是兜底，主要杠杆是组件层让调用点根本没机会写数字 |
 | 图标四档不够用 | `.tIcon` 收语义 `TextStyle` 而非小枚举，永远不会"不够"，只是新页面要克制别乱挑 |
-| SF Pro 图标与 Splendid 66 文字气质不搭 | 已知且**无解** —— SF Symbols 没有衬线变体。已选定不干预（§4.1）；若日后视觉方向重做，这是要重新审视的点 |
+| SF Pro 图标与衬线文字气质不搭 | 已知且**无解** —— SF Symbols 没有衬线变体。已选定不干预（§4.1）；若日后视觉方向重做，这是要重新审视的点 |
 | 本轮不迁页面导致"规范没生效"的观感 | 已知取舍。视觉方向未定前，迁移是白做；地基+画廊先让方向可快速迭代 |
 | `inkSecondary`/`inkTertiary` 是手搓的 `.secondary`/`.tertiary` | 已知取舍。本轮只做浅色，等于放弃系统语义色**免费**的暗色/高对比适配。重做视觉方向时这是首选项 |
 | style-guide.md 与 Theme.swift 两处维护 hex | 本轮不处理，已备案。目前值一致，但将来改色必须同时改两处 |

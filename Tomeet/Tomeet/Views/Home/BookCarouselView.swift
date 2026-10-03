@@ -49,11 +49,11 @@ struct BookCarouselView: View {
                 BookCoverView(book: book)
                     .frame(width: width)
                 Text(book.title)
-                    .font(.splendid(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.book(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                 Text(book.author)
-                    .font(.splendid(.caption)).tracking(Theme.letterSpacing)
+                    .font(.book(.caption)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.inkSecondary)
                     .lineLimit(1)
             }

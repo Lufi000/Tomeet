@@ -196,8 +196,7 @@ struct ThemesSettingsSheet: View {
         } label: {
             VStack(spacing: Spacing.sm) {
                 Text("大小")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(theme.textColor)
+                    .tText(.sectionTitle, color: theme.textColor)
                 Text(theme.displayName)
                     .tText(.hint, color: theme.textColor.opacity(0.8))
             }

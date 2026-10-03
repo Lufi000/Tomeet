@@ -2,8 +2,8 @@ import SwiftUI
 
 /// 文字角色：字体 + 字距 + 颜色的三元组。
 ///
-/// 抽这个而不是抽字号，是因为 `.tracking(Theme.letterSpacing)` 在 57 处
-/// `.splendid(` 里几乎逐一手写重复，且**永远会被漏写**。
+/// 抽这个而不是抽字号，是因为 `.tracking(Theme.letterSpacing)` 在几十处
+/// `.book(` 里几乎逐一手写重复，且**永远会被漏写**。
 /// 打包成角色后，漏写从"可能"变成"不可能"。
 enum TextRole: CaseIterable {
     /// 页面大标题。
@@ -55,7 +55,7 @@ extension View {
     /// 颜色可覆盖（角色默认色不适用时）：`.tText(.button, color: Theme.cream)`
     func tText(_ role: TextRole, color: Color? = nil) -> some View {
         self
-            .font(.splendid(role.textStyle, weight: role.weight))
+            .font(.book(role.textStyle, weight: role.weight))
             .tracking(Theme.letterSpacing)
             .foregroundStyle(color ?? role.color)
     }

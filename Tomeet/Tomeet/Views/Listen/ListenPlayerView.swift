@@ -18,7 +18,7 @@ struct ListenPlayerView: View {
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.splendid(.title2)).tracking(Theme.letterSpacing)
+                            .tIcon(.title2)
                             .foregroundStyle(.white.opacity(0.8))
                     }
                 }
@@ -31,9 +31,9 @@ struct ListenPlayerView: View {
 
                 VStack(spacing: 6) {
                     Text(book.title)
-                        .font(.splendid(.title3, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .font(.book(.title3, weight: .semibold)).tracking(Theme.letterSpacing)
                     Text(subtitle)
-                        .font(.splendid(.subheadline)).tracking(Theme.letterSpacing)
+                        .font(.book(.subheadline)).tracking(Theme.letterSpacing)
                         .foregroundStyle(.secondary)
                 }
 
@@ -41,7 +41,7 @@ struct ListenPlayerView: View {
                 case .failed(let message):
                     VStack(spacing: 12) {
                         Text(message)
-                            .font(.splendid(.body))
+                            .font(.book(.body))
                             .foregroundStyle(.secondary)
                         Button("重试") {
                             Task { await player.load(book: book) }
@@ -97,7 +97,7 @@ struct ListenPlayerView: View {
                     Spacer()
                     Text("-\(formatTime(max(0, player.duration - player.currentTime)))")
                 }
-                .font(.splendid(.caption).monospacedDigit())
+                .font(.book(.caption).monospacedDigit())
                 .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 32)
@@ -118,7 +118,7 @@ struct ListenPlayerView: View {
 
             Button { player.cycleRate() } label: {
                 Text(rateLabel)
-                    .font(.splendid(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.book(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(.white.opacity(0.15)))

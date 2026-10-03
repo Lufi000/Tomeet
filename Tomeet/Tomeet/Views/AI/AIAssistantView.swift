@@ -50,10 +50,10 @@ struct AIAssistantView: View {
             BookCoverView(book: book).frame(width: 36)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Asking about")
-                    .font(.splendid(.caption2)).tracking(Theme.letterSpacing)
+                    .font(.book(.caption2)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.inkTertiary)
                 Text(book.title)
-                    .font(.splendid(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
+                    .font(.book(.subheadline, weight: .medium)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
             }
