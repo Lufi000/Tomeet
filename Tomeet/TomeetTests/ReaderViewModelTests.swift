@@ -111,4 +111,40 @@ struct ReaderViewModelTests {
         try #require(viewModel.phase == .ready)
         #expect(viewModel.totalPages != firstTotal, "边距变化应改变总页数")
     }
+
+    /// 改字号会整本重排：位置必须**跟着文字走**，而不是跟着页码走。
+    /// 这条守住「回到在读的那一页」—— 重排后仍停在同一段文字上，而不是被打回第 1 页。
+    @MainActor
+    @Test func repaginationKeepsReadingPosition() async throws {
+        let book = Book(title: "VM Sample", author: "A", format: .epub)
+        book.sourceFileName = "fixture"
+        let (viewModel, _) = try makeFixtureViewModel(book: book)
+        viewModel.apply(settings: ReaderSettings())
+        await viewModel.loadBook(pageSize: CGSize(width: 390, height: 700))
+        var waited = 0
+        while viewModel.phase != .ready && waited < 100 {
+            try await Task.sleep(for: .milliseconds(20))
+            waited += 1
+        }
+        try #require(viewModel.phase == .ready)
+
+        // 模拟翻几页
+        let target = min(3, viewModel.totalPages - 1)
+        viewModel.settle(globalIndex: target)
+        let before = try #require(viewModel.currentPageLocation)
+
+        viewModel.apply(settings: ReaderSettings(fontSizeOffset: 4))
+        waited = 0
+        while viewModel.phase != .ready && waited < 100 {
+            try await Task.sleep(for: .milliseconds(20))
+            waited += 1
+        }
+        try #require(viewModel.phase == .ready)
+
+        let page = try #require(viewModel.session?.pageMap.textPage(globalIndex: viewModel.currentGlobalIndex))
+        #expect(
+            page.characterRange.contains(before.charOffset),
+            "重排后应停回同一个字符偏移所在的页（偏移 \(before.charOffset)，当前页 \(page.characterRange)）"
+        )
+    }
 }

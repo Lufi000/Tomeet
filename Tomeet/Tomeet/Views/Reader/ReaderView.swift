@@ -152,15 +152,24 @@ struct ReaderView: View {
         }
     }
 
+    /// 章首页的正文里已经排了章标题，顶栏再来一个就会叠字（同一行显示两遍）。
+    private var showsChapterTitleInChrome: Bool {
+        viewModel.session?.pageMap
+            .textPage(globalIndex: viewModel.currentGlobalIndex)?
+            .header == nil
+    }
+
     private var topBar: some View {
         HStack {
             VStack(alignment: .leading, spacing: Spacing.hairline) {
                 Text(sectionLabel)
                     .tText(.hint, color: chromeColor.opacity(0.7))
                     .lineLimit(1)
-                Text(currentChapterTitle)
-                    .tText(.secondary, color: themeForeground)
-                    .lineLimit(1)
+                if showsChapterTitleInChrome {
+                    Text(currentChapterTitle)
+                        .tText(.secondary, color: themeForeground)
+                        .lineLimit(1)
+                }
             }
             Spacer()
             circleButton(icon: "xmark") {

@@ -202,6 +202,11 @@ struct ReaderHostView: UIViewControllerRepresentable {
     @MainActor
     final class ReaderPageVC: UIViewController, UITextViewDelegate {
         private let textView = UITextView()
+        /// 章首页的章标题与它左侧的竖线；只有章节第一页会显示。
+        private let titleLabel = UILabel()
+        private let titleRule = UIView()
+        /// 引文块左侧的竖线；一页可能有多段引文，一次画完。
+        private let quoteRules = QuoteRuleView()
         private let theme: ReaderTheme
         private let insets: UIEdgeInsets
 
@@ -210,6 +215,8 @@ struct ReaderHostView: UIViewControllerRepresentable {
 
         /// 本页在所属章节 canonical 空间中的区间；选中的区域要加上这个偏移才是章内区间。
         private var pageRange = NSRange(location: 0, length: 0)
+        /// 本页的章标题（仅章节第一页有）。高度由分页端量好，这里只照着摆。
+        private var header: PageHeader?
 
         init(theme: ReaderTheme, insets: UIEdgeInsets = UIEdgeInsets(top: 36, left: 28, bottom: 36, right: 28)) {
             self.theme = theme
@@ -233,7 +240,99 @@ struct ReaderHostView: UIViewControllerRepresentable {
             // 文字颜色由 NSAttributedString 携带的主题色/强调色控制。
             textView.textContainerInset = insets
             textView.textContainer.lineFragmentPadding = 0
+
+            // 标题与竖线挂成正文视图的子视图：位置靠 textContainerInset 让出来的那一块，
+            // 不参与文字排版，也就不影响换行。
+            titleLabel.numberOfLines = 0
+            titleLabel.isUserInteractionEnabled = false
+            titleLabel.isHidden = true
+            titleRule.isUserInteractionEnabled = false
+            titleRule.isHidden = true
+            quoteRules.isUserInteractionEnabled = false
+            // 这个视图只画几根竖线，其余像素必须透出底下正文视图的背景色。
+            // 一旦它是 opaque，没画到的像素会被渲染成黑 —— 整页变黑底。
+            quoteRules.isOpaque = false
+            quoteRules.backgroundColor = .clear
+            quoteRules.frame = textView.bounds
+            quoteRules.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            textView.addSubview(quoteRules)
+            textView.addSubview(titleRule)
+            textView.addSubview(titleLabel)
             view = textView
+        }
+
+        override func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            quoteRules.color = UIColor(theme.textColor).withAlphaComponent(ChapterPager.quoteRuleOpacity)
+            quoteRules.rects = quoteRuleRects()
+            guard let header else { return }
+            // 竖线从标题首行顶端画到末行底端，宽度与槽宽都取自分页端。
+            titleRule.frame = CGRect(
+                x: insets.left,
+                y: insets.top,
+                width: header.ruleWidth,
+                height: header.titleHeight
+            )
+            titleLabel.frame = CGRect(
+                x: insets.left + header.ruleGutter,
+                y: insets.top,
+                width: max(0, view.bounds.width - insets.left - insets.right - header.ruleGutter),
+                height: header.titleHeight
+            )
+        }
+
+        /// 引文竖线的位置：本页每一段引文的行片段并入一个矩形，画在缩进槽里。
+        ///
+        /// 用**和分页同一套引擎**（TextKit 1 + 同样的容器尺寸）重量一遍这一页，
+        /// 而不是问 `textView.layoutManager` 要几何 —— 后者报出来的和真正画在屏上的
+        /// 不是一回事（分页/上屏字体那个 bug 就是这么藏了很久的）。
+        private func quoteRuleRects() -> [CGRect] {
+            let text = textView.attributedText ?? NSAttributedString()
+            let fullRange = NSRange(location: 0, length: text.length)
+            guard fullRange.length > 0 else { return [] }
+            var hasQuote = false
+            text.enumerateAttribute(.tomeetQuote, in: fullRange) { value, _, stop in
+                if value != nil {
+                    hasQuote = true
+                    stop.pointee = true
+                }
+            }
+            guard hasQuote else { return [] }
+
+            let pageInsets = textView.textContainerInset
+            let storage = NSTextStorage(attributedString: text)
+            let manager = NSLayoutManager()
+            storage.addLayoutManager(manager)
+            let container = NSTextContainer(size: CGSize(
+                width: max(1, view.bounds.width - pageInsets.left - pageInsets.right),
+                height: max(1, view.bounds.height - pageInsets.top - pageInsets.bottom)
+            ))
+            container.lineFragmentPadding = 0
+            manager.addTextContainer(container)
+            manager.ensureLayout(for: container)
+
+            var rects: [CGRect] = []
+            text.enumerateAttribute(.tomeetQuote, in: fullRange) { value, range, _ in
+                guard value != nil else { return }
+                let glyphs = manager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+                var glyph = glyphs.location
+                let end = NSMaxRange(glyphs)
+                var union = CGRect.null
+                while glyph < end {
+                    var lineRange = NSRange(location: 0, length: 0)
+                    union = union.union(manager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: &lineRange))
+                    guard lineRange.length > 0 else { break }
+                    glyph = NSMaxRange(lineRange)
+                }
+                guard !union.isNull else { return }
+                rects.append(CGRect(
+                    x: pageInsets.left + ChapterPager.quoteRuleInset,
+                    y: pageInsets.top + union.minY,
+                    width: ChapterPager.quoteRuleWidth,
+                    height: union.height
+                ))
+            }
+            return rects
         }
 
         // MARK: 选字菜单
@@ -280,10 +379,27 @@ struct ReaderHostView: UIViewControllerRepresentable {
 
         func apply(theme: ReaderTheme) {
             textView.backgroundColor = UIColor(theme.backgroundColor)
+            titleRule.backgroundColor = UIColor(theme.accentColor)
         }
 
         func configure(text: TextPage, highlights: [Highlight] = []) {
+            // 先把视图树逼出来：`loadView` 会重置标题与内衬的初值，
+            // 若是被下面某一行间接触发，刚设好的状态就被它盖回去了。
+            loadViewIfNeeded()
             pageRange = text.characterRange
+            header = text.header
+            // 章首页：正文整体下移标题占掉的那一块。高度是分页端量好的，这里不重算。
+            var pageInsets = insets
+            if let header {
+                pageInsets.top += header.totalHeight
+                titleLabel.attributedText = header.text
+                titleRule.backgroundColor = UIColor(theme.accentColor)
+            }
+            textView.textContainerInset = pageInsets
+            titleLabel.isHidden = header == nil
+            titleRule.isHidden = header == nil
+            view.setNeedsLayout()
+
             let attributed = resolveImages(in: text.text)
             textView.attributedText = applyHighlights(highlights, to: attributed, pageRange: text.characterRange)
         }
@@ -351,6 +467,27 @@ struct ReaderHostView: UIViewControllerRepresentable {
                 }
             }
             return nil
+        }
+    }
+}
+
+/// 引文左侧竖线。一页上可能有零到多段引文，用一个视图一次画完，
+/// 不为一根线各建一个视图 —— 页视图是复用缓存的重对象。
+@MainActor
+final class QuoteRuleView: UIView {
+    /// 竖线矩形（本视图坐标系）。
+    var rects: [CGRect] = [] {
+        didSet { if rects != oldValue { setNeedsDisplay() } }
+    }
+    var color: UIColor = .clear {
+        didSet { if color != oldValue { setNeedsDisplay() } }
+    }
+
+    override func draw(_ rect: CGRect) {
+        guard !rects.isEmpty else { return }
+        color.setFill()
+        for rule in rects {
+            UIBezierPath(rect: rule).fill()
         }
     }
 }

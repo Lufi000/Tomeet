@@ -9,6 +9,8 @@ struct HomeView: View {
     @State private var showImporter = false
     /// 面板关闭后延迟推出全屏页的 pending Task,可取消(见 openAfterSheetDismiss)。
     @State private var pendingOpen: Task<Void, Never>?
+    /// 本次启动是否已经自动续读过 —— 保证一次启动只弹一次，关掉后不再打扰。
+    @State private var didAutoResume = false
 
     private var carouselBooks: [Book] {
         CarouselData.books(books)
@@ -50,7 +52,22 @@ struct HomeView: View {
                 )
             }
         }
-        .onAppear { openReaderForSnapshotIfRequested() }
+        .onAppear {
+            openReaderForSnapshotIfRequested()
+            resumeReadingIfNeeded()
+        }
+    }
+
+    /// 启动后直接回到在读的那一页（Apple Books 的行为）。
+    ///
+    /// 每次启动只自动进一次：`didAutoResume` 挡住二次触发，所以关掉阅读器退回书架后
+    /// 不会又被弹进去。没有可续读的书（新用户、全读完）就安静停在书架。
+    private func resumeReadingIfNeeded() {
+        guard !didAutoResume else { return }
+        didAutoResume = true
+        guard presentedReader == nil else { return }  // 截图钩子已经开了就不抢
+        guard let book = ResumeTarget.book(in: books) else { return }
+        presentedReader = book
     }
 
     /// 仅供截图验证：`xcrun simctl launch <udid> com.ivy.Tomeet --ui-snapshot-reader`
