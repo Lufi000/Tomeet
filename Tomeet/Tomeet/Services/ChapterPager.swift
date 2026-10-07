@@ -122,6 +122,14 @@ enum ChapterPager {
         language?.lowercased().hasPrefix("en") == true
     }
 
+    /// 上下页边距的**下限**：浮层（顶栏章名、底部按钮行）要落在这条边距里。
+    ///
+    /// 浮层是浮在正文之上的，正文排到哪里它就可能压到哪里：顶栏压住首行、按钮压住末行，
+    /// 两行字叠印在一起谁都读不出来。所以正文必须给浮层让出这条带宽 ——
+    /// 分页按它保留边距，浮层按它布局，两边同一个数，谁也不用猜。
+    /// 用户把边距调得比它还小时，以它为准（宁可少排一点，也不能压字）。
+    static let minimumVerticalMargin: CGFloat = 44
+
     static nonisolated func fontDescriptor(for language: String?) -> UIFontDescriptor {
         let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
         guard !isCJKLanguage(language), isSerifLanguage(language), let serif = descriptor.withDesign(.serif) else {

@@ -94,7 +94,8 @@ final class ReaderViewModel {
             context.firstLineIndent = CGFloat(settings.firstLineIndent)
             context.lineHeightMultiple = CGFloat(settings.lineHeightMultiple)
             context.horizontalInset = CGFloat(settings.horizontalMargin)
-            context.verticalInset = CGFloat(settings.verticalMargin)
+            // 下限兜住浮层：边距调得再小，正文也不会排到顶栏章名/底部按钮底下。
+            context.verticalInset = max(CGFloat(settings.verticalMargin), ChapterPager.minimumVerticalMargin)
             context.theme = settings.resolvedTheme(isDarkAppearance: isDarkAppearance)
         }
 

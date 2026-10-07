@@ -121,14 +121,16 @@ struct ReaderView: View {
                         .ignoresSafeArea()
 
                     if showChrome {
+                        // 顶栏与底栏都只在**页边距**里：正文区 [103, 796]（安全区 + 44pt 下限）
+                        // 之外，所以怎么翻页都不会有字被压在下面。
                         topBar
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             .transition(.move(edge: .top).combined(with: .opacity))
                         bottomBar
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
-                        overlayButtons
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        overlayMenu
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                             .transition(.scale(scale: 0.9).combined(with: .opacity))
                     }
 
@@ -159,24 +161,26 @@ struct ReaderView: View {
             .header == nil
     }
 
+    /// 顶栏：**只有一行**，整行落在上边距里。
+    ///
+    /// 原来是「章节」+ 章名两行，加上 44pt 的关闭键，整体高约 50pt —— 而上边距只有
+    /// `ChapterPager.minimumVerticalMargin`（44pt），排不下就压到正文首行上，两行字叠印。
+    /// 收成一行 + 收紧控件尺寸，正好装进去。
     private var topBar: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: Spacing.hairline) {
-                Text(sectionLabel)
-                    .tText(.hint, color: chromeColor.opacity(0.7))
+        HStack(spacing: Spacing.sm) {
+            if showsChapterTitleInChrome {
+                Text(currentChapterTitle)
+                    .tText(.hint, color: chromeColor)
                     .lineLimit(1)
-                if showsChapterTitleInChrome {
-                    Text(currentChapterTitle)
-                        .tText(.secondary, color: themeForeground)
-                        .lineLimit(1)
-                }
             }
             Spacer()
-            circleButton(icon: "xmark") {
+            circleButton(icon: "xmark", diameter: chromeControlDiameter) {
                 dismiss()
             }
         }
-        .padding()
+        .padding(.horizontal, Spacing.lg)
+        // 上边距 44pt = 34pt 控件 + 上下各留几点的余量（正文区从 103pt 开始）
+        .padding(.top, Spacing.xs)
     }
 
     /// 脚注返回：`↩ 191`（原页码），对齐 Apple Books 的置顶返回条。
@@ -204,13 +208,21 @@ struct ReaderView: View {
         (viewModel.footnoteReturnIndex ?? 0) + 1
     }
 
+    /// 浮层控件的直径。受 `ChapterPager.minimumVerticalMargin` 约束：
+    /// 底边距 44pt 要塞下按钮行、上边距 44pt 要塞下章名行 + 关闭键。
+    private var chromeControlDiameter: CGFloat { 34 }
+
     /// Apple Books 风格的原生圆形按钮：半透明圆形底 + SF Symbol。
-    private func circleButton(icon: String, action: @escaping () -> Void) -> some View {
+    private func circleButton(
+        icon: String,
+        diameter: CGFloat = 44,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(themeForeground.opacity(0.9))
-                .frame(width: 44, height: 44)
+                .frame(width: diameter, height: diameter)
                 .background(
                     Circle()
                         .fill(themeForeground.opacity(0.12))
@@ -218,20 +230,6 @@ struct ReaderView: View {
                 )
         }
         .buttonStyle(.plain)
-    }
-
-    private var sectionLabel: String {
-        guard let ref = viewModel.session?.pageMap.pageRef(globalIndex: viewModel.currentGlobalIndex) else {
-            return book.title
-        }
-        let title = viewModel.session?.document.chapters[safe: ref.chapterIndex]?.title ?? book.title
-        if title.hasPrefix("引言") || title.lowercased().contains("introduction") {
-            return "引言"
-        }
-        if title.isEmpty {
-            return book.title
-        }
-        return "章节"
     }
 
     private var currentChapterTitle: String {
@@ -243,15 +241,41 @@ struct ReaderView: View {
         return title
     }
 
+    /// 底栏：操作按钮 + 页码**同一行**，整行落在下边距里。
+    ///
+    /// 原来是一列浮在正文右下角的圆钮（44pt × 2 + 间距 ≈ 100pt 高），直接压在正文末几行上。
+    /// 收到边距里之后就再也碰不到正文了 —— 不给它留边距下限（`ChapterPager.minimumVerticalMargin`）
+    /// 的话，用户把边距调小又会压回去。
     private var bottomBar: some View {
-        HStack {
+        HStack(spacing: Spacing.sm) {
+            if book.hasAudio {
+                circleButton(icon: "headphones", diameter: chromeControlDiameter) {
+                    showListen = true
+                    scheduleChromeHide()
+                }
+            }
+            // 书签：已加则实心。点一下切换，不弹面板（对齐 Apple Books）。
+            circleButton(
+                icon: viewModel.isCurrentPageBookmarked ? "bookmark.fill" : "bookmark",
+                diameter: chromeControlDiameter
+            ) {
+                viewModel.toggleBookmark()
+                scheduleChromeHide()
+            }
+            circleButton(icon: "list.bullet", diameter: chromeControlDiameter) {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showMenu.toggle()
+                }
+                scheduleChromeHide()
+            }
+
             Spacer()
+
             Text("\(viewModel.currentGlobalIndex + 1) of \(viewModel.totalPages)")
                 .tText(.meta, color: themeForeground.opacity(0.5))
                 .monospacedDigit()
-                .padding(.trailing, Spacing.sm)
         }
-        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.lg)
     }
 
     private var currentSize: CGSize {
@@ -329,32 +353,18 @@ struct ReaderView: View {
         .buttonStyle(.plain)
     }
 
-    private var overlayButtons: some View {
-        VStack(alignment: .trailing, spacing: Spacing.md) {
+    /// 弹出的菜单（Contents / Themes 药丸），贴着底栏往上长。
+    private var overlayMenu: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Spacer()
             if showMenu {
                 readerMenu
                     .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
-            if book.hasAudio {
-                circleButton(icon: "headphones") {
-                    showListen = true
-                    scheduleChromeHide()
-                }
-            }
-            // 书签：已加则实心。点一下切换，不弹面板（对齐 Apple Books）。
-            circleButton(icon: viewModel.isCurrentPageBookmarked ? "bookmark.fill" : "bookmark") {
-                viewModel.toggleBookmark()
-                scheduleChromeHide()
-            }
-            circleButton(icon: "list.bullet") {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showMenu.toggle()
-                }
-                scheduleChromeHide()
-            }
+            // 占位：把菜单顶在底栏之上，别盖住底栏那一行。
+            Color.clear.frame(height: chromeControlDiameter)
         }
-        .padding(Spacing.xl)
+        .padding(.horizontal, Spacing.lg)
     }
 
     // MARK: - Chrome visibility
