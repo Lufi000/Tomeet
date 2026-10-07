@@ -203,11 +203,56 @@ enum ChapterPager {
             let characterRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
             guard characterRange.length > 0 else { break }  // 容器放不下任何内容：防死循环
 
-            let pageAttributed = attributed.attributedSubstring(from: characterRange)
+            let pageAttributed = pageText(
+                from: attributed,
+                range: characterRange,
+                startsMidParagraph: characterRange.location > 0
+                    && text.character(at: characterRange.location - 1) != Self.newline
+            )
             pages.append(TextPage(text: pageAttributed, characterRange: characterRange, header: pageHeader))
             nextCharacter = characterRange.location + characterRange.length
         }
         return pages
+    }
+
+    private static let newline = unichar(0x0A)
+
+    /// 裁出这一页的排版串，并修掉「页首被当成段落首行」的那个缩进。
+    ///
+    /// **分页和上屏在这里曾经算的不是同一条行宽。** 分页时整章是一个字符串，页首那一行前面
+    /// 还有内容，TextKit 不把它当段落首行，不缩进；上屏时这一页是**独立字符串**，页首那行
+    /// 就成了段落首行，被套上 `firstLineHeadIndent`（默认 2 字 = 34pt）。首行因此少排两个字，
+    /// 多出来的字挤到下一行，页尾那一行就装不下被裁掉 —— 用户看到的「每翻一页末尾丢一点」。
+    ///
+    /// 修法：页首落在段落中段时，把本页第一段的首行缩进抹平成 `headIndent`
+    /// （正文是 0，引文本来就是 28，标题是 0，都正好）。页首本来起新段时不改 —— 那时的缩进是对的。
+    ///
+    /// 代价：这类页会比分页时少排约两个字（分页按未缩进算的）。
+    /// 宁可每页末尾空一点，也不能把字裁掉。
+    private static nonisolated func pageText(
+        from attributed: NSAttributedString,
+        range: NSRange,
+        startsMidParagraph: Bool
+    ) -> NSAttributedString {
+        let page = attributed.attributedSubstring(from: range)
+        guard startsMidParagraph, page.length > 0 else { return page }
+
+        let plain = page.string as NSString
+        let breakIndex = plain.range(of: "\n").location
+        let firstParagraphLength = breakIndex == NSNotFound ? page.length : breakIndex
+        guard firstParagraphLength > 0 else { return page }
+
+        let mutable = NSMutableAttributedString(attributedString: page)
+        mutable.enumerateAttribute(.paragraphStyle, in: NSRange(location: 0, length: firstParagraphLength)) { value, subrange, _ in
+            guard let style = value as? NSParagraphStyle,
+                  style.firstLineHeadIndent != style.headIndent,
+                  let adjusted = style.mutableCopy() as? NSMutableParagraphStyle
+            else { return }
+            // 必须拷贝：整章共用同一个 style 实例，原地改会污染全书。
+            adjusted.firstLineHeadIndent = style.headIndent
+            mutable.addAttribute(.paragraphStyle, value: adjusted, range: subrange)
+        }
+        return mutable
     }
 
     private static nonisolated func makeContainer(size: CGSize) -> NSTextContainer {

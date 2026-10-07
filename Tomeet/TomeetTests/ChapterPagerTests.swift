@@ -129,6 +129,84 @@ struct ChapterPagerTests {
         #expect(chapters.allSatisfy { $0.pages.count <= 1 } || true, "极端小尺寸不无限循环（实现有 length == 0 兜底）")
     }
 
+    // MARK: - 页首缩进（分页与上屏的又一处不一致）
+
+    /// 页首落在段落中段时，这一页**不能**有首行缩进。
+    ///
+    /// 分页时它是整章字符串里的一行，前面还有别的内容，所以 TextKit 不把它当段落首行；
+    /// 上屏时它是**这一页字符串的第一行** —— TextKit 会照段落首行处理，套上
+    /// `firstLineHeadIndent`（2 字 = 34pt）。首行因此少排两个字，多出来的字挤到下一行，
+    /// 页尾那一行就装不下被裁掉：用户看到的就是「每页末尾丢一两个字」。
+    @Test func continuationPageHasNoFirstLineIndent() throws {
+        let book = oneLongParagraphBook()
+        let chapters = ChapterPager.paginate(book: book, context: context)
+        let pages = try #require(chapters.first?.pages)
+
+        // 找一个"页首是段落中段"的页：页首字符不是换行后的第一个字。
+        let fullText = book.chapters[0].blocks.map(\.text).joined(separator: "\n") as NSString
+        var checked = 0
+        for page in pages where page.characterRange.location > 0 {
+            let previous = fullText.substring(with: NSRange(location: page.characterRange.location - 1, length: 1))
+            guard previous != "\n" else { continue }  // 这页正好起新段，缩进是对的
+
+            let storage = NSTextStorage(attributedString: page.text)
+            let manager = NSLayoutManager()
+            storage.addLayoutManager(manager)
+            let container = NSTextContainer(size: CGSize(width: 334, height: 628))
+            container.lineFragmentPadding = 0
+            manager.addTextContainer(container)
+            // 用字形实际落点量缩进：lineFragmentRect 给的是整行矩形，不含 head indent。
+            let firstGlyphX = manager.location(forGlyphAt: 0).x
+            #expect(firstGlyphX == 0, "页首是段落中段，这一行不该有首行缩进（实际缩进 \(firstGlyphX)pt）")
+            checked += 1
+        }
+        #expect(checked > 0, "fixture 里必须有页首落在段落中段的页，否则这条用例什么都没测")
+    }
+
+    /// 一整段超长正文。页边界必然落在段落中段，而且**每页末行都是排满的** ——
+    /// 「页首多缩两个字」在这里会立刻变成「页尾那行装不下」，也就是用户看到的丢字。
+    private func oneLongParagraphBook() -> BookDocument {
+        BookDocument(title: "T", author: nil, language: "zh", chapters: [
+            Chapter(id: "c", title: "C", blocks: [
+                .paragraph(String(
+                    repeating: "想象一下，为了拥有美好的生活，你必须穿越一片危险的丛林。你可以安全地留在原地。",
+                    count: 40
+                ))
+            ])
+        ])
+    }
+
+    /// 上屏是**按页**排版的：每页一个独立字符串、一个独立容器。
+    /// 所以每一页的文本必须能**单独**装进正文容器 —— 装不下，页尾就会被裁掉。
+    ///
+    /// 分页是按整章排的，两者只要有一处不一致（首行缩进就是一处），多出来的内容就会在页尾被吞。
+    @Test func everyPageFitsWhenLaidOutOnItsOwn() throws {
+        let chapters = ChapterPager.paginate(book: oneLongParagraphBook(), context: context)
+        let pages = try #require(chapters.first?.pages)
+        try #require(pages.count > 2, "fixture 要够长，否则测不到「页首落在段落中段」的页")
+
+        let insets = context.resolvedInsets
+        let containerSize = CGSize(
+            width: context.pageSize.width - insets.leading - insets.trailing,
+            height: context.pageSize.height - insets.top - insets.bottom
+        )
+
+        for (index, page) in pages.enumerated() {
+            let storage = NSTextStorage(attributedString: page.text)
+            let manager = NSLayoutManager()
+            storage.addLayoutManager(manager)
+            let container = NSTextContainer(size: containerSize)
+            container.lineFragmentPadding = 0
+            manager.addTextContainer(container)
+
+            let fitted = manager.glyphRange(for: container)
+            #expect(
+                fitted.length == manager.numberOfGlyphs,
+                "第 \(index + 1) 页单独排一遍装不下容器（页尾 \(manager.numberOfGlyphs - fitted.length) 个字形会被裁掉）"
+            )
+        }
+    }
+
     // MARK: - 引文样式
 
     private func quoteBook() -> BookDocument {
