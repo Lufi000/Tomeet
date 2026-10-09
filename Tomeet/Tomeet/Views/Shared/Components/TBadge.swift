@@ -29,9 +29,11 @@ struct TBadge: View {
             Text(text)
                 .tText(.hint, color: Theme.onSolid)
                 .padding(.horizontal, Spacing.xs)
-                .padding(.vertical, Spacing.xs)
+                // 角标是 8 网格**下沿**的元素：纵向取 xs 的一半。
+                // 取整档会让胶囊变成一颗药丸 —— 它的高度本来就只有十几点。
+                .padding(.vertical, Spacing.xs / 2)
                 .background(Capsule().fill(Theme.accent))
-                .padding(Spacing.sm)
+                .padding(Spacing.xs)
 
         case .icon(let systemName):
             Image(systemName: systemName)
@@ -39,7 +41,7 @@ struct TBadge: View {
                 .foregroundStyle(Theme.onSolid)
                 .padding(Spacing.xs)
                 .background(Circle().fill(Theme.solidInk.opacity(0.65)))
-                .padding(Spacing.sm)
+                .padding(Spacing.xs)
         }
     }
 }

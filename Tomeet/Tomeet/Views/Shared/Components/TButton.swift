@@ -26,8 +26,8 @@ struct TButton: View {
         Button(action: action) {
             Text(title)
                 .tText(.button, color: foreground)
-                .padding(.horizontal, Spacing.xl)
-                .padding(.vertical, Spacing.md)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.sm)
                 .background(background)
         }
         .buttonStyle(.plain)
@@ -68,7 +68,8 @@ struct TIconButton: View {
             Image(systemName: systemName)
                 .tIcon(.body, weight: .bold)
                 .foregroundStyle(isEnabled ? Theme.onSolid : Theme.inkTertiary)
-                .frame(width: Spacing.xxl, height: Spacing.xxl)
+                // 例外：机械映射会把它撑到 xl(48)，对圆形发送键太大。
+                .frame(width: Spacing.lg, height: Spacing.lg)
                 .background(
                     Circle().fill(isEnabled ? Theme.solidInk : Theme.inkFaint)
                 )

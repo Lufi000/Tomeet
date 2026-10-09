@@ -7,7 +7,7 @@ import SwiftUI
 struct ComponentGallery: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
+            VStack(alignment: .leading, spacing: Spacing.lg) {
                 section("TText 文字角色") { textRoles }
                 section("TIcon 图标尺寸") { iconRoles }
                 section("TButton") { buttons }
@@ -16,7 +16,7 @@ struct ComponentGallery: View {
                 section("TPageHeader") { pageHeaders }
                 section("TEmptyState") { emptyStates }
             }
-            .padding(Spacing.lg)
+            .padding(Spacing.md)
         }
         .background(Theme.canvas)
     }
@@ -27,7 +27,7 @@ struct ComponentGallery: View {
         _ title: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(title)
                 .tText(.hint)
             content()
@@ -38,7 +38,7 @@ struct ComponentGallery: View {
     // MARK: - 各组件
 
     private var textRoles: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             // pageTitle 用竖排三行展示，与首页真实用法一致
             Text("Page\nTitle").tText(.pageTitle)
             Text("Section Title").tText(.sectionTitle)
@@ -53,7 +53,7 @@ struct ComponentGallery: View {
 
     /// 铁证之四里差 9pt 的那个符号，放在这里一眼比对。
     private var iconRoles: some View {
-        HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.md) {
             Image(systemName: "xmark.circle.fill").tIcon(IconRole.badge)
             Image(systemName: "xmark.circle.fill").tIcon(IconRole.control)
             Image(systemName: "xmark.circle.fill").tIcon(IconRole.emphasis)
@@ -63,10 +63,10 @@ struct ComponentGallery: View {
     }
 
     private var buttons: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             TButton("Add New Book", style: .primary) {}
             TButton("Import Book", style: .secondary) {}
-            HStack(spacing: Spacing.md) {
+            HStack(spacing: Spacing.sm) {
                 TIconButton(systemName: "arrow.up") {}
                 TIconButton(systemName: "arrow.up", isEnabled: false) {}
             }
@@ -74,32 +74,32 @@ struct ComponentGallery: View {
     }
 
     private var badges: some View {
-        HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.md) {
             TBadge.text("NEW")
             TBadge.icon("headphones")
         }
     }
 
     private var cards: some View {
-        HStack(spacing: Spacing.md) {
-            Text("Radius.md").tText(.body).padding(Spacing.lg).tCard()
-            Text("Radius.xl").tText(.body).padding(Spacing.lg).tCard(radius: Radius.xl)
+        HStack(spacing: Spacing.sm) {
+            Text("Radius.md").tText(.body).padding(Spacing.md).tCard()
+            Text("Radius.xl").tText(.body).padding(Spacing.md).tCard(radius: Radius.xl)
         }
     }
 
     private var pageHeaders: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             TPageHeader("Library")
             TPageHeader("I'm\nNow\nReading") {
                 Circle()
                     .fill(Theme.sendEnabled)
-                    .frame(width: Spacing.hero, height: Spacing.hero)
+                    .frame(width: Spacing.xxl, height: Spacing.xxl)
             }
         }
     }
 
     private var emptyStates: some View {
-        VStack(alignment: .leading, spacing: Spacing.xl) {
+        VStack(alignment: .leading, spacing: Spacing.lg) {
             TEmptyState(
                 illustration: "EmptyStateReading",
                 title: "No books yet",
