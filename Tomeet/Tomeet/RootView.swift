@@ -31,8 +31,12 @@ struct RootView: View {
         .onAppear {
             #if DEBUG
             // 录屏验证时直接落到 Library —— 弹层在那一页，停在 Home 上录不到东西。
-            if ProcessInfo.processInfo.arguments.contains("--ui-snapshot-peek")
-                || ProcessInfo.processInfo.arguments.contains("--ui-snapshot-open") {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-snapshot-peek")
+                || args.contains("--ui-snapshot-open")
+                || args.contains("--ui-snapshot-library")
+                || args.contains("--ui-snapshot-search")
+                || args.contains("--ui-snapshot-import") {
                 selectedTab = 1
             }
             #endif

@@ -37,12 +37,20 @@ struct LibraryView: View {
     /// 各书籍封面在全局坐标系中的位置，由 `BookGridCell` / 列表行通过 preference 上报。
     @State private var coverFrames: [UUID: CGRect] = [:]
     @State private var bookToDelete: Book?
-    @State private var showImporter = false
+    @State private var showImportDialog = false
+    @State private var showFileImporter = false
+    @State private var isSearching = false
+    @State private var searchText = ""
     @State private var deleteError: Error?
     @State private var catalog: InitialLibraryCatalog?
 
+    /// 常驻欢迎语 —— 有书没书都显示（已确认的产品决定）。
+    private static let welcomeTitle = "Welcome to the Book Store."
+    private static let welcomeSubtitle =
+        "You can live your whole life without ever noticing the beauty of the world around you. Reading lets you glimpse it."
+
     private var sortedBooks: [Book] {
-        let list = books.sorted { a, b in
+        books.sorted { a, b in
             switch sortMode {
             case .recent: Book.sortRecentlyOpened(a, b)
             case .title: Book.sortTitle(a, b)
@@ -50,13 +58,29 @@ struct LibraryView: View {
             case .manual: Book.sortManual(a, b)
             }
         }
-        return list
+    }
+
+    /// 搜索只过滤本地书架：书名 / 作者 / 主题名。
+    /// **不做正文全文检索** —— 那是另一个子系统。
+    private var visibleBooks: [Book] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return sortedBooks }
+        return sortedBooks.filter { book in
+            if book.title.localizedStandardContains(query) { return true }
+            if book.author.localizedStandardContains(query) { return true }
+            return themeNames(of: book).contains { $0.localizedStandardContains(query) }
+        }
+    }
+
+    private func themeNames(of book: Book) -> [String] {
+        guard let catalog else { return [] }
+        return catalog.themes.filter { book.themes.contains($0.id) }.map(\.name)
     }
 
     private var booksByTheme: [(theme: InitialTheme, books: [Book])] {
         guard let catalog else { return [] }
         return catalog.themes.compactMap { theme in
-            let themeBooks = sortedBooks.filter { $0.themes.contains(theme.id) }
+            let themeBooks = visibleBooks.filter { $0.themes.contains(theme.id) }
             return themeBooks.isEmpty ? nil : (theme, themeBooks)
         }
     }
@@ -68,9 +92,9 @@ struct LibraryView: View {
                     emptyState
                 } else if groupMode == .all {
                     if viewMode == .grid {
-                        gridContent(for: sortedBooks)
+                        gridContent(for: visibleBooks)
                     } else {
-                        listContent(for: sortedBooks)
+                        listContent(for: visibleBooks)
                     }
                 } else {
                     themedContent
@@ -82,13 +106,28 @@ struct LibraryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    libraryMenu
+                    libraryActions
                 }
             }
             .fullScreenCover(item: $presentedListen) { book in
                 ListenPlayerView(book: book)
             }
-            .bookImportPresentation(isPresented: $showImporter)
+            .bookImportPresentation(isPresented: $showFileImporter)
+            .confirmationDialog(
+                "Import Books",
+                isPresented: $showImportDialog,
+                titleVisibility: .visible
+            ) {
+                Button("iCloud") { showFileImporter = true }
+                // 第二轮（Wi-Fi 局域网传输）在这里加一行 Button("Wi-Fi") { … }。
+                //
+                // 本轮**不放**禁用态的 Wi-Fi 行：实测确认 SwiftUI 的
+                // `confirmationDialog` 会把 `.disabled(true)` 的按钮**整个丢掉**
+                // （不是变灰）—— 放上去用户根本看不见，也就谈不上「入口位置一次到位」。
+                // 第二轮那行本身就是 1 行代码，届时补上没有额外 UI 改动。
+            } message: {
+                Text(BookImporter.importDialogMessage)
+            }
             .alert("Remove Failed", isPresented: Binding(
                 get: { deleteError != nil },
                 set: { if !$0 { deleteError = nil } }
@@ -125,17 +164,47 @@ struct LibraryView: View {
                 #if DEBUG
                 openPeekForSnapshotIfRequested()
                 openBookForSnapshotIfRequested()
+                openSearchForSnapshotIfRequested()
+                openImportForSnapshotIfRequested()
                 #endif
             }
         }
         .overlay { peekOverlay }
     }
 
+    // MARK: - 顶栏右侧
+
+    /// 三个图标：`[搜索] [导入] [更多]`。
+    ///
+    /// 导入在**第二位**是有意的 —— 设计稿「右上方第二个按钮 WIFI导入 icloud 导入」
+    /// 说的就是它。第三个「更多」是设计稿没覆盖的部分：现有菜单里
+    /// Select / View / Sort / Group / Remove Downloads 需要一个落点。
+    private var libraryActions: some View {
+        HStack(spacing: Spacing.xs) {
+            Button {
+                isSearching = true
+            } label: {
+                Image(systemName: "magnifyingglass").tIcon(IconRole.control)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                showImportDialog = true
+            } label: {
+                Image(systemName: "square.and.arrow.down").tIcon(IconRole.control)
+            }
+            .buttonStyle(.plain)
+
+            libraryMenu
+        }
+        .foregroundStyle(Theme.ink)
+        .padding(.horizontal, Spacing.xs)
+        .padding(.vertical, Spacing.xs)
+        .background(Capsule().fill(Theme.card))
+    }
+
     private var libraryMenu: some View {
         Menu {
-            Button("Import Book...", systemImage: "square.and.arrow.down") {
-                showImporter = true
-            }
             Button("Select", systemImage: "checkmark.circle") {
                 // M2 编辑模式（§3.4）
             }
@@ -160,126 +229,145 @@ struct LibraryView: View {
             }
             .disabled(true)
         } label: {
-            Image(systemName: "ellipsis.circle")
+            Image(systemName: "ellipsis").tIcon(IconRole.control)
         }
     }
 
-    /// 页面顶部自定义大标题（字体用 `Font.app()`，与阅读器正文同一套衬线）
-    private var libraryHeader: some View {
-        Text("Library")
-            .font(.app(.largeTitle, weight: .bold))
-            .foregroundStyle(Theme.ink)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+    // MARK: - 页头
+
+    @ViewBuilder
+    private var header: some View {
+        if isSearching {
+            searchHeader
+        } else {
+            TPageHeader(Self.welcomeTitle, subtitle: Self.welcomeSubtitle)
+        }
     }
 
-    /// 书架为空：插画 + 引导文案 + 导入入口。
-    private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                libraryHeader
-                Spacer(minLength: 40)
-                Image("EmptyStateReading")
-                    .renderingMode(.original)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 240)
-                Text("No books yet")
-                    .font(.app(.title3, weight: .bold))
-                    .foregroundStyle(Theme.ink)
-                Text("Import a book and meet the mind inside.")
-                    .font(.app(.subheadline))
-                    .foregroundStyle(Theme.inkSecondary)
-                    .multilineTextAlignment(.center)
+    private var searchHeader: some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: "magnifyingglass")
+                .tIcon(IconRole.control)
+                .foregroundStyle(Theme.inkSecondary)
+            TextField("Search books", text: $searchText)
+                .tText(.body)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+            if !searchText.isEmpty {
                 Button {
-                    showImporter = true
+                    searchText = ""
                 } label: {
-                    Text("Import Book")
-                        .font(.app(.headline))
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 10)
-                        .background(
-                            Capsule()
-                                .stroke(Theme.accent, lineWidth: 1.5)
-                        )
+                    Image(systemName: "xmark.circle.fill")
+                        .tIcon(IconRole.control)
+                        .foregroundStyle(Theme.inkTertiary)
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 4)
-                Spacer(minLength: 40)
+            }
+            Button("Cancel") {
+                isSearching = false
+                searchText = ""
+            }
+            .tText(.button, color: Theme.accent)
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+    }
+
+    // MARK: - 内容
+
+    /// 书架为空：页头已经说了欢迎语，这里只剩插画 + 一句引导 + 按钮。
+    private var emptyState: some View {
+        ScrollView {
+            VStack(spacing: Spacing.xl) {
+                header
+                Spacer(minLength: Spacing.xl)
+                TEmptyState(
+                    illustration: "EmptyStateReading",
+                    message: "Import a book and meet the mind inside."
+                ) {
+                    TButton("Import Book", style: .secondary) {
+                        showImportDialog = true
+                    }
+                }
+                Spacer(minLength: Spacing.xl)
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 32)
         }
         .scrollContentBackground(.hidden)
     }
 
     private var themedContent: some View {
         ScrollView {
-            LazyVStack(spacing: 24, pinnedViews: [.sectionHeaders]) {
-                libraryHeader
+            LazyVStack(spacing: Spacing.lg, pinnedViews: [.sectionHeaders]) {
+                header
                 ForEach(booksByTheme, id: \.theme.id) { section in
                     Section {
-                        LazyVGrid(
-                            columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)],
-                            spacing: 16
-                        ) {
-                            ForEach(section.books) { book in
-                                BookGridCell(book: book) {
-                                    openBook(book)
-                                } onDelete: {
-                                    bookToDelete = book
-                                }
-                            }
-                        }
+                        bookGrid(section.books)
                     } header: {
                         themeHeader(section.theme)
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.horizontal, Spacing.md)
+            .padding(.top, Spacing.sm)
         }
         .scrollContentBackground(.hidden)
     }
 
     private func themeHeader(_ theme: InitialTheme) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(theme.name)
-                .font(.app(.title2, weight: .bold))
-                .foregroundStyle(Theme.ink)
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text(theme.name).tText(.sectionTitle)
             Text(theme.description)
-                .font(.app(.subheadline))
-                .foregroundStyle(Theme.inkSecondary)
+                .tText(.secondary)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.xs)
         .background(Theme.canvas)
     }
 
     private func gridContent(for bookList: [Book]) -> some View {
         ScrollView {
-            LazyVStack(spacing: 24) {
-                libraryHeader
-                LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)],
-                    spacing: 24
-                ) {
-                    ForEach(bookList) { book in
-                        BookGridCell(book: book) {
-                            openBook(book)
-                        } onDelete: {
-                            bookToDelete = book
-                        }
-                    }
+            LazyVStack(spacing: Spacing.lg) {
+                header
+                if bookList.isEmpty {
+                    noResults
+                } else {
+                    bookGrid(bookList)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.horizontal, Spacing.md)
+            .padding(.top, Spacing.sm)
         }
         .scrollContentBackground(.hidden)
+    }
+
+    /// 两列等宽。设计稿用了 `justify-between`，导致两本书的封面宽度不同（147 / 134）——
+    /// 那是稿子自身的不一致，不照抄。
+    private func bookGrid(_ bookList: [Book]) -> some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: Spacing.md),
+                GridItem(.flexible(), spacing: Spacing.md),
+            ],
+            spacing: Spacing.hero
+        ) {
+            ForEach(bookList) { book in
+                BookGridCell(book: book) {
+                    openBook(book)
+                } onDelete: {
+                    bookToDelete = book
+                }
+            }
+        }
+    }
+
+    private var noResults: some View {
+        Text("No books match “\(searchText)”.")
+            .tText(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.hero)
     }
 
     private func listContent(for bookList: [Book]) -> some View {
@@ -287,9 +375,9 @@ struct LibraryView: View {
             Button {
                 openBook(book)
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: Spacing.sm) {
                     BookCoverView(book: book)
-                        .frame(width: 44)
+                        .frame(width: Spacing.xl)
                         .background {
                             GeometryReader { proxy in
                                 Color.clear.preference(
@@ -298,13 +386,13 @@ struct LibraryView: View {
                                 )
                             }
                         }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(book.title).font(.app(.body)).foregroundStyle(Theme.ink).lineLimit(1)
-                        Text(book.author).font(.app(.caption)).foregroundStyle(Theme.inkSecondary)
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text(book.title).tText(.body).lineLimit(1)
+                        Text(book.author).tText(.meta)
                     }
                     Spacer()
                     if let progress = book.progressText {
-                        Text(progress).font(.app(.caption)).foregroundStyle(Theme.inkSecondary)
+                        Text(progress).tText(.meta)
                     }
                 }
             }
@@ -320,8 +408,7 @@ struct LibraryView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .safeAreaInset(edge: .top, spacing: 0) {
-            libraryHeader
-                .background(Theme.canvas)
+            header.background(Theme.canvas)
         }
     }
 
@@ -369,6 +456,21 @@ struct LibraryView: View {
             try? await Task.sleep(for: .seconds(1.5))
             openBook(book)
         }
+    }
+
+    /// 仅供录屏验证：`--ui-snapshot-search <关键词>` 直接进入搜索态并填入关键词。
+    /// 传一个搜不到的词就能同时验收「无结果」那一屏。
+    private func openSearchForSnapshotIfRequested() {
+        let args = ProcessInfo.processInfo.arguments
+        guard let i = args.firstIndex(of: "--ui-snapshot-search"), i + 1 < args.count else { return }
+        isSearching = true
+        searchText = args[i + 1]
+    }
+
+    /// 仅供录屏验证：`--ui-snapshot-import` 直接拉起导入 Action Sheet。
+    private func openImportForSnapshotIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-import") else { return }
+        showImportDialog = true
     }
     #endif
 

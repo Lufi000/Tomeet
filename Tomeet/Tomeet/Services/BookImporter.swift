@@ -49,6 +49,15 @@ enum BookImporter {
         ].compactMap { $0 }
     }
 
+    /// 导入对话框上给用户看的格式清单。
+    ///
+    /// **必须与 `supportedContentTypes` 一致** —— `ImportCopyTests` 会核对。
+    /// 不要写成 `txt` / `md`：本项目不支持它们（设计稿写错了）。
+    static let displayFormats = "epub / pdf / mobi"
+
+    /// 导入 Action Sheet 的副标题。
+    static var importDialogMessage: String { "Supports \(displayFormats)" }
+
     /// 导入单本书籍。
     ///
     /// - Parameters:
