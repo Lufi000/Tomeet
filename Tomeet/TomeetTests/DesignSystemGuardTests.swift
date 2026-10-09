@@ -22,12 +22,9 @@ struct DesignSystemGuardTests {
         "Views/Home/BookCarouselView.swift",
         "Views/Home/BookDetailView.swift",
         "Views/Home/HomeView.swift",
-        "Views/Library/BookGridCell.swift",
-        "Views/Library/LibraryView.swift",
         "Views/Listen/ListenPlayerView.swift",
         "Views/Listen/NowPlayingBar.swift",
         "Views/Reader/MobiReaderView.swift",
-        "Views/Shared/BookCoverView.swift",
         "Views/Shared/ImportBookModifier.swift",
     ]
 
@@ -51,7 +48,7 @@ struct DesignSystemGuardTests {
 
     /// 豁免清单是重画进度表，只能变短。
     @Test func exemptionListOnlyShrinks() {
-        #expect(DesignSystemGuardTests.grandfathered.count <= 15,
+        #expect(DesignSystemGuardTests.grandfathered.count <= 9,
                 "豁免清单只应缩短：每重画完一个页面就划掉一行，不得新增")
     }
 
