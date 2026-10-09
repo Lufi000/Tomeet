@@ -22,7 +22,7 @@ struct ThemesSettingsSheet: View {
             VStack(spacing: 0) {
                 titleBar
                 ScrollView {
-                    VStack(spacing: Spacing.xl) {
+                    VStack(spacing: Spacing.lg) {
                         controlPill
                         themeGrid
                         customizeButton
@@ -31,7 +31,7 @@ struct ThemesSettingsSheet: View {
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
-                    .padding(Spacing.lg)
+                    .padding(Spacing.md)
                 }
             }
             .background(Theme.panelSurface.ignoresSafeArea())
@@ -53,34 +53,34 @@ struct ThemesSettingsSheet: View {
             Button("Done") { dismiss() }
                 .tText(.button, color: Theme.panelInk)
         }
-        .padding(.horizontal, Spacing.lg)
-        .padding(.vertical, Spacing.md)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
     }
 
     // MARK: - 字号 + 行距 + 自动夜间
 
     private var controlPill: some View {
-        HStack(spacing: Spacing.md) {
-            HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.md) {
                 fontSizeButton(isIncrease: false)
                 Rectangle()
                     .fill(Theme.panelHairline)
-                    .frame(width: 1, height: Spacing.xl)
+                    .frame(width: 1, height: Spacing.lg)
                 fontSizeButton(isIncrease: true)
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
             .background(Capsule().fill(.ultraThinMaterial))
 
-            HStack(spacing: Spacing.lg) {
+            HStack(spacing: Spacing.md) {
                 spacingMenu
                 Rectangle()
                     .fill(Theme.panelHairline)
-                    .frame(width: 1, height: Spacing.xl)
+                    .frame(width: 1, height: Spacing.lg)
                 autoNightToggle
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
             .background(Capsule().fill(.ultraThinMaterial))
         }
     }
@@ -95,7 +95,7 @@ struct ThemesSettingsSheet: View {
         } label: {
             Text("A")
                 .tText(isIncrease ? .sectionTitle : .secondary, color: Theme.panelInk)
-                .frame(width: Spacing.xxl, height: Spacing.xxl)
+                .frame(width: Spacing.xl, height: Spacing.xl)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isIncrease ? "Increase text size" : "Decrease text size")
@@ -113,7 +113,7 @@ struct ThemesSettingsSheet: View {
             Image(systemName: "text.line.spacing")
                 .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(Theme.panelInk)
-                .frame(width: Spacing.xxl, height: Spacing.xxl)
+                .frame(width: Spacing.xl, height: Spacing.xl)
         }
         .accessibilityLabel("Line spacing")
     }
@@ -134,7 +134,7 @@ struct ThemesSettingsSheet: View {
             Image(systemName: "circle.righthalf.filled")
                 .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(settings.autoNightTheme ? Theme.accent : Theme.panelInkSecondary)
-                .frame(width: Spacing.xxl, height: Spacing.xxl)
+                .frame(width: Spacing.xl, height: Spacing.xl)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Auto night theme")
@@ -146,7 +146,7 @@ struct ThemesSettingsSheet: View {
     private var themeGrid: some View {
         LazyVGrid(
             columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
-            spacing: Spacing.md
+            spacing: Spacing.sm
         ) {
             ForEach(ReaderTheme.allCases) { theme in
                 themeCard(theme)
@@ -160,7 +160,7 @@ struct ThemesSettingsSheet: View {
             settings.setTheme(theme, isDarkAppearance: isDarkAppearance)
             save()
         } label: {
-            VStack(spacing: Spacing.sm) {
+            VStack(spacing: Spacing.xs) {
                 Text("大小")
                     .tText(.sectionTitle, color: theme.textColor)
                 Text(theme.displayName)
@@ -195,14 +195,14 @@ struct ThemesSettingsSheet: View {
                 showAdvanced.toggle()
             }
         } label: {
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
                 Image(systemName: showAdvanced ? "chevron.up" : "gearshape")
                     .tIcon(IconRole.control)
                 Text(showAdvanced ? "Hide Details" : "Customize")
                     .tText(.button, color: Theme.panelInk)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                     .fill(.ultraThinMaterial)
@@ -213,7 +213,7 @@ struct ThemesSettingsSheet: View {
 
     /// 只留"每本书都可能想调"的边距与缩进；行距段距已由上面的预设覆盖。
     private var advancedSection: some View {
-        VStack(spacing: Spacing.lg) {
+        VStack(spacing: Spacing.md) {
             stepperRow(
                 title: "First-Line Indent",
                 icon: "text.alignleft",
@@ -245,7 +245,7 @@ struct ThemesSettingsSheet: View {
                 step: 2
             )
         }
-        .padding(Spacing.lg)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: Radius.lg, style: .continuous)
                 .fill(.ultraThinMaterial)
@@ -259,8 +259,8 @@ struct ThemesSettingsSheet: View {
         range: ClosedRange<Double>,
         step: Double
     ) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            HStack(spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
                 Image(systemName: icon)
                     .tIcon(IconRole.badge)
                     .foregroundStyle(Theme.panelInkSecondary)
@@ -283,7 +283,7 @@ struct ThemesSettingsSheet: View {
         step: Double,
         range: ClosedRange<Double>
     ) -> some View {
-        HStack(spacing: Spacing.sm) {
+        HStack(spacing: Spacing.xs) {
             Image(systemName: icon)
                 .tIcon(IconRole.badge)
                 .foregroundStyle(Theme.panelInkSecondary)

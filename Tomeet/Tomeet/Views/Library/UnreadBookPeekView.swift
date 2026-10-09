@@ -18,7 +18,7 @@ private enum Peek {
     /// 卡片高度占可用高度的比例。留出的余量就是「压不到 TabBar / 播放条」的保证。
     static let cardHeightRatio: CGFloat = 0.72
     /// 卡片左右留白。
-    static let sideInset: CGFloat = Spacing.xl
+    static let sideInset: CGFloat = Spacing.lg
     /// hero（虚化封面底）高度占卡片高度的比例。
     static let heroRatio: CGFloat = 0.42
     /// 虚化封面底的模糊半径。要够大才会糊成一块「氛围色」，看得出封面轮廓就成了穿帮。
@@ -153,7 +153,7 @@ struct UnreadBookPeekView: View {
         .clipShape(
             RoundedRectangle(cornerRadius: lerpR(Peek.sourceCornerRadius, Radius.xl, t), style: .continuous)
         )
-        .shadow(color: Theme.solidInk.opacity(0.28 * t), radius: Peek.cardShadow, y: Spacing.sm * t)
+        .shadow(color: Theme.solidInk.opacity(0.28 * t), radius: Peek.cardShadow, y: Spacing.xs * t)
         .scaleEffect(
             x: lerpR(source.width / cardWidth, 1, t),
             y: lerpR(source.height / cardHeight, 1, t),
@@ -211,25 +211,25 @@ struct UnreadBookPeekView: View {
                     BookCoverView(book: book)
                         .frame(width: cardWidth * Peek.coverWidthRatio)
                         .shadow(color: Theme.solidInk.opacity(0.2), radius: Peek.coverShadow, y: Spacing.xs)
-                        .padding(.top, Spacing.lg)
+                        .padding(.top, Spacing.md)
 
                     Text(book.title)
                         .tText(.sectionTitle)
-                        .padding(.top, Spacing.lg)
+                        .padding(.top, Spacing.md)
 
                     Text(book.author)
                         .tText(.secondary)
                         .padding(.top, Spacing.xs)
 
                     authorSection
-                        .padding(.top, Spacing.xl)
+                        .padding(.top, Spacing.lg)
 
                     startReadingButton
                         .frame(maxWidth: .infinity)
-                        .padding(.top, Spacing.xl)
-                        .padding(.bottom, Spacing.xl)
+                        .padding(.top, Spacing.lg)
+                        .padding(.bottom, Spacing.lg)
                 }
-                .padding(.horizontal, Spacing.xl)
+                .padding(.horizontal, Spacing.lg)
             }
             // 转过了中途那一瞬的镜像再浮现。早了会闪一下**反着的字** ——
             // 起手那几帧卡片还没巴掌大，字挤上去也只会糊成一团。
@@ -263,8 +263,8 @@ struct UnreadBookPeekView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, Spacing.sm)
-        .padding(.top, Spacing.sm)
+        .padding(.horizontal, Spacing.xs)
+        .padding(.top, Spacing.xs)
     }
 
     /// 「Tell me about the author」一节。
@@ -273,7 +273,7 @@ struct UnreadBookPeekView: View {
     /// 和产品「与书对话」的定位同源。
     @ViewBuilder
     private var authorSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("Tell me about the author")
                 .tText(.meta)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -283,7 +283,7 @@ struct UnreadBookPeekView: View {
             if let text = book.summary, !text.isEmpty {
                 Text(text)
                     .tText(.body)
-                    .lineSpacing(Spacing.sm)
+                    .lineSpacing(Spacing.xs)
             }
         }
     }
@@ -292,8 +292,8 @@ struct UnreadBookPeekView: View {
         Button { dismiss { onStartReading() } } label: {
             Text("Start Reading")
                 .tText(.button, color: Theme.cream)
-                .padding(.horizontal, Spacing.xl)
-                .padding(.vertical, Spacing.md)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.sm)
                 .background(Theme.solidInk, in: Capsule())
         }
         .buttonStyle(.plain)

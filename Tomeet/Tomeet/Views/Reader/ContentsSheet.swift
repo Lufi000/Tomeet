@@ -45,7 +45,7 @@ struct ContentsSheet: View {
     // MARK: - 头部
 
     private var header: some View {
-        HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.md) {
             BookCoverView(book: book)
                 .frame(width: 60, height: 90)
                 // 阴影半径不是圆角半径，Radius 刻度（圆角语义）不适用。
@@ -66,8 +66,8 @@ struct ContentsSheet: View {
             Button("Done") { dismiss() }
                 .tText(.button, color: Theme.accent)
         }
-        .padding(.horizontal, Spacing.lg)
-        .padding(.vertical, Spacing.md)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
     }
 
     private var tabPicker: some View {
@@ -77,8 +77,8 @@ struct ContentsSheet: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal, Spacing.lg)
-        .padding(.bottom, Spacing.md)
+        .padding(.horizontal, Spacing.md)
+        .padding(.bottom, Spacing.sm)
     }
 
     @ViewBuilder
@@ -115,7 +115,7 @@ struct ContentsSheet: View {
                 .listRowBackground(
                     RoundedRectangle(cornerRadius: Radius.md, style: .continuous)
                         .fill(isCurrentChapter(index) ? Theme.inkFaint : Color.clear)
-                        .padding(.horizontal, -Spacing.md)
+                        .padding(.horizontal, -Spacing.sm)
                 )
             }
         }
@@ -186,11 +186,11 @@ struct ContentsSheet: View {
                         viewModel.jump(to: highlight.location)
                         dismiss()
                     } label: {
-                        HStack(alignment: .top, spacing: Spacing.md) {
+                        HStack(alignment: .top, spacing: Spacing.sm) {
                             // 色块：一眼看出这条是什么颜色
                             RoundedRectangle(cornerRadius: Radius.sm, style: .continuous)
                                 .fill(Color(highlight.color.uiColor))
-                                .frame(width: Spacing.xs, height: Spacing.xl)
+                                .frame(width: Spacing.xs, height: Spacing.lg)
                             annotationRow(
                                 leading: chapterTitle(highlight.chapterIndex),
                                 page: pageNumber(for: highlight.location),
@@ -216,7 +216,7 @@ struct ContentsSheet: View {
 
     private func annotationRow(leading: String, page: Int, body text: String) -> some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
                 Text(leading)
                     .tText(.secondary)
                     .lineLimit(1)
@@ -234,7 +234,7 @@ struct ContentsSheet: View {
     }
 
     private func emptyState(icon: String, title: String, message: String) -> some View {
-        VStack(spacing: Spacing.md) {
+        VStack(spacing: Spacing.sm) {
             Image(systemName: icon)
                 .tIcon(IconRole.emphasis)
                 .foregroundStyle(Theme.inkTertiary)
@@ -244,7 +244,7 @@ struct ContentsSheet: View {
                 .tText(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(.horizontal, Spacing.xxl)
+        .padding(.horizontal, Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

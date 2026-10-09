@@ -60,6 +60,19 @@ struct ReaderView: View {
             closeBook(bookClose, orDismiss: dismiss)
             #endif
         }
+        .task {
+            #if DEBUG
+            // 仅供录屏验证：`--ui-snapshot-contents` / `--ui-snapshot-themes`
+            // 会在进阅读器后自动展开对应浮层。理由同上面那条 ——
+            // 模拟器没有可编程的点击接口，不自己触发就验收不了浮层里的间距。
+            let args = ProcessInfo.processInfo.arguments
+            let wantsContents = args.contains("--ui-snapshot-contents")
+            let wantsThemes = args.contains("--ui-snapshot-themes")
+            guard wantsContents || wantsThemes else { return }
+            try? await Task.sleep(for: .seconds(2))
+            if wantsContents { showContents = true } else { showThemes = true }
+            #endif
+        }
         .onReceive(readingFlushTimer) { _ in flushReadingTime() }
         .onChange(of: colorScheme) { _, newScheme in
             // 自动夜间开启时系统换外观要跟着换主题
@@ -96,7 +109,7 @@ struct ReaderView: View {
         circleButton(icon: "xmark", diameter: chromeControlDiameter) {
             closeBook(bookClose, orDismiss: dismiss)
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
         .padding(.top, Spacing.xs)
     }
 
@@ -123,14 +136,14 @@ struct ReaderView: View {
         case .loading:
             ProgressView().tint(themeForeground)
         case .failed(let message):
-            VStack(spacing: Spacing.lg) {
+            VStack(spacing: Spacing.md) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .tIcon(IconRole.display)
                     .foregroundStyle(themeForeground.opacity(0.6))
                 Text(message)
                     .tText(.secondary, color: themeForeground.opacity(0.8))
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.horizontal, Spacing.xl)
                 Button("Retry") {
                     viewModel.loadBook(pageSize: currentSize, safeAreaInsets: currentSafeAreaInsets)
                 }
@@ -196,7 +209,7 @@ struct ReaderView: View {
     /// `ChapterPager.minimumVerticalMargin`（44pt），排不下就压到正文首行上，两行字叠印。
     /// 收成一行 + 收紧控件尺寸，正好装进去。
     private var topBar: some View {
-        HStack(spacing: Spacing.sm) {
+        HStack(spacing: Spacing.xs) {
             if showsChapterTitleInChrome {
                 Text(currentChapterTitle)
                     .tText(.hint, color: chromeColor)
@@ -207,7 +220,7 @@ struct ReaderView: View {
                 closeBook(bookClose, orDismiss: dismiss)
             }
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
         // 上边距 44pt = 34pt 控件 + 上下各留几点的余量（正文区从 103pt 开始）
         .padding(.top, Spacing.xs)
     }
@@ -224,12 +237,12 @@ struct ReaderView: View {
                     .tText(.meta, color: themeForeground)
                     .monospacedDigit()
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
             .background(Capsule().fill(.ultraThinMaterial))
         }
         .buttonStyle(.plain)
-        .padding(Spacing.lg)
+        .padding(Spacing.md)
     }
 
     /// 跳转前的页码（1-based，与底部页码一致）。
@@ -276,7 +289,7 @@ struct ReaderView: View {
     /// 收到边距里之后就再也碰不到正文了 —— 不给它留边距下限（`ChapterPager.minimumVerticalMargin`）
     /// 的话，用户把边距调小又会压回去。
     private var bottomBar: some View {
-        HStack(spacing: Spacing.sm) {
+        HStack(spacing: Spacing.xs) {
             if book.hasAudio {
                 circleButton(icon: "headphones", diameter: chromeControlDiameter) {
                     showListen = true
@@ -304,7 +317,7 @@ struct ReaderView: View {
                 .tText(.meta, color: themeForeground.opacity(0.5))
                 .monospacedDigit()
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
     }
 
     private var currentSize: CGSize {
@@ -346,7 +359,7 @@ struct ReaderView: View {
     // MARK: - 悬浮菜单
 
     private var readerMenu: some View {
-        VStack(alignment: .trailing, spacing: Spacing.sm) {
+        VStack(alignment: .trailing, spacing: Spacing.xs) {
             pillButton(
                 title: "Contents · \(Int((book.readingProgress * 100).rounded()))%",
                 icon: "list.bullet"
@@ -364,15 +377,15 @@ struct ReaderView: View {
 
     private func pillButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
                 Text(title)
                     .tText(.button, color: themeForeground)
                 Image(systemName: icon)
                     .tIcon(IconRole.control, weight: .semibold)
             }
             .foregroundStyle(themeForeground)
-            .padding(.horizontal, Spacing.lg)
-            .padding(.vertical, Spacing.md)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
@@ -384,7 +397,7 @@ struct ReaderView: View {
 
     /// 弹出的菜单（Contents / Themes 药丸），贴着底栏往上长。
     private var overlayMenu: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Spacer()
             if showMenu {
                 readerMenu
@@ -393,7 +406,7 @@ struct ReaderView: View {
             // 占位：把菜单顶在底栏之上，别盖住底栏那一行。
             Color.clear.frame(height: chromeControlDiameter)
         }
-        .padding(.horizontal, Spacing.lg)
+        .padding(.horizontal, Spacing.md)
     }
 
     // MARK: - Chrome visibility
