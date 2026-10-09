@@ -9,12 +9,18 @@ struct MetricsTests {
         #expect(Set(values).count == values.count, "刻度值不得重复：\(values)")
     }
 
-    @Test func spacingIsOnFourPointGridExceptHairline() {
-        for value in Spacing.all where value != Spacing.hairline {
-            #expect(value.truncatingRemainder(dividingBy: 4) == 0,
-                    "\(value) 不在 4pt 网格上")
+    /// 8pt 网格是硬约束，**没有例外** —— 旧的 `hairline`(2) 已删除。
+    /// 它的用途（紧贴文字堆叠）归入 `xs`(8)。
+    @Test func spacingIsOnEightPointGrid() {
+        for value in Spacing.all {
+            #expect(value.truncatingRemainder(dividingBy: 8) == 0,
+                    "\(value) 不是 8 的倍数")
         }
-        #expect(Spacing.hairline == 2, "hairline 是唯一的非网格值")
+    }
+
+    /// 防呆：上一条对空数组恒真 —— 刻度被清空时它会假装通过。
+    @Test func spacingScaleIsNotEmpty() {
+        #expect(Spacing.all.count >= 6, "刻度只剩 \(Spacing.all.count) 档，太少了")
     }
 
     @Test func radiusIsStrictlyAscendingAndOnGrid() {

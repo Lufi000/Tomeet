@@ -29,7 +29,7 @@ struct TBadge: View {
             Text(text)
                 .tText(.hint, color: Theme.onSolid)
                 .padding(.horizontal, Spacing.xs)
-                .padding(.vertical, Spacing.hairline)
+                .padding(.vertical, Spacing.xs)
                 .background(Capsule().fill(Theme.accent))
                 .padding(Spacing.sm)
 
