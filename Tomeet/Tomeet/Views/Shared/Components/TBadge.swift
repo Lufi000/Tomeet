@@ -29,9 +29,9 @@ struct TBadge: View {
             Text(text)
                 .tText(.hint, color: Theme.onSolid)
                 .padding(.horizontal, Spacing.xs)
-                // 角标是 8 网格**下沿**的元素：纵向取 xs 的一半。
+                // 角标是 8 网格**下沿**的元素：纵向取半步。
                 // 取整档会让胶囊变成一颗药丸 —— 它的高度本来就只有十几点。
-                .padding(.vertical, Spacing.xs / 2)
+                .padding(.vertical, Spacing.halfStep)
                 .background(Capsule().fill(Theme.accent))
                 .padding(Spacing.xs)
 

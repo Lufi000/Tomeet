@@ -22,6 +22,15 @@ enum Spacing {
     /// 页面级留白、书架网格行间距。
     static let hero: CGFloat = 80
 
+    /// 8 网格**下沿**的半步。
+    ///
+    /// 唯一用途：角标那类本来就只有十几点高的元素 —— 纵向取整档会让胶囊变成药丸。
+    ///
+    /// 全 App **仅此一处**次网格值，且必须**具名**：内联的 `Spacing.xs / 2`
+    /// 既绕过刻度、也躲开 `MetricsTests`（它只看 `Spacing.all`）。
+    /// `DesignSystemGuardTests` 会拦住任何内联的 `Spacing.X / N`。
+    static let halfStep: CGFloat = xs / 2
+
     /// 供门禁测试给出"最近的刻度"建议。
     static let all: [CGFloat] = [xs, sm, md, lg, xl, xxl, hero]
 }

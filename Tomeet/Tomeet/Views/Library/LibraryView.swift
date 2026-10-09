@@ -41,6 +41,8 @@ struct LibraryView: View {
     @State private var showFileImporter = false
     @State private var isSearching = false
     @State private var searchText = ""
+    /// 点搜索图标后直接把光标放进输入框 —— 不然要再点一次才能打字。
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var deleteError: Error?
     @State private var catalog: InitialLibraryCatalog?
 
@@ -191,10 +193,13 @@ struct LibraryView: View {
         HStack(spacing: Spacing.xs) {
             Button {
                 isSearching = true
+                // 搜索框要在同一帧里才被建出来，直接置 true 会被丢掉 —— 等一拍。
+                Task { @MainActor in isSearchFieldFocused = true }
             } label: {
                 Image(systemName: "magnifyingglass").tIcon(IconRole.control)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Search")
 
             Button {
                 showImportDialog = true
@@ -202,6 +207,7 @@ struct LibraryView: View {
                 Image(systemName: "square.and.arrow.down").tIcon(IconRole.control)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Import books")
 
             libraryMenu
         }
@@ -239,6 +245,7 @@ struct LibraryView: View {
         } label: {
             Image(systemName: "ellipsis").tIcon(IconRole.control)
         }
+        .accessibilityLabel("More options")
     }
 
     // MARK: - 页头
@@ -261,6 +268,7 @@ struct LibraryView: View {
                 .tText(.body)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
+                .focused($isSearchFieldFocused)
             if !searchText.isEmpty {
                 Button {
                     searchText = ""

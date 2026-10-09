@@ -23,6 +23,19 @@ struct MetricsTests {
         #expect(Spacing.all.count >= 6, "刻度只剩 \(Spacing.all.count) 档，太少了")
     }
 
+    /// 半步是全 App **唯一**的次网格值，而且必须具名。
+    ///
+    /// 它不在 `Spacing.all` 里（上一条因此看不见它），这正是要点：
+    /// 内联的 `Spacing.xs / 2` 是**会扩散**的写法 —— 下一个页面想要半步时会照抄，
+    /// 「严格 8 网格」这句话就悄悄变成假的，而套件全绿。
+    /// 具名之后它只有一处，`DesignSystemGuardTests` 拦内联除法。
+    @Test func halfStepIsTheOneNamedSubGridValue() {
+        #expect(Spacing.halfStep == Spacing.xs / 2)
+        #expect(Spacing.halfStep == 4, "半步应当是 4pt；改这里等于改角标的高度")
+        #expect(!Spacing.all.contains(Spacing.halfStep),
+                "半步不该混进刻度表 —— 它不是一档，是一个被计数的例外")
+    }
+
     @Test func radiusIsStrictlyAscendingAndOnGrid() {
         let values = Radius.all
         #expect(values == values.sorted(), "圆角刻度必须严格递增")

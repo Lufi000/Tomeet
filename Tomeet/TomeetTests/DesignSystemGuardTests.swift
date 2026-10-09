@@ -95,6 +95,13 @@ struct DesignSystemGuardTests {
         """)
         #expect(label.contains { $0.rule == "SF Symbol 挂文字字体" },
                 "`Label(_:systemImage:)` 挂 `.font(.app` 应被窗口规则抓到")
+
+        // 7. 内联的间距除法要报，具名令牌放行 —— 否则「严格 8 网格」会从这道缝里漏掉。
+        let division = try Self.scanSnippet("card.padding(.vertical, Spacing.xs / 2)\n")
+        #expect(division.contains { $0.rule == "间距做除法" },
+                "`Spacing.xs / 2` 应被拦下，改走 Spacing.halfStep")
+        let named = try Self.scanSnippet("card.padding(.vertical, Spacing.halfStep)\n")
+        #expect(!named.contains { $0.rule == "间距做除法" }, "具名令牌应放行")
     }
 
     /// 把一段源码写进临时目录并过一次扫描器，返回违规。
@@ -232,6 +239,11 @@ enum DesignSystemScanner {
     private static let literalRules: [(name: String, regex: NSRegularExpression, hint: String)] = [
         ("裸 hex 颜色", regex(#"Color\(hex:"#), "颜色只从 Theme.* 取"),
         ("裸黑白色", regex(#"Color\.(black|white)\b"#), "用 Theme.solidInk / Theme.onSolid / Theme.*"),
+        // 内联的间距除法是唯一会**悄悄扩散**次网格值的写法：
+        // `Spacing.xs / 2` 既绕过刻度，也躲开 MetricsTests（它只看 Spacing.all）。
+        // 8 网格下沿的半步只有 Spacing.halfStep 一处，具名、可数。
+        ("间距做除法", regex(#"Spacing\.[a-z]+\s*/\s*[0-9]"#),
+         "次网格值只走 Spacing.halfStep —— 内联除法会绕过刻度，测试也看不住"),
     ]
 
     private static func literalViolations(lines: [String], file: String) -> [Violation] {
