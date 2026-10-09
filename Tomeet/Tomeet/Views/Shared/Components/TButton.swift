@@ -26,7 +26,9 @@ struct TButton: View {
         Button(action: action) {
             Text(title)
                 .tText(.button, color: foreground)
-                .padding(.horizontal, Spacing.lg)
+                // spec §4.1 把「按钮内边距」指给 md(24)。机械映射把旧的 xl(24)
+                // 带到了 lg(32)，让每个按钮比刻度表说的宽 16pt。
+                .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
                 .background(background)
         }

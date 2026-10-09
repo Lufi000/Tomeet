@@ -90,6 +90,14 @@ struct LibraryView: View {
             Group {
                 if books.isEmpty {
                     emptyState
+                } else if Self.hasNothingToShow(
+                    visibleCount: visibleBooks.count,
+                    themeSectionCount: booksByTheme.count,
+                    groupByTheme: groupMode == .byTheme
+                ) {
+                    // 三条内容路径共用这一个判断 —— 之前只有网格那条接了空态，
+                    // 切到列表或按主题再搜索就白屏（spec §5.5：不是空白）。
+                    noResultsScreen
                 } else if groupMode == .all {
                     if viewMode == .grid {
                         gridContent(for: visibleBooks)
@@ -304,12 +312,12 @@ struct LibraryView: View {
                 ForEach(booksByTheme, id: \.theme.id) { section in
                     Section {
                         bookGrid(section.books)
+                            .padding(.horizontal, Spacing.md)
                     } header: {
                         themeHeader(section.theme)
                     }
                 }
             }
-            .padding(.horizontal, Spacing.md)
             .padding(.top, Spacing.sm)
         }
         .scrollContentBackground(.hidden)
@@ -323,6 +331,7 @@ struct LibraryView: View {
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.xs)
         .background(Theme.canvas)
     }
@@ -331,13 +340,13 @@ struct LibraryView: View {
         ScrollView {
             LazyVStack(spacing: Spacing.lg) {
                 header
-                if bookList.isEmpty {
-                    noResults
-                } else {
-                    bookGrid(bookList)
-                }
+                // 横向边距挂在网格上，不是挂在外层 VStack 上：
+                // `TPageHeader` 自带 md 边距，套在外层会让标题变成 48pt、
+                // 而网格还是 24pt —— 同一页两个左边距。列表与空态没有外层，
+                // 于是标题还会在切换模式时横跳 24pt。
+                bookGrid(bookList)
+                    .padding(.horizontal, Spacing.md)
             }
-            .padding(.horizontal, Spacing.md)
             .padding(.top, Spacing.sm)
         }
         .scrollContentBackground(.hidden)
@@ -363,10 +372,26 @@ struct LibraryView: View {
         }
     }
 
-    private var noResults: some View {
-        Text("No books match “\(searchText)”.")
+    private var isFiltering: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    /// 三条内容路径**共用**的判断点。抽成 static 是为了能被测试钉住 ——
+    /// 这条判断原先只存在于网格那条路径里。
+    static func hasNothingToShow(
+        visibleCount: Int,
+        themeSectionCount: Int,
+        groupByTheme: Bool
+    ) -> Bool {
+        groupByTheme ? themeSectionCount == 0 : visibleCount == 0
+    }
+
+    private var noResultsScreen: some View {
+        Text(isFiltering ? "No books match “\(searchText)”." : "No books in this view.")
             .tText(.secondary)
+            .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
+            .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.hero)
     }
 

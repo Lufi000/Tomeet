@@ -36,4 +36,35 @@ struct AppFontTests {
         let serifName = UIFont(descriptor: serif, size: 17).fontName
         #expect(roundedName != serifName, "圆体和衬线解析到了同一支字体，设计没生效")
     }
+
+    /// **这条才是 spec §3.5 真正要的那道闸。**
+    ///
+    /// 上面两条断言的是**平台**能做什么 —— `Font.app` 改成任何别的东西，
+    /// 它们都照样绿。而本轮最大的教训正是「换错字体不报错，只静默回落」：
+    /// 把 `Font.app` 写成 `Font.custom("SFCompactRounded-Bold", size: 17)`，
+    /// 全 App 会变成 Helvetica，**243 条测试一条都不会红**。
+    ///
+    /// SwiftUI 的 `Font` 无法反查成 `UIFont`；改成 `Font(uiFont)` 那条路
+    /// 会牺牲 Dynamic Type，代价比收益大。所以直接扫**工厂的源码** ——
+    /// 本仓库已有同类做法（`DesignSystemGuardTests` 也是扫源码的）。
+    @Test func appFontFactoryStaysOnTheRoundedSystemDesign() throws {
+        let factory = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()   // TomeetTests
+            .deletingLastPathComponent()   // Tomeet
+            .appendingPathComponent("Tomeet/Theme/AppFont.swift")
+        let source = try String(contentsOf: factory, encoding: .utf8)
+
+        #expect(source.contains("design: .rounded"),
+                "Font.app 不再走 .rounded —— 圆体方案被改掉了")
+
+        #expect(!source.contains("Font.custom("),
+                """
+                Font.app 用了 Font.custom。它**找不到字体时不抛错也不返回 nil**，\
+                会静默给你 Helvetica —— 实测：设计稿指定的 .SFCompactRounded-Bold \
+                就是这么回落到 Times New Roman / Helvetica 的。
+                """)
+
+        #expect(!source.contains(".system(size:"),
+                "Font.app 用了固定字号，会丢掉 Dynamic Type")
+    }
 }

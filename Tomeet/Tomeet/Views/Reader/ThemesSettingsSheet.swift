@@ -59,27 +59,54 @@ struct ThemesSettingsSheet: View {
 
     // MARK: - 字号 + 行距 + 自动夜间
 
+    /// 控件行的尺寸常量。**view 与测试共用同一份** ——
+    /// 否则「最窄机型不裁切」那条断言会随着 view 里的改动悄悄失效，
+    /// 而这类回归恰恰是靠肉眼看不出来的（402pt 上有 16pt 富余，375pt 上就裁了）。
+    enum ControlMetrics {
+        /// 可点尺寸。**不要再往下调** —— 这是三个阅读时的高频操作，
+        /// 而且下面那条宽度预算正是靠它撑住的。
+        static let tapTarget = Spacing.xl
+        /// 同组内按钮↔分隔线的间隙。
+        ///
+        /// `xs`(8) 而非 `sm`/`md`：三个 48pt 的可点尺寸本身已经把这一行撑得很宽，
+        /// 再留 24 的间隙，一行两个胶囊就要 370pt —— 375pt 的机型放不下。
+        /// 间隙是这里最便宜的余量：按钮够大，靠近一点不影响点到。
+        static let innerGap = Spacing.xs
+        /// 胶囊自身的左右内衬。
+        static let pillPadding = Spacing.sm
+        /// 两个胶囊之间的间隙。
+        static let rowGap = Spacing.sm
+        /// 分隔线宽度。
+        static let dividerWidth: CGFloat = 1
+
+        static var pillWidth: CGFloat {
+            2 * pillPadding + 2 * tapTarget + 2 * innerGap + dividerWidth
+        }
+
+        static var rowWidth: CGFloat { 2 * pillWidth + rowGap }
+    }
+
     private var controlPill: some View {
-        HStack(spacing: Spacing.sm) {
-            HStack(spacing: Spacing.md) {
+        HStack(spacing: ControlMetrics.rowGap) {
+            HStack(spacing: ControlMetrics.innerGap) {
                 fontSizeButton(isIncrease: false)
                 Rectangle()
                     .fill(Theme.panelHairline)
-                    .frame(width: 1, height: Spacing.lg)
+                    .frame(width: ControlMetrics.dividerWidth, height: Spacing.lg)
                 fontSizeButton(isIncrease: true)
             }
-            .padding(.horizontal, Spacing.sm)
+            .padding(.horizontal, ControlMetrics.pillPadding)
             .padding(.vertical, Spacing.xs)
             .background(Capsule().fill(.ultraThinMaterial))
 
-            HStack(spacing: Spacing.md) {
+            HStack(spacing: ControlMetrics.innerGap) {
                 spacingMenu
                 Rectangle()
                     .fill(Theme.panelHairline)
-                    .frame(width: 1, height: Spacing.lg)
+                    .frame(width: ControlMetrics.dividerWidth, height: Spacing.lg)
                 autoNightToggle
             }
-            .padding(.horizontal, Spacing.sm)
+            .padding(.horizontal, ControlMetrics.pillPadding)
             .padding(.vertical, Spacing.xs)
             .background(Capsule().fill(.ultraThinMaterial))
         }
@@ -95,7 +122,7 @@ struct ThemesSettingsSheet: View {
         } label: {
             Text("A")
                 .tText(isIncrease ? .sectionTitle : .secondary, color: Theme.panelInk)
-                .frame(width: Spacing.xl, height: Spacing.xl)
+                .frame(width: ControlMetrics.tapTarget, height: ControlMetrics.tapTarget)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isIncrease ? "Increase text size" : "Decrease text size")
@@ -113,7 +140,7 @@ struct ThemesSettingsSheet: View {
             Image(systemName: "text.line.spacing")
                 .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(Theme.panelInk)
-                .frame(width: Spacing.xl, height: Spacing.xl)
+                .frame(width: ControlMetrics.tapTarget, height: ControlMetrics.tapTarget)
         }
         .accessibilityLabel("Line spacing")
     }
@@ -134,7 +161,7 @@ struct ThemesSettingsSheet: View {
             Image(systemName: "circle.righthalf.filled")
                 .tIcon(IconRole.control, weight: .semibold)
                 .foregroundStyle(settings.autoNightTheme ? Theme.accent : Theme.panelInkSecondary)
-                .frame(width: Spacing.xl, height: Spacing.xl)
+                .frame(width: ControlMetrics.tapTarget, height: ControlMetrics.tapTarget)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Auto night theme")
