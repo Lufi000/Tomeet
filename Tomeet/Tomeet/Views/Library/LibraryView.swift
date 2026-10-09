@@ -28,10 +28,14 @@ struct LibraryView: View {
     @Query private var books: [Book]
     @Environment(\.modelContext) private var modelContext
     @Environment(AudioPlayerService.self) private var audioPlayer
+    @Environment(BookOpening.self) private var bookOpening
     @State private var viewMode: LibraryViewMode = .grid
     @State private var sortMode: LibrarySortMode = .recent
     @State private var groupMode: LibraryGroupMode = .all
-    @State private var presentedReader: Book?
+    @State private var presentedListen: Book?
+    @State private var peekBook: Book?
+    /// 各书籍封面在全局坐标系中的位置，由 `BookGridCell` / 列表行通过 preference 上报。
+    @State private var coverFrames: [UUID: CGRect] = [:]
     @State private var bookToDelete: Book?
     @State private var showImporter = false
     @State private var deleteError: Error?
@@ -81,8 +85,8 @@ struct LibraryView: View {
                     libraryMenu
                 }
             }
-            .fullScreenCover(item: $presentedReader) { book in
-                BookReaderPresenter.view(for: book)
+            .fullScreenCover(item: $presentedListen) { book in
+                ListenPlayerView(book: book)
             }
             .bookImportPresentation(isPresented: $showImporter)
             .alert("Remove Failed", isPresented: Binding(
@@ -112,10 +116,19 @@ struct LibraryView: View {
             }
             .toolbarBackground(Theme.canvas, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            // 弹层期间收起 TabBar：否则内容区被它切掉一截，卡片会按「整屏」算尺寸、
+            // 却按「去掉 TabBar 的那块」定位，于是看着不居中，底部按钮还会被压住。
+            .toolbar(peekBook == nil ? .visible : .hidden, for: .tabBar)
+            .onPreferenceChange(BookCoverFramePreferenceKey.self) { coverFrames = $0 }
             .task {
                 catalog = try? InitialLibraryLoader.load()
+                #if DEBUG
+                openPeekForSnapshotIfRequested()
+                openBookForSnapshotIfRequested()
+                #endif
             }
         }
+        .overlay { peekOverlay }
     }
 
     private var libraryMenu: some View {
@@ -214,7 +227,7 @@ struct LibraryView: View {
                         ) {
                             ForEach(section.books) { book in
                                 BookGridCell(book: book) {
-                                    presentedReader = book
+                                    openBook(book)
                                 } onDelete: {
                                     bookToDelete = book
                                 }
@@ -256,7 +269,7 @@ struct LibraryView: View {
                 ) {
                     ForEach(bookList) { book in
                         BookGridCell(book: book) {
-                            presentedReader = book
+                            openBook(book)
                         } onDelete: {
                             bookToDelete = book
                         }
@@ -272,10 +285,19 @@ struct LibraryView: View {
     private func listContent(for bookList: [Book]) -> some View {
         List(bookList) { book in
             Button {
-                presentedReader = book
+                openBook(book)
             } label: {
                 HStack(spacing: 12) {
-                    BookCoverView(book: book).frame(width: 44)
+                    BookCoverView(book: book)
+                        .frame(width: 44)
+                        .background {
+                            GeometryReader { proxy in
+                                Color.clear.preference(
+                                    key: BookCoverFramePreferenceKey.self,
+                                    value: [book.id: proxy.frame(in: .global)]
+                                )
+                            }
+                        }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(book.title).font(.book(.body)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink).lineLimit(1)
                         Text(book.author).font(.book(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
@@ -300,6 +322,77 @@ struct LibraryView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             libraryHeader
                 .background(Theme.canvas)
+        }
+    }
+
+    /// 未读（NEW）书先弹详情卡片；读过的书直接翻开 —— 封面从这一格的原位抬起、绕书脊
+    /// 荡开，底下露出上次读到的那一页（动效由 `RootView` 上的呈现层负责）。
+    private func openBook(_ book: Book) {
+        if book.showsNewBadge {
+            peekBook = book
+        } else {
+            bookOpening.open(book, from: coverFrames[book.id])
+        }
+    }
+
+    #if DEBUG
+    /// 仅供录屏验证：`xcrun simctl launch <udid> com.ivy.Tomeet --ui-snapshot-peek`
+    /// 会自动点开书架里第一本未读书的弹层。
+    ///
+    /// 模拟器没有可编程的点击接口，不自己触发就录不到「从封面原位翻起」那几帧 ——
+    /// 而这次改的正是那几帧。延迟 1.5s 是为了等网格上报完封面坐标，
+    /// 走的是和手指点完全同一条路径（真回调、真 frame）。
+    private func openPeekForSnapshotIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-peek"),
+              let book = sortedBooks.first(where: \.showsNewBadge) else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            peekBook = book
+        }
+    }
+
+    /// 仅供录屏验证：`xcrun simctl launch <udid> com.ivy.Tomeet --ui-snapshot-open`
+    /// 会点开书架里第一本**有进度**的书 —— 走的正是这次改的那条路径
+    /// （抬起 → 翻开 → 底下是正文而不是转圈）。
+    ///
+    /// 全新安装时得先给它一点进度：种子里 42 本全是 NEW（零进度），
+    /// 而 NEW 的书走的是弹层那条路，挑 `!showsNewBadge` 会一本都挑不到 ——
+    /// 钩子静默失效，录到一张静止画面，然后得出"动画没跑"的错误结论。
+    private func openBookForSnapshotIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-open"),
+              let book = sortedBooks.first else { return }
+        if book.showsNewBadge {
+            book.readingProgress = 0.35
+            try? modelContext.save()
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            openBook(book)
+        }
+    }
+    #endif
+
+    /// 未读书籍弹层；收放动画由弹层自管理，父视图只负责装/卸。
+    @ViewBuilder
+    private var peekOverlay: some View {
+        if let book = peekBook {
+            UnreadBookPeekView(
+                book: book,
+                sourceFrame: coverFrames[book.id],
+                onDismiss: { peekBook = nil },
+                // 弹层自己会先翻回收起（`dismiss` 等沉降完才回调），这里接着
+                // 从书架上那一格把书翻开 —— 两拍首尾相接，是一条连续的路径。
+                // `peekBook = nil` 不能省：弹层停在 t=0 时虽然全透明，但仍然挂在那儿挡手势。
+                onStartReading: {
+                    peekBook = nil
+                    bookOpening.open(book, from: coverFrames[book.id])
+                },
+                onListen: {
+                    peekBook = nil
+                    presentedListen = book
+                },
+                onRemove: { bookToDelete = book }
+            )
         }
     }
 

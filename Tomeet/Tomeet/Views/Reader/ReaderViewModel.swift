@@ -346,7 +346,16 @@ final class ReaderViewModel {
         let chapters = document.chapters
         let start = (restoredLocation ?? ReaderLocation(chapterIndex: 0, charOffset: 0))
             .clamped(chapterCount: chapters.count, chapterLengths: chapters.map(\.textLength))
-        currentGlobalIndex = session.globalIndex(for: start) ?? 0
+        var index = session.globalIndex(for: start) ?? 0
+        // 首次打开、且正好落在封面页上时往后挪一页。否则「翻开」露出来的还是封面本身 ——
+        // 封面飞走又原样出现，看着像盖了两层。
+        // 只在**没有存档位置**时挪：读过的书必须回到读到的哪一页，那是另一回事。
+        if restoredLocation == nil,
+           pageMap.textPage(globalIndex: index)?.isImageOnly == true,
+           index + 1 < pageMap.totalPages {
+            index += 1
+        }
+        currentGlobalIndex = index
         totalPages = pageMap.totalPages
         phase = .ready
     }

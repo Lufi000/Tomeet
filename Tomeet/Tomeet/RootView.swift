@@ -4,6 +4,7 @@ struct RootView: View {
     @Environment(AudioPlayerService.self) private var audioPlayer
     @State private var selectedTab = 0
     @State private var showNowPlaying = false
+    @State private var bookOpening = BookOpening()
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -14,6 +15,9 @@ struct RootView: View {
                 .tabItem { tabLabel("Library", selectedImage: "TabLibrary", unselectedImage: "TabLibraryUnselected", tag: 1) }
                 .tag(1)
         }
+        // 打开一本书的动效要盖住 TabBar（书架、Home 都在 TabView 里，盖不住它），
+        // 所以呈现层挂在最外层。Home / Library 通过这个环境值发起打开。
+        .environment(bookOpening)
         // 听书迷你条：safeAreaInset 钉在 TabBar 上方（VStack 会把它压到屏幕最底端、TabBar 之下）
         .safeAreaInset(edge: .bottom, spacing: 0) {
             NowPlayingBar(onExpand: { showNowPlaying = true })
@@ -24,9 +28,23 @@ struct RootView: View {
                 ListenPlayerView(book: book)
             }
         }
+        .onAppear {
+            #if DEBUG
+            // 录屏验证时直接落到 Library —— 弹层在那一页，停在 Home 上录不到东西。
+            if ProcessInfo.processInfo.arguments.contains("--ui-snapshot-peek")
+                || ProcessInfo.processInfo.arguments.contains("--ui-snapshot-open") {
+                selectedTab = 1
+            }
+            #endif
+        }
         .tint(Theme.accent)
         // Theme 色板只有浅色一套，锁定浅色模式，避免系统深色翻转键盘/弹窗等系统表面。
         .preferredColorScheme(.light)
+        .overlay {
+            if let request = bookOpening.request {
+                BookOpenTransition(request: request) { bookOpening.finish() }
+            }
+        }
     }
 
     /// 水彩插画 Tab 图标：选中彩色、未选中灰调，均保持原色渲染。

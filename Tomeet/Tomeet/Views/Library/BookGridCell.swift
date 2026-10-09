@@ -29,6 +29,15 @@ struct BookGridCell: View {
         VStack(alignment: .leading, spacing: 6) {
             Button(action: onOpen) {
                 BookCoverView(book: book)
+                    // 把封面在本帧中的全局坐标上报给书架，弹层据此做「从原位翻起」
+                    .background {
+                        GeometryReader { proxy in
+                            Color.clear.preference(
+                                key: BookCoverFramePreferenceKey.self,
+                                value: [book.id: proxy.frame(in: .global)]
+                            )
+                        }
+                    }
             }
             .buttonStyle(.plain)
             .overlay(alignment: .topLeading) {

@@ -48,6 +48,17 @@ struct BookCarouselView: View {
             VStack(spacing: 8) {
                 BookCoverView(book: book)
                     .frame(width: width)
+                    // 把封面在本帧中的全局坐标上报给呈现层，翻开动效据此从原位起飞。
+                    // 读的是布局框（`visualEffect` 的缩放不改布局），而只有居中的那本
+                    // 才会被点开，那时缩放正好是 1，两者重合。
+                    .background {
+                        GeometryReader { proxy in
+                            Color.clear.preference(
+                                key: BookCoverFramePreferenceKey.self,
+                                value: [book.id: proxy.frame(in: .global)]
+                            )
+                        }
+                    }
                 Text(book.title)
                     .font(.book(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
                     .foregroundStyle(Theme.ink)

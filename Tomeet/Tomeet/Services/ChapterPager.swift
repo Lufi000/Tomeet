@@ -27,6 +27,30 @@ struct TextPage: Sendable {
     }
 }
 
+extension TextPage {
+    /// 只有一张图、没有正文的一页 —— 也就是 EPUB 里的封面 / 前置图版页。
+    ///
+    /// 认得出来是因为：首次打开一本书若落在这一页上，翻开动效底下露出来的**还是封面
+    /// 本身**，看起来就像封面又盖了一层。判断要件是「有图」且「除了图没有别的字」——
+    /// 只按「有图」判会误伤带插图的正文页（那种页误跳到下一页就是真丢内容）。
+    ///
+    /// 注意附件在字符串里占一个 U+FFFC，必须先剔掉再判断有没有字。
+    var isImageOnly: Bool {
+        let full = NSRange(location: 0, length: text.length)
+        guard full.length > 0 else { return false }
+        var hasImage = false
+        text.enumerateAttribute(.tomeetImage, in: full) { value, _, stop in
+            if value != nil {
+                hasImage = true
+                stop.pointee = true
+            }
+        }
+        guard hasImage else { return false }
+        let plain = text.string.replacingOccurrences(of: "\u{FFFC}", with: "")
+        return plain.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 /// 章首页顶部排好的章标题。
 ///
 /// **标题不进 `TextPage.text`** —— 正文串必须与 `Chapter.plainText` 逐字对应，

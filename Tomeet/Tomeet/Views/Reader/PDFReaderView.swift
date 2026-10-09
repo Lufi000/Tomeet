@@ -7,6 +7,7 @@ struct PDFReaderView: View {
     let book: Book
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bookClose) private var bookClose
     @Environment(\.modelContext) private var modelContext
 
     private var pdfURL: URL? {
@@ -30,7 +31,7 @@ struct PDFReaderView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    Button("Done") { closeBook(bookClose, orDismiss: dismiss) }
                 }
             }
         }

@@ -3,12 +3,11 @@ import SwiftData
 
 struct HomeView: View {
     @Query private var books: [Book]
-    @State private var selectedBook: Book?       // 详情面板
-    @State private var presentedReader: Book?
+    @Environment(BookOpening.self) private var bookOpening
     @State private var presentedListen: Book?
+    /// 轮播里各书封面在全局坐标系中的位置，由 `BookCarouselView` 上报。
+    @State private var coverFrames: [UUID: CGRect] = [:]
     @State private var showImporter = false
-    /// 面板关闭后延迟推出全屏页的 pending Task,可取消(见 openAfterSheetDismiss)。
-    @State private var pendingOpen: Task<Void, Never>?
     /// 本次启动是否已经自动续读过 —— 保证一次启动只弹一次，关掉后不再打扰。
     @State private var didAutoResume = false
 
@@ -23,8 +22,9 @@ struct HomeView: View {
             if carouselBooks.isEmpty {
                 emptyState
             } else {
+                // 点居中的书直接翻开它（原来先弹一个对话详情面板，已去掉）。
                 BookCarouselView(books: carouselBooks) { book in
-                    withAnimation(.spring) { selectedBook = book }
+                    openBook(book)
                 }
             }
 
@@ -32,26 +32,13 @@ struct HomeView: View {
             addBookButton
         }
         .bookImportPresentation(isPresented: $showImporter)
-        .toolbar(selectedBook == nil ? .visible : .hidden, for: .tabBar)
         .onChange(of: books, initial: false) { _, newBooks in
             reconcileStaleSelections(with: newBooks)
-        }
-        .fullScreenCover(item: $presentedReader) { book in
-            BookReaderPresenter.view(for: book)
         }
         .fullScreenCover(item: $presentedListen) { book in
             ListenPlayerView(book: book)
         }
-        .overlay {
-            if let book = selectedBook {
-                BookDetailView(
-                    book: book,
-                    onClose: { dismissPanel() },
-                    onRead: { openAfterPanelDismiss { presentedReader = book } },
-                    onListen: { openAfterPanelDismiss { presentedListen = book } }
-                )
-            }
-        }
+        .onPreferenceChange(BookCoverFramePreferenceKey.self) { coverFrames = $0 }
         .onAppear {
             openReaderForSnapshotIfRequested()
             resumeReadingIfNeeded()
@@ -65,9 +52,15 @@ struct HomeView: View {
     private func resumeReadingIfNeeded() {
         guard !didAutoResume else { return }
         didAutoResume = true
-        guard presentedReader == nil else { return }  // 截图钩子已经开了就不抢
+        guard bookOpening.request == nil else { return }  // 截图钩子已经开了就不抢
         guard let book = ResumeTarget.book(in: books) else { return }
-        presentedReader = book
+        // 不传原位坐标：冷启动时轮播还没上报封面位置，凭空从屏幕中央长出一张封面
+        // 比直接出现更怪。自动续读要的是「立刻回到那一页」，不是看动画。
+        bookOpening.open(book, from: nil)
+    }
+
+    private func openBook(_ book: Book) {
+        bookOpening.open(book, from: coverFrames[book.id])
     }
 
     /// 仅供截图验证：`xcrun simctl launch <udid> com.ivy.Tomeet --ui-snapshot-reader`
@@ -79,32 +72,19 @@ struct HomeView: View {
         #if DEBUG
         guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-reader"),
               let first = carouselBooks.first else { return }
-        presentedReader = first
+        // 等轮播上报完封面坐标再开，这样录到的是真的「从封面原位翻开」。
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            openBook(first)
+        }
         #endif
     }
 
-    private func dismissPanel() {
-        withAnimation(.spring) { selectedBook = nil }
-    }
-
-    /// 先收面板再全屏推出目标页,避免全屏 cover 叠在磨砂面板上造成层级闪烁。
-    /// 重复触发时取消上一个 pending Task,防止旧 action 延迟误触。
-    private func openAfterPanelDismiss(_ action: @escaping () -> Void) {
-        dismissPanel()
-        pendingOpen?.cancel()
-        pendingOpen = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(400))
-            guard !Task.isCancelled else { return }
-            action()
-        }
-    }
-
-    /// 面板/全屏页打开期间书可能在 Library tab 被删除,对账清掉指向已删对象的选中态,
+    /// 全屏页打开期间书可能在 Library tab 被删除,对账清掉指向已删对象的选中态,
     /// 避免后续访问已失效的 SwiftData 对象。
     private func reconcileStaleSelections(with currentBooks: [Book]) {
         let ids = Set(currentBooks.map(\.id))
-        if let book = selectedBook, !ids.contains(book.id) { selectedBook = nil }
-        if let book = presentedReader, !ids.contains(book.id) { presentedReader = nil }
+        bookOpening.closeIfDeleted(existingIDs: ids)
         if let book = presentedListen, !ids.contains(book.id) { presentedListen = nil }
     }
 
@@ -141,7 +121,6 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .padding(.bottom, 12)
-        .opacity(selectedBook == nil ? 1 : 0)
     }
 
     /// 空态:刺猬插画 + 引导。

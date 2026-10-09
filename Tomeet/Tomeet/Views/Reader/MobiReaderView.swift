@@ -6,6 +6,7 @@ struct MobiReaderView: View {
     let book: Book
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bookClose) private var bookClose
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -13,7 +14,7 @@ struct MobiReaderView: View {
             VStack(spacing: 24) {
                 HStack {
                     Spacer()
-                    Button("Done") { dismiss() }
+                    Button("Done") { closeBook(bookClose, orDismiss: dismiss) }
                 }
 
                 BookCoverView(book: book)

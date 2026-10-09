@@ -6,6 +6,7 @@ import SwiftUI
 struct ReaderView: View {
     let book: Book
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.bookClose) private var bookClose
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.colorScheme) private var colorScheme
@@ -29,6 +30,14 @@ struct ReaderView: View {
             content
         }
         .foregroundStyle(themeForeground)
+        // 顶栏那个 × 只长在就绪态里（`content` 的 `.ready` 分支才有 `topBar`）。
+        // 于是加载一旦卡住或失败，整页就没有任何退出口 —— 人被关在阅读器里出不来。
+        // 没就绪时在这里补一个。
+        .overlay(alignment: .topLeading) {
+            if !viewModel.isReady {
+                escapeButton
+            }
+        }
         .onAppear {
             let settings = ReaderSettings.fetchOrCreate(in: modelContext)
             viewModel.modelContext = modelContext
@@ -40,6 +49,16 @@ struct ReaderView: View {
         .onDisappear {
             readingTracker.end(.reading)
             flushReadingTime()
+        }
+        .task {
+            #if DEBUG
+            // 仅供录屏验证：`--ui-snapshot-close` 会在进阅读器几秒后自动按一次 ×。
+            // 走的是和手指点**完全同一条路径**（真的 `bookClose` 回调），
+            // 不然录到的「合书」就不是用户会看到的那一段。
+            guard ProcessInfo.processInfo.arguments.contains("--ui-snapshot-close") else { return }
+            try? await Task.sleep(for: .seconds(3))
+            closeBook(bookClose, orDismiss: dismiss)
+            #endif
         }
         .onReceive(readingFlushTimer) { _ in flushReadingTime() }
         .onChange(of: colorScheme) { _, newScheme in
@@ -69,6 +88,16 @@ struct ReaderView: View {
                 viewModel.apply(settings: settings)
             }
         }
+    }
+
+    /// 未就绪时的退出口。与就绪态顶栏那个 × 同一个动作、同一个尺寸，只是位置独立 ——
+    /// 它不能依赖 `content` 走到哪个分支。
+    private var escapeButton: some View {
+        circleButton(icon: "xmark", diameter: chromeControlDiameter) {
+            closeBook(bookClose, orDismiss: dismiss)
+        }
+        .padding(.horizontal, Spacing.lg)
+        .padding(.top, Spacing.xs)
     }
 
     // MARK: - 主题颜色
@@ -175,7 +204,7 @@ struct ReaderView: View {
             }
             Spacer()
             circleButton(icon: "xmark", diameter: chromeControlDiameter) {
-                dismiss()
+                closeBook(bookClose, orDismiss: dismiss)
             }
         }
         .padding(.horizontal, Spacing.lg)
