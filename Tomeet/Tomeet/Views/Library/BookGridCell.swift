@@ -7,7 +7,7 @@ struct BookGridCell: View {
 
     private var newBadge: some View {
         Text("NEW")
-            .font(.book(.caption2, weight: .bold)).tracking(Theme.letterSpacing)
+            .font(.app(.caption2, weight: .bold))
             .foregroundStyle(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -54,7 +54,7 @@ struct BookGridCell: View {
             HStack(spacing: 4) {
                 if let progress = book.progressText {
                     Text(progress)
-                        .font(.book(.caption)).tracking(Theme.letterSpacing)
+                        .font(.app(.caption))
                         .foregroundStyle(Theme.inkSecondary)
                 }
                 Spacer()
@@ -77,11 +77,11 @@ struct BookGridCell: View {
             }
 
             Text(book.title)
-                .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                .font(.app(.subheadline))
                 .foregroundStyle(Theme.ink)
                 .lineLimit(2)
             Text(book.author)
-                .font(.book(.caption2)).tracking(Theme.letterSpacing)
+                .font(.app(.caption2))
                 .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(1)
         }

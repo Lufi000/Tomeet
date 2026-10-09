@@ -40,7 +40,7 @@ struct ImportBookModifier: ViewModifier {
                             VStack(spacing: 12) {
                                 ProgressView()
                                 Text("Importing...")
-                                    .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                                    .font(.app(.subheadline))
                             }
                         }
                 }

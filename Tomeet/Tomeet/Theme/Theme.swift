@@ -31,15 +31,6 @@ enum Theme {
     /// 由 sendEnabled 加深得来，保证在 canvas/card 浅色底上对比度足够。
     static let accent = Color(hex: 0x6F8145)
 
-    /// 全局字距：New York 的字距本就按 UI 尺寸设计，0 即最佳值。
-    ///
-    /// 保留这个旋钮（而不是删掉各处 `.tracking(Theme.letterSpacing)`）是有意的：
-    /// 日后要整体微调，改这一行即可，不必回头补 30 多处调用。
-    ///
-    /// **为 0 是硬约束**：`Font.book()` 的字号已回到 iOS 标准档，
-    /// 此时任何负字距（此前为打字机字体设的 -3.5）都会让字糊成一团。
-    static let letterSpacing: Double = 0
-
     /// 实心填充（主按钮底、用户消息气泡）。比 `ink` 更重，用于需要强对比的实心形状。
     static let solidInk = Color(hex: 0x000000)
     /// 压在 `solidInk` 上的文字与图标。

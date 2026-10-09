@@ -164,10 +164,10 @@ struct LibraryView: View {
         }
     }
 
-    /// 页面顶部自定义大标题（字体用 `Font.book()`，与阅读器正文同一套衬线）
+    /// 页面顶部自定义大标题（字体用 `Font.app()`，与阅读器正文同一套衬线）
     private var libraryHeader: some View {
         Text("Library")
-            .font(.book(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+            .font(.app(.largeTitle, weight: .bold))
             .foregroundStyle(Theme.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
@@ -186,17 +186,17 @@ struct LibraryView: View {
                     .scaledToFit()
                     .frame(width: 240)
                 Text("No books yet")
-                    .font(.book(.title3, weight: .bold)).tracking(Theme.letterSpacing)
+                    .font(.app(.title3, weight: .bold))
                     .foregroundStyle(Theme.ink)
                 Text("Import a book and meet the mind inside.")
-                    .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.app(.subheadline))
                     .foregroundStyle(Theme.inkSecondary)
                     .multilineTextAlignment(.center)
                 Button {
                     showImporter = true
                 } label: {
                     Text("Import Book")
-                        .font(.book(.headline)).tracking(Theme.letterSpacing)
+                        .font(.app(.headline))
                         .foregroundStyle(Theme.accent)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 10)
@@ -247,10 +247,10 @@ struct LibraryView: View {
     private func themeHeader(_ theme: InitialTheme) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(theme.name)
-                .font(.book(.title2, weight: .bold)).tracking(Theme.letterSpacing)
+                .font(.app(.title2, weight: .bold))
                 .foregroundStyle(Theme.ink)
             Text(theme.description)
-                .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                .font(.app(.subheadline))
                 .foregroundStyle(Theme.inkSecondary)
                 .lineLimit(1)
         }
@@ -299,12 +299,12 @@ struct LibraryView: View {
                             }
                         }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(book.title).font(.book(.body)).tracking(Theme.letterSpacing).foregroundStyle(Theme.ink).lineLimit(1)
-                        Text(book.author).font(.book(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
+                        Text(book.title).font(.app(.body)).foregroundStyle(Theme.ink).lineLimit(1)
+                        Text(book.author).font(.app(.caption)).foregroundStyle(Theme.inkSecondary)
                     }
                     Spacer()
                     if let progress = book.progressText {
-                        Text(progress).font(.book(.caption)).tracking(Theme.letterSpacing).foregroundStyle(Theme.inkSecondary)
+                        Text(progress).font(.app(.caption)).foregroundStyle(Theme.inkSecondary)
                     }
                 }
             }

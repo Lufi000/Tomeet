@@ -60,11 +60,11 @@ struct BookCarouselView: View {
                         }
                     }
                 Text(book.title)
-                    .font(.book(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.app(.headline, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                 Text(book.author)
-                    .font(.book(.caption)).tracking(Theme.letterSpacing)
+                    .font(.app(.caption))
                     .foregroundStyle(Theme.inkSecondary)
                     .lineLimit(1)
             }

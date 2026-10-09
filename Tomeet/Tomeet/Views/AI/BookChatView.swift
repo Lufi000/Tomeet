@@ -61,7 +61,7 @@ struct BookChatView: View {
                     Task { await viewModel.send(prompt) }
                 } label: {
                     Text(prompt)
-                        .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                        .font(.app(.subheadline))
                         .foregroundStyle(Theme.inkSecondary)
                 }
                 .buttonStyle(.plain)
@@ -76,8 +76,8 @@ struct BookChatView: View {
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField("Ask about this book...", text: $input, axis: .vertical)
-                .font(.book(.body))
-                .tracking(Theme.letterSpacing)
+                .font(.app(.body))
+
                 .lineLimit(1...4)
                 .focused($inputFocused)
                 .foregroundStyle(Theme.ink)
@@ -128,11 +128,11 @@ private struct MessageBubble: View {
             if isThinking {
                 // Manta:状态行不套气泡,灰字左对齐
                 Text("Thinking")
-                    .font(.book(.caption)).tracking(Theme.letterSpacing)
+                    .font(.app(.caption))
                     .foregroundStyle(Theme.inkTertiary)
             } else if message.role == .user {
                 Text(message.text)
-                    .font(.book(.body)).tracking(Theme.letterSpacing)
+                    .font(.app(.body))
                     .foregroundStyle(Color.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
@@ -143,7 +143,7 @@ private struct MessageBubble: View {
             } else {
                 // Manta:AI 回复纯文本,无气泡
                 content
-                    .font(.book(.body)).tracking(Theme.letterSpacing)
+                    .font(.app(.body))
                     .foregroundStyle(Theme.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

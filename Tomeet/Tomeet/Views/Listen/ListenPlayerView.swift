@@ -31,9 +31,9 @@ struct ListenPlayerView: View {
 
                 VStack(spacing: 6) {
                     Text(book.title)
-                        .font(.book(.title3, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .font(.app(.title3, weight: .semibold))
                     Text(subtitle)
-                        .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                        .font(.app(.subheadline))
                         .foregroundStyle(.secondary)
                 }
 
@@ -41,7 +41,7 @@ struct ListenPlayerView: View {
                 case .failed(let message):
                     VStack(spacing: 12) {
                         Text(message)
-                            .font(.book(.body))
+                            .font(.app(.body))
                             .foregroundStyle(.secondary)
                         Button("重试") {
                             Task { await player.load(book: book) }
@@ -97,7 +97,7 @@ struct ListenPlayerView: View {
                     Spacer()
                     Text("-\(formatTime(max(0, player.duration - player.currentTime)))")
                 }
-                .font(.book(.caption).monospacedDigit())
+                .font(.app(.caption).monospacedDigit())
                 .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 32)
@@ -118,7 +118,7 @@ struct ListenPlayerView: View {
 
             Button { player.cycleRate() } label: {
                 Text(rateLabel)
-                    .font(.book(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                    .font(.app(.subheadline, weight: .semibold))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(.white.opacity(0.15)))

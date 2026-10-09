@@ -70,10 +70,10 @@ struct BookDetailView: View {
                 }
                 .buttonStyle(.plain)
                 Text(book.title)
-                    .font(.book(.title3, weight: .bold)).tracking(Theme.letterSpacing)
+                    .font(.app(.title3, weight: .bold))
                     .foregroundStyle(Theme.ink)
                 Text(book.author)
-                    .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.app(.subheadline))
                     .foregroundStyle(Theme.inkSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

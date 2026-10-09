@@ -19,11 +19,11 @@ struct NowPlayingBar: View {
                     .frame(width: 36)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(book.title)
-                        .font(.book(.subheadline, weight: .semibold)).tracking(Theme.letterSpacing)
+                        .font(.app(.subheadline, weight: .semibold))
                         .foregroundStyle(Theme.ink)
                         .lineLimit(1)
                     Text("讲书 · \(book.author)")
-                        .font(.book(.caption2)).tracking(Theme.letterSpacing)
+                        .font(.app(.caption2))
                         .foregroundStyle(Theme.inkTertiary)
                         .lineLimit(1)
                 }
@@ -33,7 +33,7 @@ struct NowPlayingBar: View {
                     .tint(Theme.accent)
                     .controlSize(.small)
                 Text("加载中…")
-                    .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                    .font(.app(.subheadline))
                     .foregroundStyle(Theme.inkSecondary)
             }
 

@@ -95,7 +95,7 @@ struct HomeView: View {
         VStack {
             HStack(alignment: .top) {
                 Text("I'm\nNow\nReading")
-                    .font(.book(.largeTitle, weight: .bold)).tracking(Theme.letterSpacing)
+                    .font(.app(.largeTitle, weight: .bold))
                     .foregroundStyle(Theme.ink)
                 Spacer()
                 Circle()
@@ -113,7 +113,7 @@ struct HomeView: View {
     private var addBookButton: some View {
         Button { showImporter = true } label: {
             Text("Add New Book")
-                .font(.book(.headline, weight: .semibold)).tracking(Theme.letterSpacing)
+                .font(.app(.headline, weight: .semibold))
                 .foregroundStyle(Theme.cream)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 14)
@@ -133,7 +133,7 @@ struct HomeView: View {
                 .scaledToFit()
                 .frame(height: 160)
             Text("Books you start reading will appear here.")
-                .font(.book(.subheadline)).tracking(Theme.letterSpacing)
+                .font(.app(.subheadline))
                 .foregroundStyle(Theme.inkTertiary)
             Spacer()
         }

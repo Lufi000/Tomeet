@@ -1,19 +1,20 @@
 import SwiftUI
 
 extension Font {
-    /// 全 App 统一的书籍字体 —— 与阅读器正文页同一套。
+    /// 全 App 统一的字体 —— 系统圆体（SF Pro Rounded）。
     ///
-    /// 系统衬线（New York），CJK 由 CoreText 回退到 PingFang SC。
-    /// 这与 `ChapterPager.fontDescriptor(for:)` 对正文的处理一致：
-    /// 西文走 `.serif`，中日韩回退到系统默认，所以中文界面和中文书正文是同一字体。
+    /// 走 `.system(_:design:weight:)` 而非 `Font.custom`：字号直接取 iOS 标准字阶
+    /// （body 17 / largeTitle 34 …），Dynamic Type 原生支持，不必维护字号表。
     ///
-    /// 走 `.system(_:design:weight:)` 而非 `.custom`：字号直接取 iOS 标准字阶
-    /// （body 17 / largeTitle 34 …），Dynamic Type 原生支持，不必再维护字号表；
-    /// New York 也有完整字重，不再需要"比 regular 重就落 Bold 字面"的归并。
+    /// **绝对不要改成 `Font.custom`。** 设计稿指定的是 SF Compact Rounded，
+    /// 那支字体在 iOS 上是带点的私有族名（`.SFCompactRounded-*`），CoreText 拒绝解析，
+    /// 且 `Font.custom` 找不到字体时不抛错也不返回 nil —— 它会静默给你 Helvetica。
+    /// 实测：Compact 与 Pro Rounded 的 34pt advance width 只差 1.3%（241.7 vs 245.0）。
+    /// 详见 spec §1。`AppFontTests` 会拦住这类改动。
     ///
-    /// 也正因为字号回到标准档，`Theme.letterSpacing` 必须为 0 ——
-    /// New York 的字距本就按 UI 尺寸设计，收紧了会立刻糊成一团。
-    static func book(_ style: Font.TextStyle = .body, weight: Font.Weight = .regular) -> Font {
-        .system(style, design: .serif, weight: weight)
+    /// 原名 `book()`：那个名字表达的是「与阅读器正文页同一套书籍字体」，
+    /// 而 App 字体**不再**是阅读正文那一套（正文仍是衬线，见 `ChapterPager`）。
+    static func app(_ style: Font.TextStyle = .body, weight: Font.Weight = .regular) -> Font {
+        .system(style, design: .rounded, weight: weight)
     }
 }

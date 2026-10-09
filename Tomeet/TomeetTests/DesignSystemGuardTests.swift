@@ -94,10 +94,10 @@ struct DesignSystemGuardTests {
         //    `Label("听书", systemImage: "headphones").tText(.body)` 会带着绿门禁复现 22pt/31pt 的老问题。
         let label = try Self.scanSnippet("""
         Label("听书", systemImage: "headphones")
-            .font(.book(.body))
+            .font(.app(.body))
         """)
         #expect(label.contains { $0.rule == "SF Symbol 挂文字字体" },
-                "`Label(_:systemImage:)` 挂 `.font(.book` 应被窗口规则抓到")
+                "`Label(_:systemImage:)` 挂 `.font(.app` 应被窗口规则抓到")
     }
 
     /// 把一段源码写进临时目录并过一次扫描器，返回违规。
@@ -267,15 +267,15 @@ enum DesignSystemScanner {
         #"Image\(systemName:|Label\(.*systemImage:|Button\(.*systemImage:"#
     )
 
-    /// 只有 `.book` 需要"挂在 Symbol 上"这条专门规则 ——
+    /// 只有 `.app` 需要"挂在 Symbol 上"这条专门规则 ——
     /// 它在 `Text` 上完全合法，在 `Image(systemName:)` 上则是纯错误
     /// （New York 是文字衬线，SF Symbols 没有衬线变体，挂上去只会落到回退字形）。
     /// 裸字号 `.system(size:` 已由上面的全局规则覆盖，不在这里重复报。
-    private static let textFontOnSymbol = regex(#"\.font\(\.book"#)
+    private static let textFontOnSymbol = regex(#"\.font\(\.app"#)
 
     /// SwiftUI 的修饰符常另起一行，所以要看当前行 **及其后 2 行**。
     /// 例：`ListenPlayerView.swift:20-21` —— `Image(systemName:)` 在 20 行，
-    /// `.font(.book(...))` 在 21 行，单行扫描抓不到。
+    /// `.font(.app(...))` 在 21 行，单行扫描抓不到。
     private static func symbolFontViolations(lines: [String], file: String) -> [Violation] {
         var out: [Violation] = []
         for (index, line) in lines.enumerated() {
