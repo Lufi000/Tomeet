@@ -203,18 +203,21 @@ TPageHeader("Welcome to the Book Store.", subtitle: "You can live your whole lif
 
 > **门禁会误伤投影。** `DesignSystemGuardTests` 的「数字 radius」正则 `\bradius:\s*([0-9.]+)` 会命中 `.shadow(color:radius:x:y:)` 里的 `radius:`，把**阴影半径**当成**圆角**报违规，还会给出毫无意义的建议「最近的圆角刻度是 8 或 16」。包进 Theme 是对这个误报最干净的规避（也更符合「让调用点根本没机会写数字」的既定思路）。
 
-### 5.4 顶栏右侧：两个图标 + 一个没地方放的问题
+### 5.4 顶栏右侧：胶囊三图标
 
-设计稿是「胶囊里两个图标」，已确认：
+**`[搜索] [导入] [更多]`**
 
-- **第一个 = 搜索**
-- **第二个 = 导入**（设计稿的「右上方第二个按钮」）
+| 图标 | 行为 |
+|---|---|
+| `magnifyingglass` | 进入 / 退出搜索态（§5.5） |
+| `square.and.arrow.down` | 拉起导入 Action Sheet（§5.6） |
+| `ellipsis` | 现有 `libraryMenu` 原样搬进来：Select / View / Sort by / Group by / Remove Downloads |
 
-**这里出现一个设计稿没覆盖的缺口。** 现有 `libraryMenu` 里的 **View（网格/列表）、Sort（4 种）、Group（全部/按主题）** 在新结构里没有位置了。
+**导入在第二位是有意的** —— 设计稿「右上方第二个按钮 WIFI导入 icloud 导入」说的就是它，位置与设计稿一致。
 
-**决定：胶囊放三个图标 `[搜索][⋯][导入]`**，`⋯` 原样承接现有菜单的这三项。`Select` 与 `Remove Downloads` 两项本来就是 disabled 的占位（代码注释写着 M1/M2），**直接删掉** —— 一个从未启用过的按钮不构成功能。
+**对设计稿的主动偏离**：设计稿是**两个**图标，这里是三个（已记入 §7）。多出的 `更多` 是因为现有菜单里 View（网格/列表）、Sort（4 种）、Group（全部/按主题）三个**在用**的功能需要一个落点 —— 设计稿没有覆盖到它们。
 
-这是**对设计稿的主动偏离**（设计稿是两个图标），已记入 §7。若坚持两个图标，替代方案是把 View/Sort/Group 挪进搜索态做成筛选条 —— 但那会把「搜索」和「筛选」两个心智模型揉在一起，不推荐。
+`Select` 与 `Remove Downloads` 当前是 disabled 占位（代码注释写着 M1/M2），**保留在「更多」里，不删除** —— 它们在菜单里不占位置，等 M1/M2 接线时直接启用。
 
 ### 5.5 搜索
 
@@ -288,7 +291,7 @@ TPageHeader("Welcome to the Book Store.", subtitle: "You can live your whole lif
 | 8 | 封面列间距 60 | `Spacing.md` 24 | 60 不是 8 的倍数；且它是 `justify-between` 的副产物，非刻意 |
 | 9 | 行间距 80 | `Spacing.hero` 80 | 一致 |
 | 10 | 无进度 / 无 `⋯` / 无角标 | 保留三者 | 设计稿没画，但 App 已有这些功能 |
-| 11 | 顶栏两个图标 | 三个 `[搜索][⋯][导入]` | 现有 View/Sort/Group 需要落点（§5.4）；另删掉两个从未启用的占位项 |
+| 11 | 顶栏两个图标 | 三个 `[搜索][导入][更多]` | 设计稿没覆盖现有 View/Sort/Group 等菜单功能的落点（§5.4）；导入仍在**第二位**，与设计稿一致 |
 
 ---
 
@@ -309,7 +312,7 @@ TPageHeader("Welcome to the Book Store.", subtitle: "You can live your whole lif
 
 **已定**（写进本 spec，不再挂着）：
 
-1. **View / Sort / Group 的落点** → 胶囊三图标 `[搜索][⋯][导入]`，两个从未启用的占位项删除（§5.4）
+1. **现有菜单的落点** → 胶囊三图标 `[搜索][导入][更多]`，现有 `libraryMenu` 整体保留在「更多」里，含 Select 与 Remove Downloads 两个占位项（§5.4）
 2. **顶栏常驻欢迎语** → 已确认的产品决定（§5.1）。残留的是一个**长期**问题而非本轮问题：`Book Store` 这个说法（设计稿原文）与「个人书架」的定位有张力，产品定位是「与书中的思想相遇」而非卖书。本轮按需求实现，文案另行决定，**不阻塞本轮**
 
 **实施时定**（只能看画面定，不是未决）:
