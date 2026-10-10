@@ -106,13 +106,7 @@ struct LibraryView: View {
             // 系统大标题字体无法定制（iOS 26 不吃 UIKit appearance），标题自己画
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    searchToolbarButton
-                    importToolbarButton
-                    libraryMenu
-                }
-            }
+            .toolbar { libraryToolbar }
             .toolbarBackground(Theme.canvas, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             // 弹层期间收起 TabBar：否则内容区被它切掉一截，卡片会按「整屏」算尺寸、
@@ -214,6 +208,26 @@ struct LibraryView: View {
         )
     }
 
+    /// 工具栏：**第一颗单独，后两颗一组**（对齐设计稿）。
+    ///
+    /// 抽成 `@ToolbarContentBuilder` 属性而不是写在 `.toolbar {}` 里：
+    /// 那一长串内容留在修饰符链里会让 Swift 的类型推断爆掉。
+    ///
+    /// `ToolbarSpacer(.fixed)` 是 iOS 26 用来切断分组的 —— 它会阻止系统把
+    /// 两侧的按钮收进同一个玻璃胶囊。不给它，系统会按相邻性自己分组
+    /// （实测会把前两颗收一起、第三颗单独，与设计稿相反）。
+    @ToolbarContentBuilder
+    private var libraryToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            searchToolbarButton
+        }
+        ToolbarSpacer(.fixed, placement: .topBarTrailing)
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            importToolbarButton
+            libraryMenu
+        }
+    }
+
     // 工具栏三件套。
     //
     // 拆成独立子视图不是为了好看：三颗按钮 + 条件 + Menu 写在同一个
@@ -238,7 +252,7 @@ struct LibraryView: View {
         // `.tint` 只能挂在这儿：`ToolbarItemGroup` 是 `ToolbarContent` 不是 `View`，
         // 对它调 `.tint` 会报「has no member 'tint'」，而编译器在那之前会先卡到
         // 「unable to type-check in reasonable time」—— 报错行还会跟着改动乱跑。
-        .tint(Theme.ink)
+        .tint(Theme.solidInk)
         .accessibilityLabel("Search")
     }
 
@@ -250,7 +264,7 @@ struct LibraryView: View {
             // 带加号的文稿语义更准，也不是一个向下的箭头。
             Image(systemName: "doc.badge.plus").tIcon(IconRole.control)
         }
-        .tint(Theme.ink)
+        .tint(Theme.solidInk)
         .accessibilityLabel("Import books")
     }
 
@@ -287,7 +301,7 @@ struct LibraryView: View {
         } label: {
             Image(systemName: "ellipsis").tIcon(IconRole.control)
         }
-        .tint(Theme.ink)
+        .tint(Theme.solidInk)
         .accessibilityLabel("More options")
     }
 

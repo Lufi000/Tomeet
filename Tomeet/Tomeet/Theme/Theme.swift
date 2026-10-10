@@ -5,7 +5,11 @@ import SwiftUI
 /// 命名按用途而非色值，方便整 App 逐步套用；改色只改这里。
 enum Theme {
     /// 页面背景。
-    static let canvas = Color(hex: 0xF8EEE5)
+    ///
+    /// 原先是米色（`#F8EEE5`），2026-10-10 按设计稿改成白 —— 稿子里的 Screen
+    /// 节点用的是 `backgrounds/primary`（white）。米色是上一版视觉方向留下的，
+    /// 与设计稿的「洁净纸面」不是一回事。
+    static let canvas = Color(hex: 0xFFFFFF)
     /// Manta 浅灰:仅首页 + 书籍详情面板,不动全局米色。
     static let homeCanvas = Color(hex: 0xF0F0F3)
     /// 卡片底色：上下文卡片、AI 气泡、输入框。
