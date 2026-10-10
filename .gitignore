@@ -24,6 +24,11 @@ bff/.env
 .claude/settings.local.json
 .mcp.json
 
+# superpowers 的临时工作区（ledger / task brief / 审查包 / 截图）—— 不是产物。
+# 它自带一个 .gitignore，但那是一行 `*` 的自忽略，删掉它整棵树就会冒出来；
+# 这里再钉一条，免得依赖那个文件在不在。
+.superpowers/sdd/
+
 # Obsidian 仓库笔记：个人写作状态与待办草稿，不进仓库（docs/ 里的正式文档照常跟踪）
 .obsidian/
 docs/todo/
