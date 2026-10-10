@@ -89,36 +89,40 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if books.isEmpty {
-                    emptyState
-                } else if Self.hasNothingToShow(
-                    visibleCount: visibleBooks.count,
-                    themeSectionCount: booksByTheme.count,
-                    groupByTheme: groupMode == .byTheme
-                ) {
-                    // 三条内容路径共用这一个判断 —— 之前只有网格那条接了空态，
-                    // 切到列表或按主题再搜索就白屏（spec §5.5：不是空白）。
-                    noResultsScreen
-                } else if groupMode == .all {
-                    if viewMode == .grid {
-                        gridContent(for: visibleBooks)
-                    } else {
-                        listContent(for: visibleBooks)
-                    }
-                } else {
-                    themedContent
-                }
-            }
+            libraryDialogs
+        }
+        .overlay { peekOverlay }
+    }
+
+    /// 内容 + 导航栏。
+    ///
+    /// **和下面的 `libraryDialogs` 拆开不是为了好看。** 这两段原先连在一条
+    /// 十六节长的修饰符链上，Swift 的类型推断直接爆了
+    /// （`unable to type-check this expression in reasonable time`），
+    /// 而且报错行会跟着改动来回跑、指不到真凶。劈成两段各七八节就稳了。
+    private var libraryChrome: some View {
+        libraryContent
             .background(Theme.canvas)
             // 系统大标题字体无法定制（iOS 26 不吃 UIKit appearance），标题自己画
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    libraryActions
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    searchToolbarButton
+                    importToolbarButton
+                    libraryMenu
                 }
             }
+            .toolbarBackground(Theme.canvas, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            // 弹层期间收起 TabBar：否则内容区被它切掉一截，卡片会按「整屏」算尺寸、
+            // 却按「去掉 TabBar 的那块」定位，于是看着不居中，底部按钮还会被压住。
+            .toolbar(peekBook == nil ? .visible : .hidden, for: .tabBar)
+    }
+
+    /// 弹层、菜单与后台任务。
+    private var libraryDialogs: some View {
+        libraryChrome
             .fullScreenCover(item: $presentedListen) { book in
                 ListenPlayerView(book: book)
             }
@@ -163,11 +167,6 @@ struct LibraryView: View {
                     Text("“\(book.title)” will be removed from your library.")
                 }
             }
-            .toolbarBackground(Theme.canvas, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            // 弹层期间收起 TabBar：否则内容区被它切掉一截，卡片会按「整屏」算尺寸、
-            // 却按「去掉 TabBar 的那块」定位，于是看着不居中，底部按钮还会被压住。
-            .toolbar(peekBook == nil ? .visible : .hidden, for: .tabBar)
             .onPreferenceChange(BookCoverFramePreferenceKey.self) { coverFrames = $0 }
             .task {
                 catalog = try? InitialLibraryLoader.load()
@@ -178,45 +177,88 @@ struct LibraryView: View {
                 openImportForSnapshotIfRequested()
                 #endif
             }
-        }
-        .overlay { peekOverlay }
     }
 
     // MARK: - 顶栏右侧
 
-    /// 三个图标：`[搜索] [导入] [更多]`。
+    /// 三条内容路径。
+    ///
+    /// **抽出来不只是为了好看**：这条 `if/else if/else if/else` 链直接写在
+    /// `body` 的 `Group` 里、后面还跟着一长串修饰符时，Swift 的类型推断会爆
+    /// （`unable to type-check this expression in reasonable time`）。
+    /// 独立成属性后每个分支是一个小单元，编译器就不再卡住。
+    @ViewBuilder
+    private var libraryContent: some View {
+        if books.isEmpty {
+            emptyState
+        } else if hasNothingToShow {
+            // 三条内容路径共用这一个判断 —— 之前只有网格那条接了空态，
+            // 切到列表或按主题再搜索就白屏（spec §5.5：不是空白）。
+            noResultsScreen
+        } else if groupMode == .all {
+            if viewMode == .grid {
+                gridContent(for: visibleBooks)
+            } else {
+                listContent(for: visibleBooks)
+            }
+        } else {
+            themedContent
+        }
+    }
+
+    private var hasNothingToShow: Bool {
+        Self.hasNothingToShow(
+            visibleCount: visibleBooks.count,
+            themeSectionCount: booksByTheme.count,
+            groupByTheme: groupMode == .byTheme
+        )
+    }
+
+    // 工具栏三件套。
+    //
+    // 拆成独立子视图不是为了好看：三颗按钮 + 条件 + Menu 写在同一个
+    // `ToolbarItemGroup` 闭包里，Swift 的类型推断会直接爆掉
+    // （`unable to type-check this expression in reasonable time`）。
+    //
+    // 交给 iOS 26 自己渲染 —— 相邻的工具栏按钮会被系统收成原生玻璃胶囊，
+    // 而设计稿里那组本来就是从 iOS 26 的 kit 扒的。手搓
+    // `Capsule().fill(Theme.card)` 还原不出那个质感：玻璃是会吃背景的。
+
+    private var searchToolbarButton: some View {
+        Button {
+            isSearching = true
+            // 搜索框要在同一帧里才被建出来，直接置 true 会被丢掉 —— 等一拍。
+            Task { @MainActor in isSearchFieldFocused = true }
+        } label: {
+            Image(systemName: "magnifyingglass").tIcon(IconRole.control)
+        }
+        // 原生工具栏默认吃 App 的 tint（accent 绿），而设计稿那组用的是系统中性
+        // 深色（`#1a1a1a`）—— 拉回 Theme.ink。
+        //
+        // `.tint` 只能挂在这儿：`ToolbarItemGroup` 是 `ToolbarContent` 不是 `View`，
+        // 对它调 `.tint` 会报「has no member 'tint'」，而编译器在那之前会先卡到
+        // 「unable to type-check in reasonable time」—— 报错行还会跟着改动乱跑。
+        .tint(Theme.ink)
+        .accessibilityLabel("Search")
+    }
+
+    private var importToolbarButton: some View {
+        Button {
+            showImportDialog = true
+        } label: {
+            // 不用 square.and.arrow.down：那是「下载」，而这里是「导入」。
+            // 带加号的文稿语义更准，也不是一个向下的箭头。
+            Image(systemName: "doc.badge.plus").tIcon(IconRole.control)
+        }
+        .tint(Theme.ink)
+        .accessibilityLabel("Import books")
+    }
+
+    /// 第三个图标：`[搜索] [导入] [更多]` 里的「更多」。
     ///
     /// 导入在**第二位**是有意的 —— 设计稿「右上方第二个按钮 WIFI导入 icloud 导入」
     /// 说的就是它。第三个「更多」是设计稿没覆盖的部分：现有菜单里
     /// Select / View / Sort / Group / Remove Downloads 需要一个落点。
-    private var libraryActions: some View {
-        HStack(spacing: Spacing.xs) {
-            Button {
-                isSearching = true
-                // 搜索框要在同一帧里才被建出来，直接置 true 会被丢掉 —— 等一拍。
-                Task { @MainActor in isSearchFieldFocused = true }
-            } label: {
-                Image(systemName: "magnifyingglass").tIcon(IconRole.control)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search")
-
-            Button {
-                showImportDialog = true
-            } label: {
-                Image(systemName: "square.and.arrow.down").tIcon(IconRole.control)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Import books")
-
-            libraryMenu
-        }
-        .foregroundStyle(Theme.ink)
-        .padding(.horizontal, Spacing.xs)
-        .padding(.vertical, Spacing.xs)
-        .background(Capsule().fill(Theme.card))
-    }
-
     private var libraryMenu: some View {
         Menu {
             Button("Select", systemImage: "checkmark.circle") {
@@ -245,6 +287,7 @@ struct LibraryView: View {
         } label: {
             Image(systemName: "ellipsis").tIcon(IconRole.control)
         }
+        .tint(Theme.ink)
         .accessibilityLabel("More options")
     }
 
