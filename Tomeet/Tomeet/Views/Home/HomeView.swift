@@ -2,12 +2,14 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    /// 进「库」的入口回调 —— 顶栏那颗 ☰（原来靠底部标签栏）。
+    let onOpenLibrary: () -> Void
+
     @Query private var books: [Book]
     @Environment(BookOpening.self) private var bookOpening
     @State private var presentedListen: Book?
     /// 轮播里各书封面在全局坐标系中的位置，由 `BookCarouselView` 上报。
     @State private var coverFrames: [UUID: CGRect] = [:]
-    @State private var showImporter = false
     /// 本次启动是否已经自动续读过 —— 保证一次启动只弹一次，关掉后不再打扰。
     @State private var didAutoResume = false
 
@@ -17,7 +19,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Theme.homeCanvas.ignoresSafeArea()
+            Theme.canvas.ignoresSafeArea()
 
             if carouselBooks.isEmpty {
                 emptyState
@@ -29,9 +31,7 @@ struct HomeView: View {
             }
 
             header
-            addBookButton
         }
-        .bookImportPresentation(isPresented: $showImporter)
         .onChange(of: books, initial: false) { _, newBooks in
             reconcileStaleSelections(with: newBooks)
         }
@@ -90,37 +90,39 @@ struct HomeView: View {
 
     // MARK: - 固定层
 
-    /// 顶部固定大标题 + 头像,不随轮播滚动。
+    /// 顶部固定层：大标题在左，头像 + 进「库」的入口在右。不随轮播滚动。
+    ///
+    /// 只有那颗 ☰ 吃手势：标题与头像各自 `allowsHitTesting(false)`，
+    /// 中间那个 `Spacer` 本身没有命中区域 —— 空白处的触摸照旧穿到轮播上。
+    /// （原来是整块挂 `allowsHitTesting(false)`，加了按钮就不能那样了。）
     private var header: some View {
         VStack {
             HStack(alignment: .top) {
                 Text("I'm\nNow\nReading")
                     .font(.app(.largeTitle, weight: .bold))
                     .foregroundStyle(Theme.ink)
+                    .allowsHitTesting(false)
                 Spacer()
                 Circle()
                     .fill(LinearGradient(colors: [Theme.sendEnabled, Theme.accent],
                                          startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 44, height: 44)
+                    .allowsHitTesting(false)
+                // 进书架的入口。Paper 的做法：顶栏最右一个 ☰，没有底部标签栏。
+                Button(action: onOpenLibrary) {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.system(.title3, weight: .medium))
+                        .foregroundStyle(Theme.solidInk)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Library")
+                .padding(.leading, 4)
             }
             .padding(.horizontal, 24)
             .padding(.top, 8)
             Spacer()
         }
-        .allowsHitTesting(false)
-    }
-
-    private var addBookButton: some View {
-        Button { showImporter = true } label: {
-            Text("Add New Book")
-                .font(.app(.headline, weight: .semibold))
-                .foregroundStyle(Theme.cream)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
-                .background(Color.black, in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .padding(.bottom, 12)
     }
 
     /// 空态:刺猬插画 + 引导。

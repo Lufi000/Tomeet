@@ -29,6 +29,8 @@ struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AudioPlayerService.self) private var audioPlayer
     @Environment(BookOpening.self) private var bookOpening
+    /// 书架现在是盖在首页上的 sheet —— 翻开一本书前得先把自己收掉。
+    @Environment(\.dismiss) private var dismissSheet
     @State private var viewMode: LibraryViewMode = .grid
     @State private var sortMode: LibrarySortMode = .recent
     @State private var groupMode: LibraryGroupMode = .all
@@ -109,9 +111,6 @@ struct LibraryView: View {
             .toolbar { libraryToolbar }
             .toolbarBackground(Theme.canvas, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            // 弹层期间收起 TabBar：否则内容区被它切掉一截，卡片会按「整屏」算尺寸、
-            // 却按「去掉 TabBar 的那块」定位，于是看着不居中，底部按钮还会被压住。
-            .toolbar(peekBook == nil ? .visible : .hidden, for: .tabBar)
     }
 
     /// 弹层、菜单与后台任务。
@@ -502,13 +501,26 @@ struct LibraryView: View {
         }
     }
 
-    /// 未读（NEW）书先弹详情卡片；读过的书直接翻开 —— 封面从这一格的原位抬起、绕书脊
-    /// 荡开，底下露出上次读到的那一页（动效由 `RootView` 上的呈现层负责）。
+    /// 未读（NEW）书先弹详情卡片；读过的书直接翻开。
+    ///
+    /// **翻开前先把 sheet 收掉**：阅读器是由 `RootView` 在最外层呈现的，
+    /// 不收 sheet 的话它会被压在书架下面。
+    ///
+    /// 代价说清楚：`from:` 传的是这一格封面的坐标，而此刻这张 sheet 正在
+    /// 往下滑 —— 那个坐标已经没有意义了。所以传 `nil`，让书整屏出现
+    /// （与冷启动自动续读同一条路径）。**「封面从书架原位抬起、绕书脊荡开」
+    /// 这段动效在这条路径上不复存在** —— 那是为「书架本身就是整屏」的
+    /// 标签栏布局写的，书架变成 sheet 之后前提没了。
+    private func startReading(_ book: Book) {
+        dismissSheet()
+        bookOpening.open(book, from: nil)
+    }
+
     private func openBook(_ book: Book) {
         if book.showsNewBadge {
             peekBook = book
         } else {
-            bookOpening.open(book, from: coverFrames[book.id])
+            startReading(book)
         }
     }
 
@@ -577,7 +589,7 @@ struct LibraryView: View {
                 // `peekBook = nil` 不能省：弹层停在 t=0 时虽然全透明，但仍然挂在那儿挡手势。
                 onStartReading: {
                     peekBook = nil
-                    bookOpening.open(book, from: coverFrames[book.id])
+                    startReading(book)
                 },
                 onListen: {
                     peekBook = nil
